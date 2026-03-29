@@ -129,4 +129,22 @@ describe('BattleSystem', () => {
             expect(result.actualDamage).toBe(50);
         });
     });
+
+    describe('isDead', () => {
+        test('returns true when hp is 0', () => {
+            expect(battleSystem.isDead(0)).toBe(true);
+        });
+
+        test('returns true when hp is negative', () => {
+            expect(battleSystem.isDead(-10)).toBe(true);
+        });
+
+        test('returns false when hp is positive', () => {
+            expect(battleSystem.isDead(1)).toBe(false);
+        });
+
+        test('returns false when hp equals maxHp', () => {
+            expect(battleSystem.isDead(100)).toBe(false);
+        });
+    });
 });

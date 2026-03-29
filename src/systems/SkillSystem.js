@@ -113,7 +113,6 @@ export class SkillSystem {
         const enemies = scene.enemies || [];
         const playerX = player.x;
         const playerY = player.y;
-        const playerRotation = player.rotation;
         const range = skill.range;
 
         let hitEnemy = null;
@@ -126,19 +125,12 @@ export class SkillSystem {
             const dy = enemy.graphics.y - playerY;
             const distance = Math.sqrt(dx * dx + dy * dy);
 
-            // Check if enemy is in range
+            // Check if enemy is in range (no directional restriction)
             if (distance <= range + (enemy.fishData?.size || 20)) {
-                // Check if enemy is in front of player (within 60 degree cone)
-                const angleToEnemy = Math.atan2(dy, dx);
-                let angleDiff = Math.abs(angleToEnemy - playerRotation);
-                if (angleDiff > Math.PI) angleDiff = 2 * Math.PI - angleDiff;
-
-                if (angleDiff <= Math.PI / 3) { // 60 degrees
-                    const damage = skill.damage;
-                    if (damage > maxDamage) {
-                        maxDamage = damage;
-                        hitEnemy = enemy;
-                    }
+                const damage = skill.damage;
+                if (damage > maxDamage) {
+                    maxDamage = damage;
+                    hitEnemy = enemy;
                 }
             }
         }
@@ -151,7 +143,7 @@ export class SkillSystem {
             if (died) {
                 // Add experience using GrowthSystem
                 const expGain = hitEnemy.getExpValue();
-                const expResult = this.scene.growthSystem.addExperience(expGain, this.scene.time.now);
+                const expResult = this.scene.growthSystem.addExperience(expGain, this.scene.time.now, this.scene.luckSystem);
                 this.scene.exp = this.scene.growthSystem.getExp();
                 this.scene.level = this.scene.growthSystem.getLevel();
                 this.scene.score += expResult.expGained * 10;
@@ -191,18 +183,19 @@ export class SkillSystem {
 
         const player = this.player;
 
-        // Create shield effect
+        // Create shield effect - positioned at player center
+        const shieldRadius = player.playerData.size + 15;
         const shieldGraphics = this.scene.add.graphics();
-        shieldGraphics.fillStyle(0x00aaff, 0.4);
-        shieldGraphics.fillCircle(0, 0, player.playerData.size + 15);
         shieldGraphics.setPosition(player.x, player.y);
+        shieldGraphics.fillStyle(0x00aaff, 0.4);
+        shieldGraphics.fillCircle(0, 0, shieldRadius);
         shieldGraphics.setDepth(5);
 
         // Make shield follow player
         const shieldUpdate = this.scene.time.addEvent({
             delay: 16,
             callback: () => {
-                if (shieldGraphics.active) {
+                if (shieldGraphics && !shieldGraphics.destroyed) {
                     shieldGraphics.setPosition(player.x, player.y);
                 }
             },
@@ -282,6 +275,11 @@ export class SkillSystem {
 
         // Apply heal
         scene.hp = currentHp + actualHeal;
+
+        // Update player health bar
+        if (scene.updatePlayerHealthBar) {
+            scene.updatePlayerHealthBar();
+        }
 
         // Show heal effect
         const healText = scene.add.text(player.x, player.y - 30, `+${actualHeal}`, {
@@ -380,6 +378,19 @@ export class SkillSystem {
         if (!skill) return 0;
         const remaining = this.getCooldownRemaining(skillId);
         return remaining / skill.cooldown;
+    }
+
+    /**
+     * Reduce cooldown for all skills
+     * @param {number} seconds - Seconds to reduce
+     */
+    reduceAllCooldowns(seconds) {
+        for (const skillId in this.cooldowns) {
+            if (this.cooldowns[skillId] > 0) {
+                this.cooldowns[skillId] = Math.max(0, this.cooldowns[skillId] - seconds);
+            }
+        }
+        logger.info(`All skill cooldowns reduced by ${seconds}s`);
     }
 
     /**

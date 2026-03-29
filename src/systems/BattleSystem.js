@@ -13,28 +13,17 @@ export class BattleSystem {
      * @param {string} targetType - Type of target fish
      * @returns {number} Calculated damage
      */
-    calculateDamage(attackerType, targetType) {
-        let damage = this.baseDamage;
+    calculateDamage(attacker, defender, baseDamage) {
+        // Add level bonus: +5 per level
+        const levelBonus = ((attacker.level || 1) - 1) * 5;
+        const actualDamage = baseDamage + levelBonus;
 
-        const attackerConfig = this.fishData[attackerType];
-        const targetConfig = this.fishData[targetType];
+        return Math.floor(actualDamage);
+    }
 
-        if (!attackerConfig || !targetConfig) {
-            console.warn(`BattleSystem: Unknown fish type - attacker: ${attackerType}, target: ${targetType}`);
-            return damage;
-        }
-
-        // Check if attacker is strong against target
-        if (attackerConfig.strongAgainst && attackerConfig.strongAgainst.includes(targetType)) {
-            damage *= 1.5;
-        }
-
-        // Check if attacker is weak to target
-        if (attackerConfig.weakTo && attackerConfig.weakTo.includes(targetType)) {
-            damage *= 0.5;
-        }
-
-        return Math.floor(damage);
+    calculateDefense(defender) {
+        // Defense = (level - 1) * 3
+        return ((defender.level || 1) - 1) * 3;
     }
 
     /**

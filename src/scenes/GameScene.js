@@ -6,6 +6,7 @@ import { SkillSystem } from '../systems/SkillSystem.js';
 import { GrowthSystem } from '../systems/GrowthSystem.js';
 import { DriftBottleSystem } from '../systems/DriftBottleSystem.js';
 import { LuckSystem } from '../systems/LuckSystem.js';
+import { BackgroundSystem } from '../systems/BackgroundSystem.js';
 import { SkillBar } from '../ui/SkillBar.js';
 import { logger } from '../systems/DebugLogger.js';
 
@@ -121,6 +122,12 @@ class GameScene extends Phaser.Scene {
         // Create gradient background based on current level
         this.createBackground();
 
+        // Initialize BackgroundSystem and create decorations
+        this.backgroundSystem = new BackgroundSystem(this);
+        this.backgroundSystem.createBubbles(15);
+        this.backgroundSystem.createCoral(100, 650, 'branch', 0xFF6B6B);
+        this.backgroundSystem.createSeaweed(900, 700, 120, 0x2ECC71);
+
         // Create fish group
         this.fishes = this.physics.add.group();
 
@@ -133,6 +140,7 @@ class GameScene extends Phaser.Scene {
         // Create skill bar UI
         this.skillBar = new SkillBar(this, this.skillsData, this.skillSystem);
         this.skillBar.create();
+        this.skillBar.setPlayerLevel(this.level);
 
         // Setup arrow key controls
         this.cursors = this.input.keyboard.createCursorKeys();
@@ -591,6 +599,11 @@ class GameScene extends Phaser.Scene {
             logger.info(`Level ${this.level} reached! Unlocked: ${newlyUnlocked.join(', ')}`);
             // Notify UI of skill unlock
             this.scene.get('UIScene').showSkillUnlock(newlyUnlocked);
+        }
+
+        // Update skill bar with new player level
+        if (this.skillBar) {
+            this.skillBar.setPlayerLevel(this.level);
         }
 
         // Trigger drift bottle effect

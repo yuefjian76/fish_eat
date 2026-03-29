@@ -11,6 +11,15 @@ export class SkillBar {
         this.skillSystem = skillSystem;
         this.skillSlots = {};
         this.container = null;
+        this.playerLevel = 1;
+    }
+
+    /**
+     * Set player level for skill lock checking
+     * @param {number} level - Player level
+     */
+    setPlayerLevel(level) {
+        this.playerLevel = level;
     }
 
     /**
@@ -123,7 +132,7 @@ export class SkillBar {
     }
 
     /**
-     * Update skill bar (cooldowns, active effects)
+     * Update skill bar (cooldowns, active effects, locked skills)
      */
     update() {
         for (const skillId in this.skillSlots) {
@@ -131,6 +140,30 @@ export class SkillBar {
             const cooldownPercent = this.skillSystem.getCooldownPercent(skillId);
             const isActive = this.skillSystem.isActive(skillId);
             const cooldownRemaining = this.skillSystem.getCooldownRemaining(skillId);
+            const isUnlocked = this.skillSystem.isSkillUnlocked(skillId, this.playerLevel);
+
+            // Check if skill is locked
+            if (!isUnlocked) {
+                // Gray out locked skills
+                slot.bg.clear();
+                slot.bg.fillStyle(0x222222, 0.9);
+                slot.bg.fillCircle(0, 0, 25);
+                slot.bg.lineStyle(2, 0x555555, 0.5);
+                slot.bg.strokeCircle(0, 0, 25);
+
+                // Show lock icon
+                slot.icon.setText('🔒');
+                slot.icon.setAlpha(0.5);
+
+                // Hide cooldown overlay for locked skills
+                slot.cooldownOverlay.setAlpha(0);
+                slot.cooldownText.setText('');
+                continue;
+            }
+
+            // Restore icon for unlocked skills
+            slot.icon.setText(this.getSkillIcon(skillId));
+            slot.icon.setAlpha(1);
 
             // Update cooldown overlay
             if (cooldownPercent > 0) {

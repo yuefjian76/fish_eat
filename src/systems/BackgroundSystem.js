@@ -1,6 +1,6 @@
 /**
  * BackgroundSystem - Underwater decoration system
- * Creates beautiful underwater backgrounds with canvas-generated textures
+ * Creates beautiful underwater backgrounds with Phaser Graphics
  */
 export class BackgroundSystem {
     /**
@@ -20,29 +20,16 @@ export class BackgroundSystem {
     }
 
     /**
-     * Create the full underwater background with gradient, light rays, and particles
+     * Create the full underwater background
      */
     createBackground() {
-        // Create background graphics layer
         this.bgGraphics = this.scene.add.graphics();
         this.bgGraphics.setDepth(0);
-
-        // Draw gradient background
         this._drawGradientBackground();
-
-        // Draw light rays from top
         this._drawLightRays();
-
-        // Draw underwater particles (sand, dust)
         this._drawUnderwaterParticles();
-
-        // Create bubbles with proper graphics
         this.createBubbles(25);
-
-        // Create multiple corals with better visuals
         this._createCoralField();
-
-        // Create seaweed with better visuals
         this._createSeaweedField();
     }
 
@@ -54,15 +41,14 @@ export class BackgroundSystem {
         const height = this.screenHeight;
         const width = this.screenWidth;
 
-        // Deep sea gradient colors
+        // Deep sea gradient
         const colors = [
-            { y: 0, color: [20, 60, 100] },      // Top - lighter blue
-            { y: 0.3, color: [10, 40, 80] },    // Upper middle
-            { y: 0.6, color: [5, 30, 60] },     // Lower middle
-            { y: 1.0, color: [2, 15, 40] }      // Bottom - deep blue
+            { y: 0, color: [20, 60, 100] },
+            { y: 0.3, color: [10, 40, 80] },
+            { y: 0.6, color: [5, 30, 60] },
+            { y: 1.0, color: [2, 15, 40] }
         ];
 
-        // Draw gradient segments
         const segmentHeight = height / 100;
         for (let i = 0; i < 100; i++) {
             const ratio = i / 100;
@@ -85,9 +71,6 @@ export class BackgroundSystem {
         }
     }
 
-    /**
-     * Interpolate between two colors
-     */
     _interpolateColor(c1, c2, ratio) {
         return [
             c1[0] + (c2[0] - c1[0]) * ratio,
@@ -101,11 +84,9 @@ export class BackgroundSystem {
      */
     _drawLightRays() {
         const graphics = this.bgGraphics;
-
-        // Draw 5 light rays
         const rayPositions = [150, 350, 550, 750, 900];
+
         for (const x of rayPositions) {
-            // Ray gradient
             for (let i = 0; i < 20; i++) {
                 const alpha = 0.03 * (1 - i / 20);
                 const rayWidth = 30 + i * 4;
@@ -121,28 +102,25 @@ export class BackgroundSystem {
     }
 
     /**
-     * Draw floating particles (sand, dust, plankton)
+     * Draw floating particles
      */
     _drawUnderwaterParticles() {
         const graphics = this.bgGraphics;
-
-        // Add some floating particles
         for (let i = 0; i < 50; i++) {
             const x = Math.random() * this.screenWidth;
             const y = Math.random() * this.screenHeight;
             const size = 1 + Math.random() * 2;
             const alpha = 0.1 + Math.random() * 0.2;
-
             graphics.fillStyle(0xFFFFFF, alpha);
             graphics.fillCircle(x, y, size);
         }
     }
 
     /**
-     * Create a field of corals
+     * Create coral field
      */
     _createCoralField() {
-        // Branch coral positions
+        // Branch corals
         const branchPositions = [
             { x: 50, y: 720, scale: 1.2 },
             { x: 120, y: 740, scale: 0.8 },
@@ -151,35 +129,32 @@ export class BackgroundSystem {
             { x: 880, y: 745, scale: 0.9 },
             { x: 960, y: 735, scale: 1.0 }
         ];
-
         for (const pos of branchPositions) {
             this.createCoral(pos.x, pos.y, 'branch', 0xFF6B6B, pos.scale);
         }
 
-        // Brain coral positions
+        // Brain corals
         const brainPositions = [
             { x: 300, y: 750, scale: 1.0 },
             { x: 600, y: 755, scale: 0.8 },
             { x: 700, y: 745, scale: 1.2 }
         ];
-
         for (const pos of brainPositions) {
             this.createCoral(pos.x, pos.y, 'brain', 0xFF8888, pos.scale);
         }
 
-        // Fan coral positions
+        // Fan corals
         const fanPositions = [
             { x: 400, y: 760, scale: 1.0 },
             { x: 500, y: 755, scale: 0.9 }
         ];
-
         for (const pos of fanPositions) {
             this.createCoral(pos.x, pos.y, 'fan', 0xFFAA88, pos.scale);
         }
     }
 
     /**
-     * Create a field of seaweed
+     * Create seaweed field
      */
     _createSeaweedField() {
         const positions = [
@@ -192,43 +167,33 @@ export class BackgroundSystem {
             { x: 850, y: 768, height: 175, color: 0x228B22 },
             { x: 990, y: 768, height: 155, color: 0x32CD32 }
         ];
-
         for (const pos of positions) {
             this.createSeaweed(pos.x, pos.y, pos.height, pos.color);
         }
     }
 
     /**
-     * Create rising bubble particles with improved visuals
+     * Create bubbles
      */
     createBubbles(count = 20) {
         for (let i = 0; i < count; i++) {
             const x = Math.random() * this.screenWidth;
             const y = Math.random() * this.screenHeight + 50;
-            const size = 3 + Math.random() * 8; // 3-11 pixels
+            const size = 3 + Math.random() * 8;
 
-            // Create graphics for bubble
             const graphics = this.scene.add.graphics();
             graphics.setDepth(3);
 
-            // Draw bubble with gradient effect
-            // Outer bubble
             graphics.fillStyle(0xFFFFFF, 0.4);
             graphics.fillCircle(0, 0, size);
-
-            // Inner highlight
             graphics.fillStyle(0xAAFFFF, 0.3);
             graphics.fillCircle(-size * 0.3, -size * 0.3, size * 0.5);
-
-            // Small reflection
             graphics.fillStyle(0xFFFFFF, 0.7);
             graphics.fillCircle(-size * 0.4, -size * 0.4, size * 0.15);
 
             const bubble = {
-                x,
-                y,
-                size,
-                speed: 15 + Math.random() * 35, // 15-50 pixels/sec
+                x, y, size,
+                speed: 15 + Math.random() * 35,
                 drift: (Math.random() - 0.5) * 15,
                 wobbleOffset: Math.random() * Math.PI * 2,
                 wobbleSpeed: 1 + Math.random() * 2,
@@ -241,7 +206,7 @@ export class BackgroundSystem {
     }
 
     /**
-     * Create coral decoration with improved visuals
+     * Create coral
      */
     createCoral(x, y, type = 'branch', color = 0xFF6B6B, scale = 1.0) {
         const graphics = this.scene.add.graphics();
@@ -264,7 +229,7 @@ export class BackgroundSystem {
     }
 
     /**
-     * Draw branch-style coral with better visuals
+     * Draw branch coral
      */
     _drawBranchCoral(graphics, x, y, color, scale) {
         const s = scale;
@@ -290,8 +255,7 @@ export class BackgroundSystem {
         graphics.lineTo(x + 18 * s, y - 75 * s);
         graphics.strokePath();
 
-        // Branch tips (polyp balls)
-        graphics.fillStyle(color, 1);
+        // Branch tips
         const tips = [
             { dx: -20, dy: -55, r: 6 },
             { dx: 15, dy: -60, r: 5 },
@@ -303,22 +267,20 @@ export class BackgroundSystem {
             graphics.fillCircle(x + tip.dx * s, y + tip.dy * s, tip.r * s);
         }
 
-        // Add highlight
+        // Highlight
         graphics.fillStyle(0xFFFFFF, 0.2);
         graphics.fillCircle(x - 2 * s, y - 30 * s, 3 * s);
     }
 
     /**
-     * Draw brain-style coral
+     * Draw brain coral
      */
     _drawBrainCoral(graphics, x, y, color, scale) {
         const s = scale;
-
-        // Main brain shape
         graphics.fillStyle(color, 1);
         graphics.fillEllipse(x, y - 20 * s, 50 * s, 35 * s);
 
-        // Add ridges
+        // Ridges
         graphics.lineStyle(2 * s, 0xFFFFFF, 0.3);
         for (let i = -20; i <= 20; i += 8) {
             graphics.beginPath();
@@ -338,15 +300,12 @@ export class BackgroundSystem {
     }
 
     /**
-     * Draw fan-style coral
+     * Draw fan coral
      */
     _drawFanCoral(graphics, x, y, color, scale) {
         const s = scale;
-
-        // Fan shape
         graphics.fillStyle(color, 0.9);
 
-        // Draw fan with ribs
         const fanWidth = 60 * s;
         const fanHeight = 80 * s;
 
@@ -377,35 +336,29 @@ export class BackgroundSystem {
     }
 
     /**
-     * Create seaweed with improved visuals
+     * Create seaweed using ellipses
      */
     createSeaweed(x, y, height = 100, color = 0x2ECC71) {
         const graphics = this.scene.add.graphics();
         graphics.setDepth(2);
 
-        // Draw seaweed blade
-        const baseWidth = 12;
-        const topWidth = 4;
+        const baseWidth = 14;
 
-        // Main blade with gradient effect
+        // Main blade using stacked ellipses
         graphics.fillStyle(color, 1);
-        graphics.beginPath();
-        graphics.moveTo(x - baseWidth / 2, y);
-        graphics.quadraticCurveTo(x - baseWidth / 3, y - height / 2, x, y - height);
-        graphics.quadraticCurveTo(x + baseWidth / 3, y - height / 2, x + baseWidth / 2, y);
-        graphics.closePath();
-        graphics.fillPath();
+        for (let i = 0; i < 8; i++) {
+            const ratio = i / 8;
+            const ellHeight = (height / 8) * (1 - ratio * 0.3);
+            const ellWidth = baseWidth * (1 - ratio * 0.5);
+            const ellY = y - (height * 0.1) - (height * 0.85 * ratio);
+            graphics.fillEllipse(x, ellY, ellWidth, ellHeight);
+        }
 
-        // Highlight on blade
+        // Highlight
         graphics.fillStyle(0xFFFFFF, 0.15);
-        graphics.beginPath();
-        graphics.moveTo(x - 2, y);
-        graphics.quadraticCurveTo(x - 1, y - height / 2, x, y - height);
-        graphics.quadraticCurveTo(x + 1, y - height / 2, x + 2, y);
-        graphics.closePath();
-        graphics.fillPath();
+        graphics.fillEllipse(x - 2, y - height * 0.5, 4, height * 0.6);
 
-        // Add secondary blades
+        // Secondary blades
         const secColor = Phaser.Display.Color.ValueToColor(color);
         const secDarkColor = Phaser.Display.Color.GetColor(
             Math.floor(secColor.r * 0.6),
@@ -414,14 +367,15 @@ export class BackgroundSystem {
         );
         graphics.fillStyle(secDarkColor, 0.8);
         for (let i = 1; i <= 2; i++) {
-            const offset = i * 8;
-            const bladeHeight = height * (0.6 - i * 0.1);
-            graphics.beginPath();
-            graphics.moveTo(x + offset, y);
-            graphics.quadraticCurveTo(x + offset + 5, y - bladeHeight / 2, x + offset + 3, y - bladeHeight);
-            graphics.quadraticCurveTo(x + offset + 2, y - bladeHeight / 2, x + offset + 5, y);
-            graphics.closePath();
-            graphics.fillPath();
+            const offset = i * 10;
+            const bladeHeight = height * (0.5 - i * 0.1);
+            for (let j = 0; j < 5; j++) {
+                const ratio = j / 5;
+                const ellHeight = (bladeHeight / 5) * (1 - ratio * 0.3);
+                const ellWidth = 6 * (1 - ratio * 0.4);
+                const ellY = y - (bladeHeight * 0.1) - (bladeHeight * 0.8 * ratio);
+                graphics.fillEllipse(x + offset, ellY, ellWidth, ellHeight);
+            }
         }
 
         // Sway animation
@@ -439,21 +393,17 @@ export class BackgroundSystem {
     }
 
     /**
-     * Update bubble positions
+     * Update bubbles
      */
     update(delta) {
         const deltaSec = delta / 1000;
         const time = this.scene.time.now / 1000;
 
         for (const bubble of this.bubbles) {
-            // Move bubble up
             bubble.y -= bubble.speed * deltaSec;
-
-            // Apply wobble effect
             const wobble = Math.sin(time * bubble.wobbleSpeed + bubble.wobbleOffset) * 2;
             const newX = bubble.x + bubble.drift * deltaSec + wobble;
 
-            // Keep within screen bounds horizontally
             if (newX < 0) {
                 bubble.x = this.screenWidth;
             } else if (newX > this.screenWidth) {
@@ -462,12 +412,10 @@ export class BackgroundSystem {
                 bubble.x = newX;
             }
 
-            // Update graphics position
             if (bubble.graphics && bubble.graphics.active) {
                 bubble.graphics.setPosition(bubble.x, bubble.y);
             }
 
-            // Respawn at bottom if bubble goes off top
             if (bubble.y < -15) {
                 bubble.y = this.bubbleRespawnY;
                 bubble.x = Math.random() * this.screenWidth;
@@ -476,34 +424,23 @@ export class BackgroundSystem {
     }
 
     /**
-     * Clean up all graphics and animations
+     * Clean up
      */
     destroy() {
         if (this.bgGraphics) {
             this.bgGraphics.destroy();
         }
-
         for (const bubble of this.bubbles) {
-            if (bubble.graphics) {
-                bubble.graphics.destroy();
-            }
+            if (bubble.graphics) bubble.graphics.destroy();
         }
         this.bubbles = [];
-
         for (const coral of this.corals) {
-            if (coral.graphics) {
-                coral.graphics.destroy();
-            }
+            if (coral.graphics) coral.graphics.destroy();
         }
         this.corals = [];
-
         for (const seaweed of this.seaweeds) {
-            if (seaweed.tween) {
-                seaweed.tween.stop();
-            }
-            if (seaweed.graphics) {
-                seaweed.graphics.destroy();
-            }
+            if (seaweed.tween) seaweed.tween.stop();
+            if (seaweed.graphics) seaweed.graphics.destroy();
         }
         this.seaweeds = [];
     }

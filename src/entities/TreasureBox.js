@@ -5,7 +5,12 @@ export class TreasureBox {
     static TYPE = {
         COIN: 'coin',
         POTION: 'potion',
-        SKILL_FRAGMENT: 'skillFragment'
+        SKILL_FRAGMENT: 'skillFragment',
+        EXP: 'exp',
+        COOLDOWN_REDUCTION: 'cooldownReduction',
+        INVINCIBILITY: 'invincibility',
+        TELEPORT: 'teleport',
+        DOUBLE_REWARDS: 'doubleRewards'
     };
 
     constructor(scene, x, y, rewardType, rewardAmount) {
@@ -91,7 +96,12 @@ export class TreasureBox {
         const labels = {
             [TreasureBox.TYPE.COIN]: `+${this.rewardAmount}`,
             [TreasureBox.TYPE.POTION]: 'HP',
-            [TreasureBox.TYPE.SKILL_FRAGMENT]: 'SKILL'
+            [TreasureBox.TYPE.SKILL_FRAGMENT]: 'SKILL',
+            [TreasureBox.TYPE.EXP]: '+EXP',
+            [TreasureBox.TYPE.COOLDOWN_REDUCTION]: 'CD-3s',
+            [TreasureBox.TYPE.INVINCIBILITY]: '无敌',
+            [TreasureBox.TYPE.TELEPORT]: '传送',
+            [TreasureBox.TYPE.DOUBLE_REWARDS]: 'x2'
         };
 
         this.label = this.scene.add.text(this.x, this.y - 20, labels[this.rewardType], {

@@ -1,6 +1,7 @@
 // GameScene - Core game scene with arrow key and mouse movement
 import { Enemy } from '../entities/Enemy.js';
 import { TreasureBox } from '../entities/TreasureBox.js';
+import { FishFactory } from '../entities/FishFactory.js';
 import { SkillSystem } from '../systems/SkillSystem.js';
 import { GrowthSystem } from '../systems/GrowthSystem.js';
 import { DriftBottleSystem } from '../systems/DriftBottleSystem.js';
@@ -42,6 +43,8 @@ class GameScene extends Phaser.Scene {
         this.aiLevel = 0.8;
         this.dropsData = null;
         this.treasureBoxes = null;
+        this.isInvincible = false;
+        this.doubleRewardsActive = false;
     }
 
     init(data) {
@@ -92,6 +95,8 @@ class GameScene extends Phaser.Scene {
         this.enemyCountMin = this.difficultyConfig.enemyCount.min;
         this.enemyCountMax = this.difficultyConfig.enemyCount.max;
         this.aiLevel = this.difficultyConfig.aiLevel;
+        this.enemyDamageMultiplier = this.difficultyConfig.enemyDamageMultiplier || 1.0;
+        this.playerHpMultiplier = this.difficultyConfig.playerHpMultiplier || 1.0;
 
         // Load drops configuration
         this.dropsData = this.cache.json.get('dropsData');
@@ -194,24 +199,57 @@ class GameScene extends Phaser.Scene {
 
     createPlayer() {
         const playerConfig = this.fishData.clownfish;
-        this.player = this.add.graphics();
-        this.player.fillStyle(Phaser.Display.Color.HexStringToColor(playerConfig.color).color, 1);
-        this.player.fillCircle(0, 0, playerConfig.size);
+
+        // Use FishFactory to draw the player as a clownfish
+        this.player = FishFactory.createFish(this, 'clownfish', playerConfig.size, playerConfig.color);
         this.player.x = 512;
         this.player.y = 384;
 
+        // Enable physics
         this.physics.world.enable(this.player);
-        this.player.body.setCircle(playerConfig.size);
-        this.player.body.setOffset(-playerConfig.size, -playerConfig.size);
+        const hitRadius = playerConfig.size * 0.8;
+        this.player.body.setCircle(hitRadius);
+        this.player.body.setOffset(-hitRadius, -hitRadius);
         this.player.body.setBounce(0.3);
         this.player.body.setCollideWorldBounds(true);
 
         this.player.playerData = { ...playerConfig };
         this.player.isPlayer = true;
 
-        // Set HP from config
-        this.maxHp = playerConfig.hp;
+        // Set HP from config with difficulty multiplier
+        this.maxHp = Math.floor(playerConfig.hp * this.playerHpMultiplier);
         this.hp = this.maxHp;
+
+        // Player health bar
+        this.playerHealthBarWidth = playerConfig.size * 2;
+        this.playerHealthBarHeight = 6;
+        this.playerHealthBar = this.add.graphics();
+        this.updatePlayerHealthBar();
+    }
+
+    /**
+     * Update player health bar display
+     */
+    updatePlayerHealthBar() {
+        if (!this.player || !this.player.playerData) return;
+
+        this.playerHealthBar.clear();
+
+        const barOffsetY = -this.player.playerData.size - 15;
+
+        // Background (dark)
+        this.playerHealthBar.fillStyle(0x333333, 0.8);
+        this.playerHealthBar.fillRect(-this.playerHealthBarWidth / 2, barOffsetY, this.playerHealthBarWidth, this.playerHealthBarHeight);
+
+        // Health (green to red based on percentage)
+        const hpPercent = this.hp / this.maxHp;
+        const hpColor = hpPercent > 0.5 ? 0x00ff00 : (hpPercent > 0.25 ? 0xffff00 : 0xff0000);
+        this.playerHealthBar.fillStyle(hpColor, 1);
+        this.playerHealthBar.fillRect(-this.playerHealthBarWidth / 2, barOffsetY, this.playerHealthBarWidth * hpPercent, this.playerHealthBarHeight);
+
+        // Border
+        this.playerHealthBar.lineStyle(1, 0x000000, 0.5);
+        this.playerHealthBar.strokeRect(-this.playerHealthBarWidth / 2, barOffsetY, this.playerHealthBarWidth, this.playerHealthBarHeight);
     }
 
     spawnFish() {
@@ -263,7 +301,7 @@ class GameScene extends Phaser.Scene {
 
             // Add experience using GrowthSystem
             const expGain = fish.fishData.exp;
-            const expResult = this.growthSystem.addExperience(expGain, this.time.now);
+            const expResult = this.growthSystem.addExperience(expGain, this.time.now, this.luckSystem);
             this.exp = this.growthSystem.getExp();
             this.level = this.growthSystem.getLevel();
             this.score += expResult.expGained * 10;
@@ -272,6 +310,11 @@ class GameScene extends Phaser.Scene {
             const enemyIndex = this.enemies.findIndex(e => e.graphics === fish);
             if (enemyIndex !== -1) {
                 logger.debug(`Enemy death: type=${fishType}, x=${fish.x}, y=${fish.y}`);
+                const enemy = this.enemies[enemyIndex];
+                // Destroy health bar first
+                if (enemy && enemy.healthBar) {
+                    enemy.healthBar.destroy();
+                }
                 this.enemies.splice(enemyIndex, 1);
             }
 
@@ -302,6 +345,9 @@ class GameScene extends Phaser.Scene {
             logger.debug(`Damage dealt to player: ${damage} (fishSize=${fishSize})`);
             this.hp -= damage;
             if (this.hp < 0) this.hp = 0;
+
+            // Update player health bar
+            this.updatePlayerHealthBar();
 
             // Update UI
             this.scene.get('UIScene').updateUI(this.score, this.exp, this.level, this.hp, this.maxHp, this.growthSystem.getExpForLevel(this.level + 1));
@@ -350,6 +396,10 @@ class GameScene extends Phaser.Scene {
         this.player.x = Phaser.Math.Clamp(this.player.x, 20, 1004);
         this.player.y = Phaser.Math.Clamp(this.player.y, 20, 748);
 
+        // Update player health bar position
+        this.playerHealthBar.x = this.player.x;
+        this.playerHealthBar.y = this.player.y;
+
         // Remove fish that are too far off screen
         this.fishes.getChildren().forEach(fish => {
             if (fish.x < -100 || fish.x > 1124 || fish.y < -100 || fish.y > 868) {
@@ -390,11 +440,18 @@ class GameScene extends Phaser.Scene {
             // Shield blocks damage
             return;
         }
+        if (this.isInvincible) {
+            return;
+        }
 
-        // Apply damage to player
-        this.hp -= damage;
-        logger.debug(`HP change: -${damage}, currentHP=${this.hp}/${this.maxHp}`);
+        // Apply damage to player with difficulty multiplier
+        const actualDamage = Math.floor(damage * this.enemyDamageMultiplier);
+        this.hp -= actualDamage;
+        logger.debug(`HP change: -${actualDamage}, currentHP=${this.hp}/${this.maxHp}`);
         if (this.hp < 0) this.hp = 0;
+
+        // Update player health bar
+        this.updatePlayerHealthBar();
 
         // Update UI
         this.scene.get('UIScene').updateUI(this.score, this.exp, this.level, this.hp, this.maxHp, this.growthSystem.getExpForLevel(this.level + 1));
@@ -452,11 +509,49 @@ class GameScene extends Phaser.Scene {
      * Handle level up event
      */
     onLevelUp() {
-        this.player.playerData.size += 2;
-        this.player.clear();
-        this.player.fillStyle(Phaser.Display.Color.HexStringToColor(this.player.playerData.color).color, 1);
-        this.player.fillCircle(0, 0, this.player.playerData.size);
-        this.player.body.setCircle(this.player.playerData.size);
+        // Store old player data
+        const oldPlayer = this.player;
+        const oldX = oldPlayer.x;
+        const oldY = oldPlayer.y;
+        const oldPlayerData = { ...oldPlayer.playerData };
+        oldPlayerData.size += 2;
+
+        // Increase max HP per level (+10 HP per level)
+        const hpPerLevel = 10;
+        const oldMaxHp = this.maxHp;
+        this.maxHp = Math.floor(this.maxHp) + hpPerLevel;
+        // Also heal by the same amount (add to current HP)
+        this.hp = this.hp + hpPerLevel;
+        logger.info(`Level up HP: ${oldMaxHp} -> ${this.maxHp}`);
+
+        // Update health bar width based on new size
+        this.playerHealthBarWidth = oldPlayerData.size * 2;
+
+        // Recreate player fish graphics with new size
+        this.player = FishFactory.createFish(this, 'clownfish', oldPlayerData.size, oldPlayerData.color);
+        this.player.x = oldX;
+        this.player.y = oldY;
+        this.player.playerData = oldPlayerData;
+
+        // Enable physics for new graphics
+        this.physics.world.enable(this.player);
+        const hitRadius = oldPlayerData.size * 0.8;
+        this.player.body.setCircle(hitRadius);
+        this.player.body.setOffset(-hitRadius, -hitRadius);
+        this.player.body.setBounce(0.3);
+        this.player.body.setCollideWorldBounds(true);
+        this.player.isPlayer = true;
+
+        // Update skill system to use new player reference
+        if (this.skillSystem) {
+            this.skillSystem.setPlayer(this.player, this);
+        }
+
+        // Update player health bar position and display
+        this.updatePlayerHealthBar();
+
+        // Destroy old graphics
+        oldPlayer.destroy();
 
         // Check for newly unlocked skills
         const newlyUnlocked = this.growthSystem.getNewlyUnlockedSkills(this.level - 1);
@@ -594,8 +689,15 @@ class GameScene extends Phaser.Scene {
         }
 
         // Create treasure box
-        new TreasureBox(this, x, y, rewardType, rewardAmount);
+        const treasureBox = new TreasureBox(this, x, y, rewardType, rewardAmount);
         logger.info(`Treasure box spawned: type=${rewardType}, amount=${rewardAmount}, x=${x}, y=${y}`);
+
+        // Auto despawn after 10 seconds
+        this.time.delayedCall(this.dropsData.autoDespawnTime || 10000, () => {
+            if (treasureBox && !treasureBox.treasureBoxData?.isCollected) {
+                treasureBox.destroy();
+            }
+        });
     }
 
     /**
@@ -625,11 +727,53 @@ class GameScene extends Phaser.Scene {
             case TreasureBox.TYPE.POTION:
                 this.hp += reward.amount;
                 if (this.hp > this.maxHp) this.hp = this.maxHp;
+                this.updatePlayerHealthBar();
                 logger.info(`Treasure collected: POTION, amount=${reward.amount}`);
                 break;
             case TreasureBox.TYPE.SKILL_FRAGMENT:
-                // Skill fragment logic (could unlock skills)
-                logger.info('Skill fragment collected!');
+                // Skill fragment adds to score (for now)
+                this.score += reward.amount * 100;
+                logger.info(`Skill fragment collected! +${reward.amount * 100} score`);
+                break;
+            case TreasureBox.TYPE.EXP:
+                const expForNextLevel = this.growthSystem.getExpForLevel(this.level + 1);
+                const expGain = Math.floor(expForNextLevel * 0.1);
+                const expResult = this.growthSystem.addExperience(expGain, this.time.now, this.luckSystem);
+                this.exp = this.growthSystem.getExp();
+                this.level = this.growthSystem.getLevel();
+                if (this.doubleRewardsActive) {
+                    this.score += expResult.expGained * 20;
+                } else {
+                    this.score += expResult.expGained * 10;
+                }
+                logger.info(`Treasure collected: EXP, amount=${expGain}`);
+                break;
+            case TreasureBox.TYPE.COOLDOWN_REDUCTION:
+                if (this.skillSystem) {
+                    this.skillSystem.reduceAllCooldowns(3);
+                }
+                logger.info('Treasure collected: COOLDOWN REDUCTION -3s');
+                break;
+            case TreasureBox.TYPE.INVINCIBILITY:
+                this.isInvincible = true;
+                this.time.delayedCall(3000, () => {
+                    this.isInvincible = false;
+                    logger.info('Invincibility ended');
+                });
+                logger.info('Treasure collected: INVINCIBILITY 3s');
+                break;
+            case TreasureBox.TYPE.TELEPORT:
+                this.player.x = Phaser.Math.Between(100, 900);
+                this.player.y = Phaser.Math.Between(100, 600);
+                logger.info('Treasure collected: TELEPORT');
+                break;
+            case TreasureBox.TYPE.DOUBLE_REWARDS:
+                this.doubleRewardsActive = true;
+                this.time.delayedCall(15000, () => {
+                    this.doubleRewardsActive = false;
+                    logger.info('Double rewards ended');
+                });
+                logger.info('Treasure collected: DOUBLE REWARDS 15s');
                 break;
         }
 
@@ -637,3 +781,5 @@ class GameScene extends Phaser.Scene {
         this.scene.get('UIScene').updateUI(this.score, this.exp, this.level, this.hp, this.maxHp, this.growthSystem.getExpForLevel(this.level + 1));
     }
 }
+
+export default GameScene;

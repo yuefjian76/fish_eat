@@ -63,6 +63,22 @@ export class LuckSystem {
     }
 
     /**
+     * Modify weight based on luck value
+     * @param {number} baseWeight - Base weight
+     * @param {boolean} isGoodEffect - True if good effect
+     * @param {object} luckInfluence - Luck influence config
+     * @returns {number} Modified weight
+     */
+    modifyWeightPure(baseWeight, isGoodEffect, luckInfluence) {
+        const luck = this.getLuck();
+        if (isGoodEffect) {
+            return Math.max(1, baseWeight + luck * (luckInfluence.goodBonusPerLuck || 0.5));
+        } else {
+            return Math.max(1, baseWeight - luck * (luckInfluence.badReductionPerLuck || 0.3));
+        }
+    }
+
+    /**
      * Calculate chance of getting a good effect
      * @param {number} baseChance - Base chance (0-100)
      * @param {object} luckInfluence - Luck influence config

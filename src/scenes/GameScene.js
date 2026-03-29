@@ -119,22 +119,9 @@ class GameScene extends Phaser.Scene {
         // Initialize skill system
         this.skillSystem = new SkillSystem(this.skillsData);
 
-        // Create gradient background based on current level
-        this.createBackground();
-
-        // Initialize BackgroundSystem and create decorations
+        // Initialize BackgroundSystem and create full underwater background
         this.backgroundSystem = new BackgroundSystem(this, 1024, 768);
-        this.backgroundSystem.createBubbles(20);
-        // Create multiple corals
-        this.backgroundSystem.createCoral(80, 700, 'branch', 0xFF6B6B);
-        this.backgroundSystem.createCoral(200, 720, 'brain', 0xFF8888);
-        this.backgroundSystem.createCoral(850, 710, 'fan', 0xFFAA88);
-        this.backgroundSystem.createCoral(950, 700, 'branch', 0xFF7777);
-        // Create multiple seaweed
-        this.backgroundSystem.createSeaweed(50, 768, 150, 0x228B22);
-        this.backgroundSystem.createSeaweed(150, 768, 120, 0x32CD32);
-        this.backgroundSystem.createSeaweed(870, 768, 140, 0x228B22);
-        this.backgroundSystem.createSeaweed(970, 768, 100, 0x32CD32);
+        this.backgroundSystem.createBackground(); // Creates gradient + light rays + particles + bubbles + corals + seaweed
 
         // Create fish group
         this.fishes = this.physics.add.group();
@@ -630,6 +617,12 @@ class GameScene extends Phaser.Scene {
         const currentTheme = this.getThemeForLevel(this.level);
         if (previousTheme !== currentTheme) {
             this.createBackground();
+            // Also recreate background decorations
+            if (this.backgroundSystem) {
+                this.backgroundSystem.destroy();
+            }
+            this.backgroundSystem = new BackgroundSystem(this, 1024, 768);
+            this.backgroundSystem.createBackground();
         }
     }
 

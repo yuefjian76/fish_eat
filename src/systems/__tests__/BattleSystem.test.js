@@ -103,4 +103,30 @@ describe('BattleSystem', () => {
             expect(result.actualHeal).toBe(0);
         });
     });
+
+    describe('applyDamage', () => {
+        test('reduces hp by damage amount', () => {
+            const result = battleSystem.applyDamage(100, 30);
+            expect(result.newHp).toBe(70);
+            expect(result.actualDamage).toBe(30);
+        });
+
+        test('hp cannot go below 0', () => {
+            const result = battleSystem.applyDamage(50, 100);
+            expect(result.newHp).toBe(0);
+            expect(result.actualDamage).toBe(50); // Only took 50 damage, not 100
+        });
+
+        test('damage of 0 returns same hp', () => {
+            const result = battleSystem.applyDamage(50, 0);
+            expect(result.newHp).toBe(50);
+            expect(result.actualDamage).toBe(0);
+        });
+
+        test('damage exactly equal to hp sets hp to 0', () => {
+            const result = battleSystem.applyDamage(50, 50);
+            expect(result.newHp).toBe(0);
+            expect(result.actualDamage).toBe(50);
+        });
+    });
 });

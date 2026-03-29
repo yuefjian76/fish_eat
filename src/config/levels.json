@@ -1,0 +1,25 @@
+{
+  "experienceTable": [
+    0,
+    100,
+    250,
+    500,
+    900,
+    1500,
+    2300,
+    3500,
+    5000,
+    7000,
+    10000
+  ],
+  "skillUnlocks": {
+    "bite": 1,
+    "shield": 5,
+    "speed_up": 8,
+    "heal": 12
+  },
+  "combo": {
+    "timeWindow": 3,
+    "bonusMultiplier": 0.2
+  }
+}

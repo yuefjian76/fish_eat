@@ -1,0 +1,117 @@
+<h2>游戏核心架构方案</h2>
+<p class="subtitle">三种代码组织方式，各有适用场景</p>
+
+<div class="cards">
+  <div class="card" data-choice="modular" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="arch-diagram">
+        <div class="layer ui">UI 层<br/><small>菜单、HUD、商店</small></div>
+        <div class="layer game">游戏逻辑层<br/><small>战斗、技能、移动</small></div>
+        <div class="layer core">核心层<br/><small>玩家、敌人、碰撞</small></div>
+        <div class="layer data">数据层<br/><small>存档、配置、成就</small></div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A. 模块化分层 ⭐推荐</h3>
+      <p>按职责分层：UI层 → 游戏逻辑层 → 核心层 → 数据层</p>
+      <p><strong>优点：</strong>结构清晰，便于多人协作，测试友好<br/><strong>缺点：</strong>前期需要花时间搭建框架</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="scene-based" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="arch-diagram">
+        <div class="scenes">
+          <div class="scene">BootScene</div>
+          <div class="scene">MenuScene</div>
+          <div class="scene selected">GameScene</div>
+          <div class="scene">UIScene</div>
+          <div class="scene">ShopScene</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B. Phaser 场景驱动</h3>
+      <p>用 Phaser 的 Scene 系统组织：每个场景负责一类玩法</p>
+      <p><strong>优点：</strong>贴合 Phaser 设计，切换场景方便<br/><strong>缺点：</strong>场景间数据传递需要额外设计</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="data-driven" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="arch-diagram">
+        <div class="data-driven">
+          <div class="config">配置表.json</div>
+          <div class="arrow-down">↓</div>
+          <div class="engine">游戏引擎</div>
+          <div class="arrow-down">↓</div>
+          <div class="entities">🐟 🐠 🦈 🐡</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C. 数据驱动</h3>
+      <p>用 JSON 配置表定义鱼、技能、关卡，代码解析配置生成内容</p>
+      <p><strong>优点：</strong>内容扩展容易，不需要改代码<br/><strong>缺点：</strong>调试复杂，需要配套工具</p>
+    </div>
+  </div>
+</div>
+
+<style>
+.arch-diagram {
+  padding: 10px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 8px;
+  min-height: 120px;
+}
+.layer {
+  padding: 6px 10px;
+  margin: 4px 0;
+  border-radius: 4px;
+  font-size: 10px;
+  text-align: center;
+  color: white;
+}
+.layer small {
+  display: block;
+  font-size: 8px;
+  opacity: 0.7;
+}
+.layer.ui { background: linear-gradient(90deg, #7e57c2, #5e35b1); }
+.layer.game { background: linear-gradient(90deg, #42a5f5, #1e88e5); }
+.layer.core { background: linear-gradient(90deg, #66bb6a, #43a047); }
+.layer.data { background: linear-gradient(90deg, #ffca28, #ffa000); }
+.scenes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+}
+.scene {
+  padding: 8px 12px;
+  background: #37474f;
+  border-radius: 4px;
+  font-size: 9px;
+  color: white;
+}
+.scene.selected {
+  background: #4caf50;
+  box-shadow: 0 0 8px rgba(76,175,80,0.5);
+}
+.data-driven {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.config, .engine, .entities {
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 9px;
+  text-align: center;
+}
+.config { background: #ffca28; color: #333; }
+.engine { background: #42a5f5; color: white; }
+.entities { background: #66bb6a; color: white; }
+.arrow-down { color: #666; font-size: 12px; }
+</style>

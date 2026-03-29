@@ -1,0 +1,42 @@
+{
+  "bite": {
+    "name": "撕咬",
+    "description": "对前方敌人造成伤害",
+    "key": "Q",
+    "type": "damage",
+    "cooldown": 3,
+    "damage": 25,
+    "range": 80,
+    "duration": 0
+  },
+  "shield": {
+    "name": "护盾",
+    "description": "生成护盾抵挡伤害",
+    "key": "W",
+    "type": "defense",
+    "cooldown": 10,
+    "damage": 0,
+    "range": 0,
+    "duration": 5
+  },
+  "speed_up": {
+    "name": "加速",
+    "description": "提升移动速度",
+    "key": "E",
+    "type": "buff",
+    "cooldown": 8,
+    "damage": 0,
+    "range": 0,
+    "duration": 3
+  },
+  "heal": {
+    "name": "治疗",
+    "description": "恢复生命值",
+    "key": "R",
+    "type": "heal",
+    "cooldown": 15,
+    "damage": 0,
+    "range": 0,
+    "healAmount": 30
+  }
+}

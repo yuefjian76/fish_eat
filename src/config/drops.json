@@ -1,0 +1,18 @@
+{
+  "dropChance": 0.4,
+  "rewards": {
+    "coin": {
+      "weight": 60,
+      "minAmount": 20,
+      "maxAmount": 100
+    },
+    "potion": {
+      "weight": 25,
+      "healAmount": 30
+    },
+    "skillFragment": {
+      "weight": 15,
+      "amount": 1
+    }
+  }
+}

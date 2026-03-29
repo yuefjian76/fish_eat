@@ -1,0 +1,27 @@
+{
+  "themes": {
+    "deep_sea": {
+      "name": "深海主题",
+      "colors": [0x0a1628, 0x1a3a5c, 0x0d2847]
+    },
+    "tropical": {
+      "name": "热带浅海",
+      "colors": [0x4fc3f7, 0x00bcd4, 0x00838f]
+    },
+    "polar": {
+      "name": "极地深海",
+      "colors": [0x1a237e, 0x0d1b2a, 0x000000]
+    }
+  },
+  "levelMapping": {
+    "1": "deep_sea",
+    "2": "deep_sea",
+    "3": "deep_sea",
+    "4": "tropical",
+    "5": "tropical",
+    "6": "tropical",
+    "7": "polar",
+    "8": "polar",
+    "9": "polar"
+  }
+}

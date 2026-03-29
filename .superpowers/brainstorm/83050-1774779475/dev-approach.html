@@ -1,0 +1,145 @@
+<h2>开发架构方案</h2>
+<p class="subtitle">三种开发策略，各有优劣</p>
+
+<div class="cards">
+  <div class="card" data-choice="incremental" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="timeline">
+        <div class="phase">第1阶段<br/><small>核心玩法</small></div>
+        <div class="arrow">→</div>
+        <div class="phase">第2阶段<br/><small>战斗系统</small></div>
+        <div class="arrow">→</div>
+        <div class="phase">第3阶段<br/><small>技能系统</small></div>
+        <div class="arrow">→</div>
+        <div class="phase">第4阶段<br/><small>成长体系</small></div>
+        <div class="arrow">→</div>
+        <div class="phase final">完成</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A. 渐进式开发 ⭐推荐</h3>
+      <p>先实现核心移动和吃鱼机制，再逐步叠加技能、成长、UI系统</p>
+      <p><strong>优点：</strong>每个阶段都能测试，风险低<br/><strong>缺点：</strong>前期没有完整游戏体验</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="parallel" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="parallel">
+        <div class="stream">
+          <div class="stream-label">美术组</div>
+          <div class="stream-bar" style="background: #4fc3f7;"></div>
+          <div class="stream-bar" style="background: #4fc3f7;"></div>
+          <div class="stream-bar" style="background: #4fc3f7;"></div>
+        </div>
+        <div class="stream">
+          <div class="stream-label">程序组</div>
+          <div class="stream-bar" style="background: #81c784;"></div>
+          <div class="stream-bar" style="background: #81c784;"></div>
+          <div class="stream-bar" style="background: #81c784;"></div>
+        </div>
+        <div class="stream">
+          <div class="stream-label">策划组</div>
+          <div class="stream-bar" style="background: #ffb74d;"></div>
+          <div class="stream-bar" style="background: #ffb74d;"></div>
+          <div class="stream-bar" style="background: #ffb74d;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B. 并行开发</h3>
+      <p>同时开发多个模块（地图、技能、UI、成长），最后集成</p>
+      <p><strong>优点：</strong>效率高，进度快<br/><strong>缺点：</strong>需要多线思考，集成可能出问题</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="vertical" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="slices">
+        <div class="slice s1">关卡1<br/><small>完整可玩</small></div>
+        <div class="slice s2">关卡2<br/><small>+技能</small></div>
+        <div class="slice s3">关卡3<br/><small>+成长</small></div>
+        <div class="slice s4">关卡4<br/><small>+皮肤</small></div>
+        <div class="slice s5">...</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C. 垂直切片</h3>
+      <p>每关做一个完整可玩的版本，后续关卡叠加新功能</p>
+      <p><strong>优点：</strong>每关都有成就感，便于展示<br/><strong>缺点：</strong>后期关卡改动可能影响前面</p>
+    </div>
+  </div>
+</div>
+
+<style>
+.timeline {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 8px;
+}
+.phase {
+  padding: 6px 8px;
+  background: #37474f;
+  border-radius: 4px;
+  color: white;
+  font-size: 10px;
+  text-align: center;
+}
+.phase.final {
+  background: #4caf50;
+}
+.arrow {
+  color: #666;
+  font-size: 12px;
+}
+.parallel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+}
+.stream {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.stream-label {
+  width: 50px;
+  font-size: 9px;
+  color: rgba(255,255,255,0.7);
+}
+.stream-bar {
+  height: 12px;
+  flex: 1;
+  border-radius: 2px;
+  opacity: 0.7;
+}
+.slices {
+  display: flex;
+  gap: 4px;
+  padding: 10px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 8px;
+}
+.slice {
+  flex: 1;
+  padding: 8px 4px;
+  border-radius: 4px;
+  font-size: 9px;
+  text-align: center;
+  color: white;
+}
+.slice small {
+  display: block;
+  font-size: 7px;
+  opacity: 0.7;
+}
+.s1 { background: linear-gradient(135deg, #4fc3f7, #0288d1); }
+.s2 { background: linear-gradient(135deg, #81c784, #388e3c); }
+.s3 { background: linear-gradient(135deg, #ffb74d, #f57c00); }
+.s4 { background: linear-gradient(135deg, #f48fb1, #c2185b); }
+.s5 { background: linear-gradient(135deg, #9575cd, #512da8); }
+</style>

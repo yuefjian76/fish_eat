@@ -1,0 +1,211 @@
+<h2>游戏 HUD 布局选择</h2>
+<p class="subtitle">三种 HUD 布局方案，你更喜欢哪种风格？</p>
+
+<div class="cards">
+  <div class="card" data-choice="minimalist" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mock-hud-minimalist">
+        <div class="mock-game-area">游戏区域</div>
+        <div class="mock-hud-top">
+          <div class="mock-bar hp">❤️ 血量条</div>
+          <div class="mock-bar gold">💰 金币</div>
+          <div class="mock-bar level">⭐ Lv.5</div>
+        </div>
+        <div class="mock-skill-bar-bottom">
+          <div class="mock-skill">Q</div>
+          <div class="mock-skill">W</div>
+          <div class="mock-skill cooldown">E</div>
+          <div class="mock-skill">R</div>
+        </div>
+        <div class="mock-minimap">小地图</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>简约 HUD</h3>
+      <p>顶部状态栏 + 底部技能栏，简洁不遮挡视野</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="classic" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mock-hud-classic">
+        <div class="mock-game-area">游戏区域</div>
+        <div class="mock-hud-left">
+          <div class="mock-bar hp">❤️</div>
+          <div class="mock-bar xp">⭐</div>
+        </div>
+        <div class="mock-hud-right">
+          <div class="mock-info">💰 1280</div>
+          <div class="mock-info">🏆 第3名</div>
+        </div>
+        <div class="mock-skill-bar-right">
+          <div class="mock-skill-v">Q</div>
+          <div class="mock-skill-v">W</div>
+          <div class="mock-skill-v cooldown">E</div>
+        </div>
+        <div class="mock-minimap">小地图</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>经典 MMO HUD</h3>
+      <p>左右两侧状态栏，中央更开阔，技能栏在右下角</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="immersive" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mock-hud-immersive">
+        <div class="mock-game-area">游戏区域</div>
+        <div class="mock-hud-top-center">
+          <div class="mock-bar hp">❤️ 血量</div>
+          <div class="mock-bar gold">💰 金币</div>
+          <div class="mock-bar level">⭐ Lv</div>
+        </div>
+        <div class="mock-hud-bottom-center">
+          <div class="mock-skill-bar-bottom-center">
+            <div class="mock-skill">1</div>
+            <div class="mock-skill">2</div>
+            <div class="mock-skill cooldown">3</div>
+            <div class="mock-skill">4</div>
+          </div>
+        </div>
+        <div class="mock-minimap-bottom">小地图</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>沉浸式 HUD</h3>
+      <p>状态和技能都靠近中央，视野边缘留空，适合大地图</p>
+    </div>
+  </div>
+</div>
+
+<style>
+.mock-hud-minimalist, .mock-hud-classic, .mock-hud-immersive {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  background: linear-gradient(180deg, #1a3a5c 0%, #0d1f33 100%);
+  border-radius: 8px;
+  overflow: hidden;
+  font-family: system-ui;
+  font-size: 10px;
+}
+.mock-game-area {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: rgba(255,255,255,0.3);
+  font-size: 12px;
+}
+.mock-hud-top {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  display: flex;
+  gap: 8px;
+}
+.mock-bar {
+  padding: 4px 8px;
+  background: rgba(0,0,0,0.6);
+  border-radius: 4px;
+  color: white;
+}
+.mock-hud-left {
+  position: absolute;
+  top: 50%;
+  left: 8px;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.mock-hud-right {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: right;
+}
+.mock-info {
+  padding: 4px 8px;
+  background: rgba(0,0,0,0.6);
+  border-radius: 4px;
+  color: white;
+}
+.mock-hud-top-center {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+}
+.mock-hud-bottom-center {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.mock-skill-bar-bottom {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+}
+.mock-skill-bar-right {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.mock-skill-bar-bottom-center {
+  display: flex;
+  gap: 6px;
+}
+.mock-skill, .mock-skill-v {
+  width: 28px;
+  height: 28px;
+  background: rgba(255,255,255,0.2);
+  border: 2px solid rgba(255,255,255,0.4);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+}
+.mock-skill.cooldown, .mock-skill-v.cooldown {
+  opacity: 0.4;
+  background: rgba(100,100,100,0.4);
+}
+.mock-minimap {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 50px;
+  height: 50px;
+  background: rgba(0,0,0,0.5);
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+.mock-minimap-bottom {
+  position: absolute;
+  bottom: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px;
+  height: 50px;
+  background: rgba(0,0,0,0.5);
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+</style>

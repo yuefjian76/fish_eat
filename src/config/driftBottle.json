@@ -1,0 +1,99 @@
+{
+  "effects": [
+    {
+      "id": "double_coins",
+      "name": "双倍金币",
+      "description": "接下来60秒内金币收益翻倍",
+      "weight": 15,
+      "good": true,
+      "duration": 60000,
+      "type": "buff"
+    },
+    {
+      "id": "full_health",
+      "name": "血量全满",
+      "description": "立即恢复所有生命值",
+      "weight": 12,
+      "good": true,
+      "duration": 0,
+      "type": "instant"
+    },
+    {
+      "id": "cooldown_accel",
+      "name": "技能冷却加速",
+      "description": "接下来30秒内技能冷却速度加快50%",
+      "weight": 10,
+      "good": true,
+      "duration": 30000,
+      "type": "buff"
+    },
+    {
+      "id": "coins_50",
+      "name": "金币+50",
+      "description": "立即获得50金币",
+      "weight": 20,
+      "good": true,
+      "duration": 0,
+      "type": "instant"
+    },
+    {
+      "id": "coins_100",
+      "name": "金币+100",
+      "description": "立即获得100金币",
+      "weight": 15,
+      "good": true,
+      "duration": 0,
+      "type": "instant"
+    },
+    {
+      "id": "luck_up",
+      "name": "幸运值+1",
+      "description": "永久增加1点幸运值",
+      "weight": 8,
+      "good": true,
+      "duration": 0,
+      "type": "permanent"
+    },
+    {
+      "id": "speed_down",
+      "name": "移动速度-30%",
+      "description": "接下来10秒内移动速度降低30%",
+      "weight": 5,
+      "good": false,
+      "duration": 10000,
+      "type": "debuff"
+    },
+    {
+      "id": "vision_reduced",
+      "name": "视野缩小",
+      "description": "接下来10秒内视野范围缩小",
+      "weight": 4,
+      "good": false,
+      "duration": 10000,
+      "type": "debuff"
+    },
+    {
+      "id": "coins_minus_30",
+      "name": "金币-30",
+      "description": "损失30金币",
+      "weight": 4,
+      "good": false,
+      "duration": 0,
+      "type": "instant"
+    },
+    {
+      "id": "luck_down",
+      "name": "幸运值-1",
+      "description": "永久减少1点幸运值",
+      "weight": 3,
+      "good": false,
+      "duration": 0,
+      "type": "permanent"
+    }
+  ],
+  "luckInfluence": {
+    "goodBonusPerLuck": 5,
+    "badReductionPerLuck": 3,
+    "baseGoodChance": 70
+  }
+}

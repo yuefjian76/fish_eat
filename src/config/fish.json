@@ -1,0 +1,32 @@
+{
+  "clownfish": {
+    "name": "小丑鱼",
+    "size": 20,
+    "speed": 150,
+    "hp": 100,
+    "exp": 10,
+    "color": "#ff6b35",
+    "strongAgainst": [],
+    "weakTo": ["shark"]
+  },
+  "shrimp": {
+    "name": "小虾",
+    "size": 12,
+    "speed": 120,
+    "hp": 30,
+    "exp": 5,
+    "color": "#ff69b4",
+    "strongAgainst": [],
+    "weakTo": ["clownfish", "shark"]
+  },
+  "shark": {
+    "name": "鲨鱼",
+    "size": 40,
+    "speed": 100,
+    "hp": 300,
+    "exp": 50,
+    "color": "#708090",
+    "strongAgainst": ["clownfish"],
+    "weakTo": []
+  }
+}

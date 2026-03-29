@@ -1,0 +1,137 @@
+<h2>地图场景风格</h2>
+<p class="subtitle">三个主题环境，各有不同的氛围和视觉元素</p>
+
+<div class="cards">
+  <div class="card" data-choice="deep-sea" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mock-scene deep-sea">
+        <div class="bubbles">🫧 🫧 🫧</div>
+        <div class="coral">🪸 🌊</div>
+        <div class="fish">🐟 🐠</div>
+        <div class="light-rays"></div>
+        <div class="darkness-overlay"></div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>深海主题 🌊</h3>
+      <p>深蓝渐变海水，光线从上方透入，珊瑚礁、海藻、沉船残骸为障碍物，气泡漂浮营造深邃氛围</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="tropical" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mock-scene tropical">
+        <div class="sun-rays">☀️</div>
+        <div class="fish-school">🐟🐟🐟</div>
+        <div class="seaweed">🌿 🍃</div>
+        <div class="bright-overlay"></div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>热带浅海主题 ☀️</h3>
+      <p>明亮蓝绿色海水，阳光直射效果，热带鱼群游动，海草随水流摇摆，色彩鲜艳活泼</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="polar" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mock-scene polar">
+        <div class="ice">🧊 ❄️</div>
+        <div class="bubbles-cold">💨 💨</div>
+        <div class="fish-cold">🐟</div>
+        <div class="dark-blue"></div>
+        <div class="vent">🔥 ♨️</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>极地/深海主题 🧊</h3>
+      <p>冰山碎片漂浮，海底火山热泉喷发，深蓝到黑色的渐变，特有的极地生物和极光效果</p>
+    </div>
+  </div>
+</div>
+
+<style>
+.mock-scene {
+  position: relative;
+  width: 100%;
+  height: 140px;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+.deep-sea {
+  background: linear-gradient(180deg, #1a4a6e 0%, #0a1628 60%, #000 100%);
+}
+.tropical {
+  background: linear-gradient(180deg, #4fc3f7 0%, #00bcd4 50%, #00838f 100%);
+}
+.polar {
+  background: linear-gradient(180deg, #1a237e 0%, #0d1b2a 50%, #000 100%);
+}
+.light-rays {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+  pointer-events: none;
+}
+.sun-rays {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 32px;
+}
+.bubbles {
+  position: absolute;
+  bottom: 10px;
+  left: 20px;
+  font-size: 12px;
+  animation: rise 3s infinite;
+}
+.bubbles-cold {
+  position: absolute;
+  bottom: 10px;
+  right: 20px;
+  font-size: 14px;
+}
+.darkness-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.6) 100%);
+}
+.bright-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at top, rgba(255,255,255,0.3) 0%, transparent 60%);
+}
+.dark-blue {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at bottom, rgba(0,50,100,0.5) 0%, transparent 50%);
+}
+.vent {
+  position: absolute;
+  bottom: 5px;
+  right: 10px;
+  font-size: 16px;
+}
+.fish, .fish-school, .fish-cold {
+  position: absolute;
+}
+.fish { top: 40%; left: 30%; font-size: 16px; }
+.fish-school { top: 60%; left: 50%; font-size: 14px; }
+.fish-cold { top: 50%; left: 70%; font-size: 18px; }
+.coral { position: absolute; bottom: 5px; left: 10px; font-size: 18px; }
+.seaweed { position: absolute; bottom: 5px; right: 15px; font-size: 16px; }
+.ice { position: absolute; top: 10px; right: 15px; font-size: 18px; }
+@keyframes rise {
+  0% { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(-20px); opacity: 0; }
+}
+</style>

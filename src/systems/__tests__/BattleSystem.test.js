@@ -1,10 +1,45 @@
 import { BattleSystem } from '../BattleSystem.js';
 
-describe('BattleScaling', () => {
+describe('BattleSystem', () => {
     let battleSystem;
 
     beforeEach(() => {
         battleSystem = new BattleSystem({});
+    });
+
+    describe('canAttack', () => {
+        test('returns false if attacker type not in fishData', () => {
+            const fishData = { clownfish: {} };
+            const system = new BattleSystem(fishData);
+            expect(system.canAttack('unknown', 'clownfish')).toBe(false);
+        });
+
+        test('returns true if attacker has no type advantage against target', () => {
+            const fishData = {
+                clownfish: { strongAgainst: ['shrimp'] },
+                shark: {}
+            };
+            const system = new BattleSystem(fishData);
+            expect(system.canAttack('shark', 'clownfish')).toBe(true);
+        });
+
+        test('returns false if attacker is strong against target (type blocks attack)', () => {
+            const fishData = {
+                clownfish: { strongAgainst: ['shrimp'] },
+                shrimp: {}
+            };
+            const system = new BattleSystem(fishData);
+            expect(system.canAttack('clownfish', 'shrimp')).toBe(false);
+        });
+
+        test('returns true if attacker is NOT strong against target', () => {
+            const fishData = {
+                clownfish: { strongAgainst: ['shrimp'] },
+                shark: {}
+            };
+            const system = new BattleSystem(fishData);
+            expect(system.canAttack('clownfish', 'shark')).toBe(true);
+        });
     });
 
     describe('calculateDamage with level bonus', () => {

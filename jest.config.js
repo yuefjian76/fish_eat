@@ -7,4 +7,5 @@ export default {
     collectCoverageFrom: ['src/**/*.js'],
     coverageDirectory: 'coverage',
     coverageReporters: ['text', 'lcov'],
+    setupFiles: ['<rootDir>/tests/setup.js'],
 };

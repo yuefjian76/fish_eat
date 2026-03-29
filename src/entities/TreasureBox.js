@@ -24,23 +24,8 @@ export class TreasureBox {
         // Create treasure box graphics (glowing chest)
         this.graphics = scene.add.graphics();
 
-        // Box body
-        this.graphics.fillStyle(0x8B4513, 1); // Brown
-        this.graphics.fillRect(-12, -8, 24, 16);
-
-        // Box lid
-        this.graphics.fillStyle(0xA0522D, 1); // Sienna
-        this.graphics.fillRect(-14, -12, 28, 6);
-
-        // Gold trim
-        this.graphics.lineStyle(2, 0xFFD700, 1);
-        this.graphics.strokeRect(-12, -8, 24, 16);
-        this.graphics.strokeRect(-14, -12, 28, 6);
-
-        // Glow effect
-        this.glowGraphics = scene.add.graphics();
-        this.glowGraphics.fillStyle(0xFFD700, 0.3);
-        this.glowGraphics.fillCircle(0, 0, 20);
+        // Create exquisite chest with type-specific glow
+        this.createExquisiteChest();
 
         this.graphics.x = x;
         this.graphics.y = y;
@@ -87,6 +72,49 @@ export class TreasureBox {
 
         // Label text
         this.createRewardLabel();
+    }
+
+    /**
+     * Draw exquisite chest with type-specific glow
+     */
+    createExquisiteChest() {
+        const typeColors = {
+            [TreasureBox.TYPE.COIN]: { body: 0xFFD700, glow: 0xFFFF00 },
+            [TreasureBox.TYPE.POTION]: { body: 0xFF4444, glow: 0xFF69B4 },
+            [TreasureBox.TYPE.SKILL_FRAGMENT]: { body: 0x4488FF, glow: 0x88CCFF },
+            [TreasureBox.TYPE.EXP]: { body: 0xAA44FF, glow: 0xCC88FF },
+            [TreasureBox.TYPE.COOLDOWN_REDUCTION]: { body: 0x44FFFF, glow: 0x88FFFF },
+            [TreasureBox.TYPE.INVINCIBILITY]: { body: 0xFFFFFF, glow: 0xFFD700 },
+            [TreasureBox.TYPE.TELEPORT]: { body: 0xFF8800, glow: 0xFFAA44 },
+            [TreasureBox.TYPE.DOUBLE_REWARDS]: { body: 0x44FF44, glow: 0x88FF88 }
+        };
+
+        const colors = typeColors[this.rewardType] || typeColors[TreasureBox.TYPE.COIN];
+
+        // Glow effect (larger, semi-transparent) - create before body so body renders on top
+        this.glowGraphics = this.scene.add.graphics();
+        this.glowGraphics.fillStyle(colors.glow, 0.3);
+        this.glowGraphics.fillCircle(0, 0, 25);
+
+        // Box body (3D effect with gradient)
+        this.graphics.fillStyle(colors.body, 1);
+        this.graphics.fillRect(-12, -8, 24, 16);
+
+        // Box lid (rounded top with lighter color)
+        const lidColor = Phaser.Display.Color.IntegerToColor(
+            Phaser.Display.Color.GetColor(
+                Math.floor(Phaser.Display.Color.ValueToColor(colors.body).r * 1.2),
+                Math.floor(Phaser.Display.Color.ValueToColor(colors.body).g * 1.2),
+                Math.floor(Phaser.Display.Color.ValueToColor(colors.body).b * 1.2)
+            )
+        ).color;
+        this.graphics.fillStyle(lidColor, 1);
+        this.graphics.fillRect(-14, -14, 28, 8);
+
+        // Gold trim
+        this.graphics.lineStyle(2, 0xFFD700, 1);
+        this.graphics.strokeRect(-12, -8, 24, 16);
+        this.graphics.strokeRect(-14, -14, 28, 8);
     }
 
     /**

@@ -252,10 +252,42 @@ class GameScene extends Phaser.Scene {
         this.playerHealthBar.strokeRect(-this.playerHealthBarWidth / 2, barOffsetY, this.playerHealthBarWidth, this.playerHealthBarHeight);
     }
 
+    /**
+     * Calculate enemy level based on distribution
+     * 70% same level, 20% lower, 10% higher
+     * @param {number} playerLevel - Current player level
+     * @returns {number} Enemy level
+     */
+    calculateEnemyLevel(playerLevel) {
+        const roll = Math.random();
+        if (roll < 0.7) {
+            return playerLevel;  // 70%
+        } else if (roll < 0.9) {
+            return Math.max(1, playerLevel - 1);  // 20%
+        } else {
+            return playerLevel + 1;  // 10%
+        }
+    }
+
     spawnFish() {
         const fishTypes = ['clownfish', 'shrimp', 'shark'];
         const type = Phaser.Utils.Array.GetRandom(fishTypes);
-        const fishConfig = this.fishData[type];
+        const baseFishConfig = this.fishData[type];
+
+        // Calculate enemy level based on distribution
+        const enemyLevel = this.calculateEnemyLevel(this.level);
+
+        // Scale fish config based on enemy level
+        const levelDiff = enemyLevel - this.level;
+        const scaleFactor = 1 + (levelDiff * 0.15); // 15% scaling per level difference
+
+        const fishConfig = {
+            ...baseFishConfig,
+            hp: Math.floor(baseFishConfig.hp * scaleFactor),
+            size: Math.floor(baseFishConfig.size * scaleFactor),
+            speed: Math.floor(baseFishConfig.speed * scaleFactor),
+            exp: Math.floor(baseFishConfig.exp * scaleFactor)
+        };
 
         // Spawn at edge
         let x, y;
@@ -267,10 +299,10 @@ class GameScene extends Phaser.Scene {
             case 3: x = Phaser.Math.Between(0, 1024); y = 768; break;
         }
 
-        // Create Enemy instance with AI level
+        // Create Enemy instance with AI level and scaled fish config
         const enemy = new Enemy(this, x, y, fishConfig, type, this.aiLevel);
         this.enemies.push(enemy);
-        logger.debug(`Enemy spawned: type=${type}, x=${x}, y=${y}, aiLevel=${this.aiLevel}`);
+        logger.debug(`Enemy spawned: type=${type}, x=${x}, y=${y}, aiLevel=${this.aiLevel}, enemyLevel=${enemyLevel}`);
     }
 
     checkEat(player, fish) {

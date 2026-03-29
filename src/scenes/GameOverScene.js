@@ -123,3 +123,5 @@ class GameOverScene extends Phaser.Scene {
         }
     }
 }
+
+export default GameOverScene;

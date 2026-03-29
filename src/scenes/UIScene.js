@@ -87,3 +87,5 @@ class UIScene extends Phaser.Scene {
         });
     }
 }
+
+export default UIScene;

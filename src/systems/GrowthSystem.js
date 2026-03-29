@@ -49,9 +49,10 @@ export class GrowthSystem {
      * Add experience and handle combo bonuses
      * @param {number} baseExp - Base experience to add
      * @param {number} currentTime - Current game time (ms)
+     * @param {object} luckSystem - Optional LuckSystem for bonus exp
      * @returns {object} Result containing exp gained and combo info
      */
-    addExperience(baseExp, currentTime) {
+    addExperience(baseExp, currentTime, luckSystem = null) {
         // Check if this is a combo kill (within time window)
         const timeSinceLastKill = currentTime - this.lastKillTime;
 
@@ -65,9 +66,20 @@ export class GrowthSystem {
 
         this.lastKillTime = currentTime;
 
-        // Calculate bonus multiplier
+        // Calculate combo multiplier
         const comboMultiplier = 1 + (this.comboCount * this.comboBonusMultiplier);
-        const totalExp = Math.floor(baseExp * comboMultiplier);
+
+        // Calculate luck bonus (base * luck/100 * random)
+        let luckBonus = 0;
+        if (luckSystem && luckSystem.getLuck && luckSystem.getLuck() > 0) {
+            const luck = luckSystem.getLuck();
+            // Luck adds 0-50% bonus based on luck value
+            // At 10 luck = 0-5% bonus, at 50 luck = 0-25% bonus
+            const maxLuckBonus = Math.min(luck / 50, 1) * 0.5;
+            luckBonus = baseExp * Math.random() * maxLuckBonus;
+        }
+
+        const totalExp = Math.floor(baseExp * comboMultiplier + luckBonus);
 
         this.currentExp += totalExp;
 
@@ -75,7 +87,7 @@ export class GrowthSystem {
         const oldLevel = this.currentLevel;
         const leveledUp = this.checkLevelUp();
 
-        logger.info(`EXP gained: base=${baseExp}, total=${totalExp}, currentExp=${this.currentExp}, level=${this.currentLevel}`);
+        logger.info(`EXP gained: base=${baseExp}, combo=${comboMultiplier.toFixed(2)}, luck=${luckBonus.toFixed(0)}, total=${totalExp}, currentExp=${this.currentExp}, level=${this.currentLevel}`);
 
         if (leveledUp) {
             logger.info(`Level up: ${oldLevel} -> ${this.currentLevel}`);
@@ -90,6 +102,7 @@ export class GrowthSystem {
             baseExp: baseExp,
             comboCount: this.comboCount,
             comboMultiplier: comboMultiplier,
+            luckBonus: Math.floor(luckBonus),
             leveledUp: leveledUp,
             oldLevel: oldLevel,
             newLevel: this.currentLevel,

@@ -3,8 +3,8 @@
     "name": "小丑鱼",
     "size": 20,
     "speed": 150,
-    "hp": 100,
-    "exp": 10,
+    "hp": 50,
+    "exp": 15,
     "color": "#ff6b35",
     "strongAgainst": [],
     "weakTo": ["shark"]
@@ -14,7 +14,7 @@
     "size": 12,
     "speed": 120,
     "hp": 30,
-    "exp": 5,
+    "exp": 8,
     "color": "#ff69b4",
     "strongAgainst": [],
     "weakTo": ["clownfish", "shark"]

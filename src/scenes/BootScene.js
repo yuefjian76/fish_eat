@@ -23,11 +23,12 @@ class BootScene extends Phaser.Scene {
             progressBar.fillRect(370, 376, 284 * value, 16);
         });
 
-        // Load assets here
-        this.load.image('background', 'assets/background.png');
+        // No external assets to load - backgrounds are generated programmatically
     }
 
     create() {
         this.scene.start('MenuScene');
     }
 }
+
+export default BootScene;

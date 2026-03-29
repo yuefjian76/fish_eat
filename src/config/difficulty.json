@@ -4,20 +4,24 @@
       "name": "简单",
       "nameEn": "Easy",
       "enemyCount": {
-        "min": 3,
-        "max": 5
+        "min": 2,
+        "max": 4
       },
-      "aiLevel": 0.8,
+      "aiLevel": 0.5,
+      "enemyDamageMultiplier": 0.3,
+      "playerHpMultiplier": 1.5,
       "unlockCondition": null
     },
     "normal": {
       "name": "普通",
       "nameEn": "Normal",
       "enemyCount": {
-        "min": 5,
-        "max": 8
+        "min": 4,
+        "max": 6
       },
-      "aiLevel": 1.0,
+      "aiLevel": 0.8,
+      "enemyDamageMultiplier": 0.6,
+      "playerHpMultiplier": 1.0,
       "unlockCondition": {
         "type": "beatDifficulty",
         "requiredDifficulty": "easy"
@@ -27,10 +31,12 @@
       "name": "困难",
       "nameEn": "Hard",
       "enemyCount": {
-        "min": 8,
-        "max": 12
+        "min": 6,
+        "max": 10
       },
       "aiLevel": 1.2,
+      "enemyDamageMultiplier": 1.0,
+      "playerHpMultiplier": 0.8,
       "unlockCondition": {
         "type": "reachLevel",
         "requiredLevel": 10

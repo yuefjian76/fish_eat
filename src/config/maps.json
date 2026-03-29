@@ -2,15 +2,15 @@
   "themes": {
     "deep_sea": {
       "name": "深海主题",
-      "colors": [0x0a1628, 0x1a3a5c, 0x0d2847]
+      "colors": [6571752, 1715724, 857415]
     },
     "tropical": {
       "name": "热带浅海",
-      "colors": [0x4fc3f7, 0x00bcd4, 0x00838f]
+      "colors": [5225735, 4518468, 3459263]
     },
     "polar": {
       "name": "极地深海",
-      "colors": [0x1a237e, 0x0d1b2a, 0x000000]
+      "colors": [1719038, 857431, 0]
     }
   },
   "levelMapping": {

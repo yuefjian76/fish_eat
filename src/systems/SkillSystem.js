@@ -39,6 +39,18 @@ export class SkillSystem {
     }
 
     /**
+     * Check if a skill is unlocked at given level
+     * @param {string} skillId - Skill identifier
+     * @param {number} playerLevel - Current player level
+     * @returns {boolean} True if unlocked
+     */
+    isSkillUnlocked(skillId, playerLevel) {
+        const skill = this.skillsData[skillId];
+        if (!skill) return false;
+        return playerLevel >= (skill.unlockLevel || 1);
+    }
+
+    /**
      * Check if a skill is currently active (buff/shield)
      * @param {string} skillId - Skill identifier
      * @returns {boolean} True if active
@@ -50,9 +62,10 @@ export class SkillSystem {
     /**
      * Use a skill by key
      * @param {string} key - Key pressed (Q/W/E/R)
+     * @param {number} [levelOverride] - Optional level override for testing
      * @returns {object|null} Result of skill use
      */
-    useSkill(key) {
+    useSkill(key, levelOverride) {
         // Find skill by key
         let skillId = null;
         let skill = null;
@@ -67,6 +80,12 @@ export class SkillSystem {
 
         if (!skill || !this.player) {
             return null;
+        }
+
+        // Check if skill is unlocked (use override level if provided, else use scene level)
+        const playerLevel = levelOverride !== undefined ? levelOverride : (this.scene?.level || 1);
+        if (!this.isSkillUnlocked(skillId, playerLevel)) {
+            return { success: false, reason: 'locked' };
         }
 
         // Check cooldown
@@ -235,9 +254,9 @@ export class SkillSystem {
         const player = this.player;
         const originalSpeed = this.scene.speed;
 
-        // Boost player speed
-        this.scene.speed = originalSpeed * 1.8;
-        player.setTint(0x00ff00); // Green tint for speed buff
+        // Boost player speed - use config speedMultiplier, default 1.2
+        const multiplier = skill.speedMultiplier || 1.2;
+        this.scene.speed = originalSpeed * multiplier;
 
         // Store active effect
         this.activeEffects[skillId] = {
@@ -324,7 +343,6 @@ export class SkillSystem {
             }
         } else if (skill.type === 'buff') {
             if (this.scene) this.scene.speed = effect.originalSpeed;
-            if (this.player) this.player.clearTint();
         }
 
         this.activeEffects[skillId] = null;

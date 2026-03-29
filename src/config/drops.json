@@ -1,18 +1,38 @@
 {
   "dropChance": 0.4,
+  "autoDespawnTime": 10000,
   "rewards": {
     "coin": {
-      "weight": 60,
+      "weight": 30,
       "minAmount": 20,
       "maxAmount": 100
     },
     "potion": {
-      "weight": 25,
+      "weight": 20,
       "healAmount": 30
     },
     "skillFragment": {
-      "weight": 15,
+      "weight": 10,
       "amount": 1
+    },
+    "exp": {
+      "weight": 15,
+      "percentOfNextLevel": 0.1
+    },
+    "cooldownReduction": {
+      "weight": 10,
+      "reductionSeconds": 3
+    },
+    "invincibility": {
+      "weight": 5,
+      "durationSeconds": 3
+    },
+    "teleport": {
+      "weight": 5
+    },
+    "doubleRewards": {
+      "weight": 5,
+      "durationSeconds": 15
     }
   }
 }

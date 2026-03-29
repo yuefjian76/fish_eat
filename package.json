@@ -1,0 +1,9 @@
+{
+  "type": "module",
+  "scripts": {
+    "test": "NODE_OPTIONS='--experimental-vm-modules' jest --config jest.config.js"
+  },
+  "devDependencies": {
+    "jest": "^30.3.0"
+  }
+}

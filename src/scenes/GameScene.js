@@ -123,10 +123,18 @@ class GameScene extends Phaser.Scene {
         this.createBackground();
 
         // Initialize BackgroundSystem and create decorations
-        this.backgroundSystem = new BackgroundSystem(this);
-        this.backgroundSystem.createBubbles(15);
-        this.backgroundSystem.createCoral(100, 650, 'branch', 0xFF6B6B);
-        this.backgroundSystem.createSeaweed(900, 700, 120, 0x2ECC71);
+        this.backgroundSystem = new BackgroundSystem(this, 1024, 768);
+        this.backgroundSystem.createBubbles(20);
+        // Create multiple corals
+        this.backgroundSystem.createCoral(80, 700, 'branch', 0xFF6B6B);
+        this.backgroundSystem.createCoral(200, 720, 'brain', 0xFF8888);
+        this.backgroundSystem.createCoral(850, 710, 'fan', 0xFFAA88);
+        this.backgroundSystem.createCoral(950, 700, 'branch', 0xFF7777);
+        // Create multiple seaweed
+        this.backgroundSystem.createSeaweed(50, 768, 150, 0x228B22);
+        this.backgroundSystem.createSeaweed(150, 768, 120, 0x32CD32);
+        this.backgroundSystem.createSeaweed(870, 768, 140, 0x228B22);
+        this.backgroundSystem.createSeaweed(970, 768, 100, 0x32CD32);
 
         // Create fish group
         this.fishes = this.physics.add.group();
@@ -466,6 +474,11 @@ class GameScene extends Phaser.Scene {
         // Update skill bar UI
         if (this.skillBar) {
             this.skillBar.update();
+        }
+
+        // Update background decorations (bubbles animation)
+        if (this.backgroundSystem) {
+            this.backgroundSystem.update(delta);
         }
     }
 

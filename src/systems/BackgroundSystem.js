@@ -5,17 +5,17 @@
 export class BackgroundSystem {
     /**
      * @param {object} scene - Phaser scene reference
+     * @param {number} screenWidth - Screen width (default 1024)
+     * @param {number} screenHeight - Screen height (default 768)
      */
-    constructor(scene) {
+    constructor(scene, screenWidth = 1024, screenHeight = 768) {
         this.scene = scene;
+        this.screenWidth = screenWidth;
+        this.screenHeight = screenHeight;
+        this.bubbleRespawnY = screenHeight + 20; // Slightly below screen
         this.bubbles = [];
         this.corals = [];
         this.seaweeds = [];
-
-        // Screen bounds for bubble respawning
-        this.screenWidth = 800;
-        this.screenHeight = 600;
-        this.bubbleRespawnY = 650; // Slightly below screen
     }
 
     /**
@@ -24,14 +24,30 @@ export class BackgroundSystem {
      */
     createBubbles(count = 10) {
         for (let i = 0; i < count; i++) {
+            const x = Math.random() * this.screenWidth;
+            const y = Math.random() * this.screenHeight + 50;
+            const size = 2 + Math.random() * 6;
+
+            // Create graphics for bubble
+            const graphics = this.scene.add.graphics();
+            graphics.setDepth(0);
+
+            // Draw bubble (white/light blue circle with highlight)
+            graphics.fillStyle(0xFFFFFF, 0.6);
+            graphics.fillCircle(0, 0, size);
+            graphics.fillStyle(0xAAEEFF, 0.4);
+            graphics.fillCircle(-size * 0.3, -size * 0.3, size * 0.3);
+
             const bubble = {
-                x: Math.random() * this.screenWidth,
-                y: Math.random() * this.screenHeight + 50, // Start somewhere on screen
-                size: 2 + Math.random() * 6, // 2-8 pixels
+                x,
+                y,
+                size,
                 speed: 20 + Math.random() * 40, // 20-60 pixels/sec
                 drift: (Math.random() - 0.5) * 20, // -10 to +10 horizontal drift
-                graphics: null
+                graphics
             };
+
+            graphics.setPosition(x, y);
             this.bubbles.push(bubble);
         }
     }
@@ -233,6 +249,11 @@ export class BackgroundSystem {
             // Keep within screen bounds horizontally
             if (bubble.x < 0) bubble.x = this.screenWidth;
             if (bubble.x > this.screenWidth) bubble.x = 0;
+
+            // Update graphics position
+            if (bubble.graphics && bubble.graphics.active) {
+                bubble.graphics.setPosition(bubble.x, bubble.y);
+            }
 
             // Respawn at bottom if bubble goes off top
             if (bubble.y < -10) {

@@ -203,10 +203,11 @@ class GameScene extends Phaser.Scene {
     createPlayer() {
         const playerConfig = this.fishData.clownfish;
 
-        // Use FishFactory to draw the player as a clownfish
-        this.player = FishFactory.createFish(this, 'clownfish', playerConfig.size, playerConfig.color);
+        // Use FishFactory to draw the player as a clownfish with enhanced visuals
+        this.player = FishFactory.createPlayerFish(this, 'clownfish', playerConfig.size, playerConfig.color);
         this.player.x = 512;
         this.player.y = 384;
+        this.player.setDepth(10); // Make sure player is visible above background
 
         // Enable physics
         this.physics.world.enable(this.player);

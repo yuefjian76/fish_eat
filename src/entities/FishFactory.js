@@ -70,29 +70,41 @@ export class FishFactory {
     }
 
     /**
-     * Draw clownfish (orange with white stripes)
+     * Draw clownfish (orange with white stripes) - enhanced version
      */
     static drawClownfish(graphics, size, color, darkerColor) {
-        // Body (ellipse)
+        // Draw body shadow first
+        graphics.fillStyle(0x000000, 0.2);
+        graphics.fillEllipse(2, 2, size * 1.8, size * 1.2);
+
+        // Main body (ellipse with gradient effect using multiple fills)
         graphics.fillStyle(color, 1);
         graphics.fillEllipse(0, 0, size * 1.8, size * 1.2);
 
-        // White stripes
+        // Body highlight (top)
+        graphics.fillStyle(0xFFFFFF, 0.2);
+        graphics.fillEllipse(-size * 0.2, -size * 0.3, size * 1.2, size * 0.5);
+
+        // White stripes with black outline
+        graphics.fillStyle(0x000000, 1);
+        graphics.fillRect(-size * 0.52, -size * 0.82, size * 0.28, size * 1.64);
+        graphics.fillRect(size * 0.23, -size * 0.62, size * 0.22, size * 1.24);
+
         graphics.fillStyle(0xffffff, 1);
         graphics.fillRect(-size * 0.5, -size * 0.8, size * 0.25, size * 1.6);
         graphics.fillRect(size * 0.25, -size * 0.6, size * 0.2, size * 1.2);
 
         // Glowing stripe effect (for player fish)
-        graphics.fillStyle(0xFFFFFF, 0.3);
+        graphics.fillStyle(0xFFFFAA, 0.4);
         graphics.fillRect(-size * 0.5, -size * 0.8, size * 0.25, size * 1.6);
         graphics.fillRect(size * 0.25, -size * 0.6, size * 0.2, size * 1.2);
 
-        // Tail (triangle)
+        // Tail (triangle with gradient)
         graphics.fillStyle(darkerColor.color, 1);
         const tailPoints = [
             { x: -size * 0.9, y: 0 },
-            { x: -size * 1.4, y: -size * 0.5 },
-            { x: -size * 1.4, y: size * 0.5 }
+            { x: -size * 1.5, y: -size * 0.6 },
+            { x: -size * 1.5, y: size * 0.6 }
         ];
         graphics.fillTriangle(
             tailPoints[0].x, tailPoints[0].y,
@@ -100,12 +112,20 @@ export class FishFactory {
             tailPoints[2].x, tailPoints[2].y
         );
 
-        // Dorsal fin
-        graphics.fillStyle(color, 1);
+        // Tail highlight
+        graphics.fillStyle(0xFFFFFF, 0.15);
+        graphics.fillTriangle(
+            -size * 0.85, -size * 0.1,
+            -size * 1.3, -size * 0.4,
+            -size * 1.3, 0
+        );
+
+        // Dorsal fin with detail
+        graphics.fillStyle(darkerColor.color, 1);
         const finPoints = [
-            { x: 0, y: -size * 0.6 },
-            { x: -size * 0.3, y: -size * 1.1 },
-            { x: size * 0.3, y: -size * 0.6 }
+            { x: -size * 0.1, y: -size * 0.55 },
+            { x: -size * 0.4, y: -size * 1.2 },
+            { x: size * 0.3, y: -size * 0.55 }
         ];
         graphics.fillTriangle(
             finPoints[0].x, finPoints[0].y,
@@ -113,16 +133,42 @@ export class FishFactory {
             finPoints[2].x, finPoints[2].y
         );
 
-        // Eye
-        graphics.fillStyle(0x000000, 1);
-        graphics.fillCircle(size * 0.5, -size * 0.1, size * 0.15);
-        graphics.fillStyle(0xffffff, 1);
-        graphics.fillCircle(size * 0.53, -size * 0.15, size * 0.06);
+        // Pectoral fin
+        graphics.fillStyle(color, 0.9);
+        const pectFin = [
+            { x: size * 0.1, y: size * 0.3 },
+            { x: size * 0.4, y: size * 0.8 },
+            { x: size * 0.5, y: size * 0.35 }
+        ];
+        graphics.fillTriangle(
+            pectFin[0].x, pectFin[0].y,
+            pectFin[1].x, pectFin[1].y,
+            pectFin[2].x, pectFin[2].y
+        );
 
-        // Mouth
-        graphics.lineStyle(2, 0x000000, 0.5);
+        // Eye (large, expressive)
+        // Outer eye (black)
+        graphics.fillStyle(0x000000, 1);
+        graphics.fillCircle(size * 0.55, -size * 0.1, size * 0.18);
+        // Iris
+        graphics.fillStyle(0x222222, 1);
+        graphics.fillCircle(size * 0.55, -size * 0.1, size * 0.14);
+        // White highlight
+        graphics.fillStyle(0xffffff, 1);
+        graphics.fillCircle(size * 0.58, -size * 0.15, size * 0.06);
+        // Small secondary highlight
+        graphics.fillCircle(size * 0.52, -size * 0.08, size * 0.03);
+
+        // Mouth with cute expression
+        graphics.lineStyle(2, 0x000000, 0.7);
         graphics.beginPath();
-        graphics.arc(size * 0.8, size * 0.1, size * 0.15, 0.2, Math.PI * 0.8, false);
+        graphics.arc(size * 0.75, size * 0.15, size * 0.12, Math.PI * 0.3, Math.PI * 0.9, false);
+        graphics.strokePath();
+
+        // Gill line detail
+        graphics.lineStyle(1, darkerColor.color, 0.5);
+        graphics.beginPath();
+        graphics.arc(0, 0, size * 0.5, -Math.PI * 0.4, Math.PI * 0.4, false);
         graphics.strokePath();
     }
 

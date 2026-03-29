@@ -327,7 +327,13 @@ export class BackgroundSystem {
         }
 
         // Base
-        graphics.fillStyle(Phaser.Display.Color.IntegerToColor(color).dimm(0.7).color, 1);
+        const baseColor = Phaser.Display.Color.ValueToColor(color);
+        const darkColor = Phaser.Display.Color.GetColor(
+            Math.floor(baseColor.r * 0.7),
+            Math.floor(baseColor.g * 0.7),
+            Math.floor(baseColor.b * 0.7)
+        );
+        graphics.fillStyle(darkColor, 1);
         graphics.fillRect(x - 25 * s, y - 5 * s, 50 * s, 10 * s);
     }
 
@@ -400,7 +406,13 @@ export class BackgroundSystem {
         graphics.fillPath();
 
         // Add secondary blades
-        graphics.fillStyle(Phaser.Display.Color.IntegerToColor(color).dimm(0.8).color, 0.8);
+        const secColor = Phaser.Display.Color.ValueToColor(color);
+        const secDarkColor = Phaser.Display.Color.GetColor(
+            Math.floor(secColor.r * 0.6),
+            Math.floor(secColor.g * 0.6),
+            Math.floor(secColor.b * 0.6)
+        );
+        graphics.fillStyle(secDarkColor, 0.8);
         for (let i = 1; i <= 2; i++) {
             const offset = i * 8;
             const bladeHeight = height * (0.6 - i * 0.1);

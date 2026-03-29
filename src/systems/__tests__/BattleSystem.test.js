@@ -77,4 +77,30 @@ describe('BattleSystem', () => {
             expect(defense).toBe(12);
         });
     });
+
+    describe('heal', () => {
+        test('heals by specified amount when under maxHp', () => {
+            const result = battleSystem.heal(50, 100, 20);
+            expect(result.newHp).toBe(70);
+            expect(result.actualHeal).toBe(20);
+        });
+
+        test('caps healing at maxHp', () => {
+            const result = battleSystem.heal(90, 100, 20);
+            expect(result.newHp).toBe(100);
+            expect(result.actualHeal).toBe(10); // Only healed 10, not 20
+        });
+
+        test('heal at maxHp returns 0 actual heal', () => {
+            const result = battleSystem.heal(100, 100, 20);
+            expect(result.newHp).toBe(100);
+            expect(result.actualHeal).toBe(0);
+        });
+
+        test('heal of 0 returns same hp', () => {
+            const result = battleSystem.heal(50, 100, 0);
+            expect(result.newHp).toBe(50);
+            expect(result.actualHeal).toBe(0);
+        });
+    });
 });

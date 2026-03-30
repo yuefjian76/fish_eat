@@ -108,6 +108,15 @@ describe('FishFactory', () => {
         });
     });
 
+    describe('drawAnglerfish', () => {
+        test('draws anglerfish with glowing lure', () => {
+            const mockGraphics = createMockGraphics();
+            FishFactory.drawAnglerfish(mockGraphics, 35, 0x4B0082, { color: 0x330033 });
+            expect(mockGraphics.fillCircle).toHaveBeenCalled(); // Body
+            expect(mockGraphics.fillEllipse).toHaveBeenCalled(); // Lure
+        });
+    });
+
     describe('createPlayerFishFromSprite', () => {
         test('creates player sprite when texture exists', () => {
             const sprite = FishFactory.createPlayerFishFromSprite(mockScene, 1.5, 3);

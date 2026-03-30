@@ -28,5 +28,10 @@
     "color": "#708090",
     "strongAgainst": ["clownfish"],
     "weakTo": []
+  },
+  "anglerfish": {
+    "hp": 30, "speed": 80, "size": 35, "damage": 10,
+    "range": 200, "exp": 15, "behavior": "ranged",
+    "color": "#4B0082", "strongAgainst": [], "weakTo": ["shark"]
   }
 }

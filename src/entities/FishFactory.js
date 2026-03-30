@@ -3,6 +3,84 @@
  */
 export class FishFactory {
     /**
+     * Create player fish using sprite image (from asset pack)
+     * @param {Phaser.Scene} scene - Phaser scene
+     * @param {number} scale - Scale factor for the sprite
+     * @param {number} frame - Animation frame (0-6 for swimming)
+     * @returns {Phaser.GameObjects.Image}
+     */
+    static createPlayerFishFromSprite(scene, scale = 1.0, frame = 0) {
+        const spriteKey = `player_swim_${frame}`;
+
+        // Check if texture exists
+        const textureManager = scene.textures;
+        if (!textureManager.exists(spriteKey)) {
+            console.warn(`FishFactory: Player texture '${spriteKey}' not found, using fallback`);
+            // Fall back to procedural drawing
+            const fallbackGraphics = FishFactory.createFish(scene, 'clownfish', 30, 0xFF6B6B);
+            fallbackGraphics.scale = scale;
+            return fallbackGraphics;
+        }
+
+        const sprite = scene.add.image(0, 0, spriteKey);
+        sprite.setScale(scale);
+        sprite.setDepth(15); // Player at depth 15, above enemies
+
+        // Add glow effect (bright yellow/orange to stand out)
+        const glowGraphics = scene.add.graphics();
+        glowGraphics.fillStyle(0xFFFF88, 0.3);
+        glowGraphics.fillEllipse(0, 0, 100 * scale, 70 * scale);
+        glowGraphics.setDepth(14); // Just below player
+        glowGraphics.setPosition(0, 0);
+        sprite.glowGraphics = glowGraphics;
+
+        // Store frame info for animation
+        sprite.currentFrame = frame;
+        sprite.totalFrames = 7;
+        sprite.baseKey = 'player_swim';
+
+        return sprite;
+    }
+
+    /**
+     * Create enemy fish using sprite image (from asset pack)
+     * @param {Phaser.Scene} scene - Phaser scene
+     * @param {string} type - Enemy type ('fish' or 'fish_big')
+     * @param {number} scale - Scale factor for the sprite
+     * @param {number} frame - Animation frame
+     * @returns {Phaser.GameObjects.Image}
+     */
+    static createEnemyFromSprite(scene, type = 'fish', scale = 1.0, frame = 0) {
+        const baseKey = type === 'fish_big' ? 'enemy_fish_big' : 'enemy_fish';
+        const spriteKey = `${baseKey}_${frame}`;
+
+        // Check if texture exists
+        const textureManager = scene.textures;
+
+        if (!textureManager.exists(spriteKey)) {
+            console.warn(`FishFactory: Texture '${spriteKey}' not found, using fallback`);
+            // Fall back to procedural fish
+            const fallbackGraphics = FishFactory.createFish(scene, type === 'fish_big' ? 'shark' : 'clownfish', 30, 0xFF6B6B);
+            fallbackGraphics.scale = scale;
+            return fallbackGraphics;
+        }
+
+        const sprite = scene.add.image(0, 0, spriteKey);
+        sprite.setScale(scale);
+        sprite.setDepth(10); // Fish at depth 10, above background layers
+
+        // Add orange/red tint to make fish stand out against blue background
+        sprite.setTint(0xff8844);
+
+        // Store frame info for animation
+        sprite.currentFrame = frame;
+        sprite.totalFrames = type === 'fish_big' ? 5 : 4;
+        sprite.baseKey = baseKey;
+
+        return sprite;
+    }
+
+    /**
      * Create player fish with enhanced visuals and glow
      * @param {Phaser.Scene} scene - Phaser scene
      * @param {string} fishType - Type of fish
@@ -11,20 +89,24 @@ export class FishFactory {
      * @returns {Phaser.GameObjects.Graphics}
      */
     static createPlayerFish(scene, fishType, size, color) {
-        // 1.1x size for player
-        const playerSize = size * 1.1;
-        const graphics = FishFactory.createFish(scene, fishType, playerSize, color);
+        // Try to use sprite if available, otherwise fall back to procedural
+        try {
+            const sprite = FishFactory.createPlayerFishFromSprite(scene, size / 30);
+            sprite.setSize(size * 2, size * 1.5);
+            return sprite;
+        } catch (e) {
+            // Fall back to procedural drawing
+            const playerSize = size * 1.1;
+            const graphics = FishFactory.createFish(scene, fishType, playerSize, color);
 
-        // Add player glow effect
-        const glowGraphics = scene.add.graphics();
-        glowGraphics.fillStyle(0xFFFFFF, 0.2);
-        glowGraphics.fillEllipse(0, 0, playerSize * 2.5, playerSize * 1.8);
-        glowGraphics.setDepth(-1);
+            const glowGraphics = scene.add.graphics();
+            glowGraphics.fillStyle(0xFFFFFF, 0.2);
+            glowGraphics.fillEllipse(0, 0, playerSize * 2.5, playerSize * 1.8);
+            glowGraphics.setDepth(-1);
 
-        // Store glow reference
-        graphics.glowGraphics = glowGraphics;
-
-        return graphics;
+            graphics.glowGraphics = glowGraphics;
+            return graphics;
+        }
     }
 
     /**
@@ -60,6 +142,9 @@ export class FishFactory {
             case 'shark':
                 // Shark - gray, streamlined
                 FishFactory.drawShark(graphics, size, color, darkerColor);
+                break;
+            case 'anglerfish':
+                FishFactory.drawAnglerfish(graphics, size, color, darkerColor);
                 break;
             default:
                 // Default fish shape
@@ -307,6 +392,21 @@ export class FishFactory {
                 size * 1.25 + i * size * 0.08, size * 0.05
             );
         }
+    }
+
+    /**
+     * Draw anglerfish with glowing lure
+     */
+    static drawAnglerfish(graphics, size, color, darkerColor) {
+        // Body
+        graphics.fillStyle(color, 1);
+        graphics.fillEllipse(0, 0, size * 1.5, size);
+        // Glowing lure
+        graphics.fillStyle(0xFFFF00, 0.8);
+        graphics.fillEllipse(size * 0.5, -size * 0.8, size * 0.4, size * 0.3);
+        // Eye
+        graphics.fillStyle(0x000000, 1);
+        graphics.fillCircle(size * 0.4, -size * 0.1, size * 0.12);
     }
 
     /**

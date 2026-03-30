@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import { DebugLogger } from '../DebugLogger.js';
 
 describe('DebugLogger', () => {
@@ -63,6 +64,59 @@ describe('DebugLogger', () => {
             expect(DebugLogger.LEVEL.INFO).toBe(1);
             expect(DebugLogger.LEVEL.WARN).toBe(2);
             expect(DebugLogger.LEVEL.ERROR).toBe(3);
+        });
+    });
+
+    describe('debug', () => {
+        test('logs when level is DEBUG', () => {
+            logger.setLevel(DebugLogger.LEVEL.DEBUG);
+            const spy = jest.spyOn(console, 'log').mockImplementation(() => {});
+            logger.debug('test debug message');
+            expect(spy).toHaveBeenCalled();
+            spy.mockRestore();
+        });
+    });
+
+    describe('warn', () => {
+        test('logs warning when level allows', () => {
+            logger.setLevel(DebugLogger.LEVEL.DEBUG);
+            const spy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+            logger.warn('test warn message');
+            expect(spy).toHaveBeenCalled();
+            spy.mockRestore();
+        });
+
+        test('does not log when level is ERROR', () => {
+            logger.setLevel(DebugLogger.LEVEL.ERROR);
+            const spy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+            logger.warn('test warn message');
+            expect(spy).not.toHaveBeenCalled();
+            spy.mockRestore();
+        });
+    });
+
+    describe('error', () => {
+        test('logs error when level allows', () => {
+            logger.setLevel(DebugLogger.LEVEL.DEBUG);
+            const spy = jest.spyOn(console, 'error').mockImplementation(() => {});
+            logger.error('test error message');
+            expect(spy).toHaveBeenCalled();
+            spy.mockRestore();
+        });
+
+        test('does not log when level is above ERROR', () => {
+            logger.setLevel(DebugLogger.LEVEL.ERROR);
+            const spy = jest.spyOn(console, 'error').mockImplementation(() => {});
+            logger.error('test error message');
+            expect(spy).toHaveBeenCalled();
+            spy.mockRestore();
+        });
+    });
+
+    describe('getLevelName edge case', () => {
+        test('returns UNKNOWN for invalid level', () => {
+            logger.setLevel(99);
+            expect(logger.getLevelName()).toBe('UNKNOWN');
         });
     });
 });

@@ -27,7 +27,20 @@ describe('FishFactory', () => {
     beforeEach(() => {
         mockScene = {
             add: {
-                graphics: jest.fn(() => createMockGraphics())
+                graphics: jest.fn(() => ({
+                    ...createMockGraphics(),
+                    setDepth: jest.fn().mockReturnThis(),
+                    setPosition: jest.fn().mockReturnThis()
+                })),
+                image: jest.fn(() => ({
+                    setScale: jest.fn().mockReturnThis(),
+                    setDepth: jest.fn().mockReturnThis(),
+                    setTint: jest.fn().mockReturnThis(),
+                    setSize: jest.fn().mockReturnThis()
+                }))
+            },
+            textures: {
+                exists: jest.fn().mockReturnValue(true)
             }
         };
     });
@@ -92,6 +105,62 @@ describe('FishFactory', () => {
             expect(mockGraphics.fillEllipse).toHaveBeenCalled();
             // Verify fillEllipse is called with body dimensions based on size
             expect(mockGraphics.fillEllipse).toHaveBeenCalledWith(0, 0, 30 * 1.6, 30);
+        });
+    });
+
+    describe('createPlayerFishFromSprite', () => {
+        test('creates player sprite when texture exists', () => {
+            const sprite = FishFactory.createPlayerFishFromSprite(mockScene, 1.5, 3);
+            expect(sprite).toBeDefined();
+            expect(sprite.setScale).toHaveBeenCalledWith(1.5);
+            expect(sprite.setDepth).toHaveBeenCalledWith(15);
+        });
+
+        test('falls back to procedural when texture not found', () => {
+            mockScene.textures.exists.mockReturnValue(false);
+            const sprite = FishFactory.createPlayerFishFromSprite(mockScene, 1.0, 0);
+            expect(sprite).toBeDefined();
+            expect(mockScene.add.graphics).toHaveBeenCalled();
+        });
+
+        test('adds glow graphics to sprite', () => {
+            const sprite = FishFactory.createPlayerFishFromSprite(mockScene, 1.0, 0);
+            expect(sprite.glowGraphics).toBeDefined();
+        });
+    });
+
+    describe('createEnemyFromSprite', () => {
+        test('creates enemy sprite for fish type', () => {
+            const sprite = FishFactory.createEnemyFromSprite(mockScene, 'fish', 1.0, 0);
+            expect(sprite).toBeDefined();
+            expect(sprite.setScale).toHaveBeenCalledWith(1.0);
+            expect(sprite.setDepth).toHaveBeenCalledWith(10);
+            expect(sprite.setTint).toHaveBeenCalledWith(0xff8844);
+        });
+
+        test('creates enemy sprite for fish_big type', () => {
+            const sprite = FishFactory.createEnemyFromSprite(mockScene, 'fish_big', 2.0, 0);
+            expect(sprite).toBeDefined();
+        });
+
+        test('falls back to procedural when texture not found', () => {
+            mockScene.textures.exists.mockReturnValue(false);
+            const sprite = FishFactory.createEnemyFromSprite(mockScene, 'fish', 1.0, 0);
+            expect(sprite).toBeDefined();
+        });
+    });
+
+    describe('createPlayerFish', () => {
+        test('creates player fish with sprite when available', () => {
+            const fish = FishFactory.createPlayerFish(mockScene, 'clownfish', 45, 0xFF6B6B);
+            expect(fish).toBeDefined();
+        });
+
+        test('falls back to procedural with glow when sprite fails', () => {
+            mockScene.textures.exists.mockReturnValue(false);
+            const fish = FishFactory.createPlayerFish(mockScene, 'clownfish', 30, 0xFF6B6B);
+            expect(fish).toBeDefined();
+            expect(fish.glowGraphics).toBeDefined();
         });
     });
 });

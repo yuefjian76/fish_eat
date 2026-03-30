@@ -516,36 +516,59 @@ describe('BossAnimation', () => {
 ```javascript
 // In GameScene constructor
 this.bossSystem = new BossSystem(this);
-this.bossSystem.onBossDefeated.add(() => this.onBossDefeated());
+this.bossDefeated = { squid: false, sharkKing: false, seaDragon: false };
 ```
 
 - [ ] **Step 2: Add level check for boss triggering**
 
 ```javascript
-// In spawnFish or onLevelUp
+// In onLevelUp or checkBossSpawn
 checkBossSpawn() {
     const level = this.growthSystem.getLevel();
-    if (level === 5 && !this.bossDefeated.squid) this.spawnBoss('boss_squid');
-    if (level === 10 && !this.bossDefeated.sharkKing) this.spawnBoss('boss_shark_king');
-    if (level === 15 && !this.bossDefeated.seaDragon) this.spawnBoss('boss_sea_dragon');
+    if (level === 5 && !this.bossDefeated.squid) this.spawnBoss('boss_squid', 400, 600);
+    if (level === 10 && !this.bossDefeated.sharkKing) this.spawnBoss('boss_shark_king', -100, 384);
+    if (level === 15 && !this.bossDefeated.seaDragon) this.spawnBoss('boss_sea_dragon', 400, 700);
 }
 ```
 
 - [ ] **Step 3: Implement spawnBoss method with 1v1 mechanic**
 
 ```javascript
-spawnBoss(type) {
-    // Disable normal enemy spawning
-    this.bossSystem.triggerBossFight(boss);
-    // Create boss at screen center
+spawnBoss(type, x, y) {
+    // Create boss first
     const boss = new BossEnemy(this, type, x, y);
+    // Trigger boss fight (this clears other enemies)
+    this.bossSystem.triggerBossFight(boss);
     // Play entrance animation
+    this.bossAnimation.play(type, boss);
 }
 ```
 
-- [ ] **Step 4: Implement boss defeat callback to resume normal gameplay**
-- [ ] **Step 5: Run tests to verify integration**
-- [ ] **Step 6: Commit**
+- [ ] **Step 4: Implement onBossDefeated to resume normal gameplay**
+
+```javascript
+onBossDefeated(bossType) {
+    this.bossDefeated[bossType] = true;
+    this.bossSystem.endBossFight();
+    // Brief rest period, then resume normal spawning
+    this.time.delayedCall(3000, () => {
+        this.spawnTimer.start();
+    });
+}
+```
+
+- [ ] **Step 5: Write test for boss spawn with position**
+
+```javascript
+test('spawns boss at correct position', () => {
+    const boss = mockScene.spawnBoss('boss_squid', 400, 600);
+    expect(boss.graphics.x).toBe(400);
+    expect(boss.graphics.y).toBe(600);
+});
+```
+
+- [ ] **Step 6: Run tests to verify integration**
+- [ ] **Step 7: Commit**
 
 ---
 

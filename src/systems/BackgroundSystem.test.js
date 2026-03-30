@@ -1,41 +1,56 @@
 /**
  * BackgroundSystem Tests
- * Tests for procedural underwater decoration system (bubbles, coral, seaweed)
+ * Tests for image-based underwater decoration system with bubbles
  */
 import { jest, describe, test, expect, beforeEach } from '@jest/globals';
 import { BackgroundSystem } from './BackgroundSystem.js';
 
+// Helper to create mock Phaser image with x, y properties
+function createMockImage(x = 0, y = 0) {
+    return {
+        x,
+        y,
+        setDepth: jest.fn().mockReturnThis(),
+        setScale: jest.fn().mockReturnThis(),
+        setAlpha: jest.fn().mockReturnThis(),
+        setPosition: jest.fn().mockReturnThis(),
+        destroy: jest.fn()
+    };
+}
+
 describe('BackgroundSystem', () => {
     let mockScene;
-    let mockGraphics;
+    let mockImageFactory;
+    let mockTween;
+    let createdImages;
 
     beforeEach(() => {
-        mockGraphics = {
-            setDepth: jest.fn(),
-            fillStyle: jest.fn().mockReturnThis(),
-            fillCircle: jest.fn().mockReturnThis(),
-            fillEllipse: jest.fn().mockReturnThis(),
-            lineStyle: jest.fn().mockReturnThis(),
-            beginPath: jest.fn().mockReturnThis(),
-            moveTo: jest.fn().mockReturnThis(),
-            lineTo: jest.fn().mockReturnThis(),
-            arc: jest.fn().mockReturnThis(),
-            strokePath: jest.fn().mockReturnThis(),
-            closePath: jest.fn().mockReturnThis(),
-            fillPath: jest.fn().mockReturnThis(),
-            destroy: jest.fn()
+        createdImages = [];
+
+        mockTween = {
+            add: jest.fn().mockReturnValue({
+                targets: null,
+                y: 0,
+                alpha: 1,
+                scale: 1,
+                duration: 0,
+                repeat: -1,
+                onRepeat: jest.fn()
+            })
+        };
+
+        // Create a new mock image factory each time
+        mockImageFactory = (x, y, key) => {
+            const img = createMockImage(x, y);
+            createdImages.push(img);
+            return img;
         };
 
         mockScene = {
             add: {
-                graphics: jest.fn(() => mockGraphics)
+                image: mockImageFactory
             },
-            time: {
-                addEvent: jest.fn()
-            },
-            tweens: {
-                add: jest.fn()
-            }
+            tweens: mockTween
         };
     });
 
@@ -45,239 +60,203 @@ describe('BackgroundSystem', () => {
             expect(system).toBeDefined();
             expect(system.scene).toBe(mockScene);
             expect(system.bubbles).toEqual([]);
-            expect(system.corals).toEqual([]);
-            expect(system.seaweeds).toEqual([]);
+            expect(system.bgImages).toEqual({});
+        });
+
+        test('sets correct screen dimensions', () => {
+            const system = new BackgroundSystem(mockScene, 1280, 720);
+            expect(system.screenWidth).toBe(1280);
+            expect(system.screenHeight).toBe(720);
+        });
+
+        test('sets bubble respawn position below screen', () => {
+            const system = new BackgroundSystem(mockScene, 1024, 768);
+            expect(system.bubbleRespawnY).toBe(768 + 50);
         });
     });
 
-    describe('createBubbles', () => {
-        test('creates correct number of bubbles', () => {
+    describe('createBackground', () => {
+        test('loads all background images', () => {
             const system = new BackgroundSystem(mockScene);
-            system.createBubbles(5);
+            system.createBackground();
 
-            expect(system.bubbles.length).toBe(5);
+            // Should create 5 background images (background, far, midground, sand, foreground)
+            // Each call creates one image, 5 calls for background layers
+            expect(createdImages.length).toBeGreaterThanOrEqual(5);
         });
 
-        test('bubbles have required properties', () => {
+        test('sets depth for background layers', () => {
             const system = new BackgroundSystem(mockScene);
-            system.createBubbles(1);
+            system.createBackground();
 
-            const bubble = system.bubbles[0];
-            expect(bubble).toHaveProperty('x');
-            expect(bubble).toHaveProperty('y');
-            expect(bubble).toHaveProperty('size');
-            expect(bubble).toHaveProperty('speed');
-            expect(bubble).toHaveProperty('drift');
+            // At least some images should have setDepth called
+            const hasSetDepth = createdImages.some(img =>
+                img.setDepth.mock.calls.length > 0
+            );
+            expect(hasSetDepth).toBe(true);
         });
 
-        test('creates bubbles with random sizes between 2 and 8', () => {
+        test('scales background images', () => {
             const system = new BackgroundSystem(mockScene);
-            system.createBubbles(10);
+            system.createBackground();
 
-            system.bubbles.forEach(bubble => {
-                expect(bubble.size).toBeGreaterThanOrEqual(2);
-                expect(bubble.size).toBeLessThanOrEqual(8);
-            });
-        });
-
-        test('creates bubbles with random speeds between 20 and 60', () => {
-            const system = new BackgroundSystem(mockScene);
-            system.createBubbles(10);
-
-            system.bubbles.forEach(bubble => {
-                expect(bubble.speed).toBeGreaterThanOrEqual(20);
-                expect(bubble.speed).toBeLessThanOrEqual(60);
-            });
+            // At least some images should have setScale called
+            const hasSetScale = createdImages.some(img =>
+                img.setScale.mock.calls.length > 0
+            );
+            expect(hasSetScale).toBe(true);
         });
     });
 
-    describe('bubble animation', () => {
-        test('bubbles rise and despawn at top', () => {
+    describe('createBubbleAnimation', () => {
+        test('creates 20 bubbles by default', () => {
             const system = new BackgroundSystem(mockScene);
-            system.createBubbles(5);
+            system._createBubbleAnimation();
 
-            // Simulate update with bubbles at y < 0
+            expect(system.bubbles.length).toBe(20);
+        });
+
+        test('creates bubble objects with required methods', () => {
+            const system = new BackgroundSystem(mockScene, 1024, 768);
+            system._createBubbleAnimation();
+
+            // Each bubble should be a Phaser image-like object with required methods
             system.bubbles.forEach(bubble => {
-                bubble.y = -10; // Off screen at top
-            });
-
-            system.update(16); // ~60fps delta
-
-            // Bubbles that went off screen should respawn at bottom
-            system.bubbles.forEach(bubble => {
-                expect(bubble.y).toBeGreaterThanOrEqual(600);
+                expect(bubble).toHaveProperty('setScale');
+                expect(bubble).toHaveProperty('setAlpha');
+                expect(bubble).toHaveProperty('setDepth');
+                expect(bubble).toHaveProperty('destroy');
             });
         });
 
-        test('bubbles have horizontal drift', () => {
-            const system = new BackgroundSystem(mockScene);
-            system.createBubbles(3);
+        test('bubbles are positioned within screen bounds', () => {
+            const system = new BackgroundSystem(mockScene, 1024, 768);
+            system._createBubbleAnimation();
 
+            // All bubbles should have x between 0 and 1024
             system.bubbles.forEach(bubble => {
-                expect(bubble.drift).toBeDefined();
-                expect(typeof bubble.drift).toBe('number');
+                expect(bubble.x).toBeGreaterThanOrEqual(0);
+                expect(bubble.x).toBeLessThanOrEqual(1024);
             });
+        });
+
+        test('bubbles have animation tween added', () => {
+            const system = new BackgroundSystem(mockScene);
+            system._createBubbleAnimation();
+
+            // Should add tween for each bubble
+            expect(mockTween.add).toHaveBeenCalled();
+            expect(mockTween.add.mock.calls.length).toBe(20);
+        });
+
+        test('bubble tweens have correct properties', () => {
+            const system = new BackgroundSystem(mockScene);
+            system._createBubbleAnimation();
+
+            const tweenCall = mockTween.add.mock.calls[0][0];
+            expect(tweenCall).toHaveProperty('targets');
+            expect(tweenCall).toHaveProperty('y');
+            expect(tweenCall).toHaveProperty('alpha');
+            expect(tweenCall).toHaveProperty('scale');
+            expect(tweenCall).toHaveProperty('duration');
+            expect(tweenCall).toHaveProperty('repeat', -1);
+        });
+
+        test('bubble tweens have onRepeat callback for respawn', () => {
+            const system = new BackgroundSystem(mockScene);
+            system._createBubbleAnimation();
+
+            const tweenCall = mockTween.add.mock.calls[0][0];
+            expect(tweenCall.onRepeat).toBeDefined();
+            expect(typeof tweenCall.onRepeat).toBe('function');
         });
     });
 
-    describe('createCoral', () => {
-        test('creates coral at specified position', () => {
+    describe('setPlayerPosition', () => {
+        test('stores player position', () => {
             const system = new BackgroundSystem(mockScene);
-            const coral = system.createCoral(100, 400, 'branch', 0xFF6B6B);
+            system.setPlayerPosition(500, 400);
 
-            expect(coral).toBeDefined();
-            expect(coral.x).toBe(100);
-            expect(coral.y).toBe(400);
-            expect(coral.type).toBe('branch');
-            expect(coral.color).toBe(0xFF6B6B);
-        });
-
-        test('supports branch coral type', () => {
-            const system = new BackgroundSystem(mockScene);
-            const coral = system.createCoral(50, 450, 'branch');
-
-            expect(coral.type).toBe('branch');
-            expect(system.corals.length).toBe(1);
-        });
-
-        test('supports brain coral type', () => {
-            const system = new BackgroundSystem(mockScene);
-            const coral = system.createCoral(150, 450, 'brain');
-
-            expect(coral.type).toBe('brain');
-            expect(system.corals.length).toBe(1);
-        });
-
-        test('supports fan coral type', () => {
-            const system = new BackgroundSystem(mockScene);
-            const coral = system.createCoral(200, 450, 'fan');
-
-            expect(coral.type).toBe('fan');
-            expect(system.corals.length).toBe(1);
-        });
-
-        test('defaults to branch type', () => {
-            const system = new BackgroundSystem(mockScene);
-            const coral = system.createCoral(100, 400);
-
-            expect(coral.type).toBe('branch');
-        });
-
-        test('defaults to red color', () => {
-            const system = new BackgroundSystem(mockScene);
-            const coral = system.createCoral(100, 400, 'branch');
-
-            expect(coral.color).toBe(0xFF6B6B);
-        });
-
-        test('creates graphics object for coral', () => {
-            const system = new BackgroundSystem(mockScene);
-            system.createCoral(100, 400, 'branch');
-
-            expect(mockScene.add.graphics).toHaveBeenCalled();
-        });
-    });
-
-    describe('createSeaweed', () => {
-        test('creates seaweed at specified position', () => {
-            const system = new BackgroundSystem(mockScene);
-            const seaweed = system.createSeaweed(300, 500, 120, 0x2ECC71);
-
-            expect(seaweed).toBeDefined();
-            expect(seaweed.x).toBe(300);
-            expect(seaweed.y).toBe(500);
-            expect(seaweed.height).toBe(120);
-            expect(seaweed.color).toBe(0x2ECC71);
-        });
-
-        test('has default height of 100', () => {
-            const system = new BackgroundSystem(mockScene);
-            const seaweed = system.createSeaweed(300, 500);
-
-            expect(seaweed.height).toBe(100);
-        });
-
-        test('has default green color', () => {
-            const system = new BackgroundSystem(mockScene);
-            const seaweed = system.createSeaweed(300, 500);
-
-            expect(seaweed.color).toBe(0x2ECC71);
-        });
-
-        test('creates sway tween animation', () => {
-            const system = new BackgroundSystem(mockScene);
-            system.createSeaweed(300, 500, 100);
-
-            expect(mockScene.tweens.add).toHaveBeenCalled();
-        });
-
-        test('adds seaweed to seaweeds array', () => {
-            const system = new BackgroundSystem(mockScene);
-            system.createSeaweed(300, 500, 100);
-
-            expect(system.seaweeds.length).toBe(1);
+            expect(system.playerX).toBe(500);
+            expect(system.playerY).toBe(400);
         });
     });
 
     describe('update', () => {
-        test('updates bubble positions', () => {
+        test('updates parallax based on player position', () => {
             const system = new BackgroundSystem(mockScene);
-            system.createBubbles(3);
+            system.createBackground();
+            system.setPlayerPosition(500, 384);
 
-            const initialY = system.bubbles[0].y;
-            system.update(16); // ~60fps
-
-            // Bubble should have moved up
-            expect(system.bubbles[0].y).toBeLessThan(initialY);
+            // Should not throw when updating parallax
+            expect(() => system.update(16)).not.toThrow();
         });
 
-        test('respawns bubbles at bottom when they reach top', () => {
+        test('handles update without player position', () => {
             const system = new BackgroundSystem(mockScene);
-            system.createBubbles(2);
+            // Don't set player position
 
-            // Move bubbles to top
-            system.bubbles[0].y = -10;
-            system.bubbles[1].y = -20;
-
-            system.update(16);
-
-            // Bubbles should respawn at bottom
-            expect(system.bubbles[0].y).toBeGreaterThanOrEqual(600);
-            expect(system.bubbles[1].y).toBeGreaterThanOrEqual(600);
+            // Should not throw
+            expect(() => system.update(16)).not.toThrow();
         });
     });
 
     describe('destroy', () => {
+        test('cleans up all background images', () => {
+            const system = new BackgroundSystem(mockScene);
+
+            // Create mock destroy functions
+            const destroyFns = {
+                background: jest.fn(),
+                far: jest.fn(),
+                midground: jest.fn(),
+                sand: jest.fn(),
+                foreground: jest.fn()
+            };
+
+            // Manually set up bgImages with mock destroy methods
+            system.bgImages.background = { destroy: destroyFns.background };
+            system.bgImages.far = { destroy: destroyFns.far };
+            system.bgImages.midground = { destroy: destroyFns.midground };
+            system.bgImages.sand = { destroy: destroyFns.sand };
+            system.bgImages.foreground = { destroy: destroyFns.foreground };
+
+            // Capture state before destroy
+            const bgImagesBefore = { ...system.bgImages };
+
+            system.destroy();
+
+            // Verify destroy was called on all images BEFORE reset
+            expect(destroyFns.background).toHaveBeenCalled();
+            expect(destroyFns.far).toHaveBeenCalled();
+            expect(destroyFns.midground).toHaveBeenCalled();
+            expect(destroyFns.sand).toHaveBeenCalled();
+            expect(destroyFns.foreground).toHaveBeenCalled();
+
+            // After reset, bgImages should be empty
+            expect(system.bgImages).toEqual({});
+        });
+
         test('cleans up all bubbles', () => {
             const system = new BackgroundSystem(mockScene);
-            system.createBubbles(5);
-            expect(system.bubbles.length).toBe(5);
+            system._createBubbleAnimation();
+
+            // Mock destroy on each bubble
+            system.bubbles.forEach(b => b.destroy = jest.fn());
 
             system.destroy();
 
             expect(system.bubbles.length).toBe(0);
         });
 
-        test('cleans up all corals', () => {
+        test('resets bgImages to empty object', () => {
             const system = new BackgroundSystem(mockScene);
-            system.createCoral(100, 400, 'branch');
-            system.createCoral(200, 400, 'brain');
-            expect(system.corals.length).toBe(2);
 
+            // Manually set some bgImages
+            system.bgImages.background = { destroy: jest.fn() };
             system.destroy();
 
-            expect(system.corals.length).toBe(0);
-        });
-
-        test('cleans up all seaweeds', () => {
-            const system = new BackgroundSystem(mockScene);
-            system.createSeaweed(300, 500);
-            system.createSeaweed(400, 500);
-            expect(system.seaweeds.length).toBe(2);
-
-            system.destroy();
-
-            expect(system.seaweeds.length).toBe(0);
+            expect(system.bgImages).toEqual({});
         });
     });
 });

@@ -19,10 +19,17 @@ export class Enemy {
         this.fishType = fishType;
         this.aiLevel = aiLevel;
 
-        // Create fish graphics using FishFactory
-        this.graphics = FishFactory.createFish(scene, fishType, fishConfig.size, fishConfig.color);
+        // Create fish graphics using FishFactory (sprite-based if available)
+        const isBigFish = fishType === 'shark' || fishConfig.size > 40;
+        this.enemyType = isBigFish ? 'fish_big' : 'fish';
+        const frame = Math.floor(Math.random() * (isBigFish ? 5 : 4));
+        this.graphics = FishFactory.createEnemyFromSprite(scene, this.enemyType, fishConfig.size / 30, frame);
         this.graphics.x = x;
         this.graphics.y = y;
+
+        // Animation frame update timer
+        this.frameTimer = 0;
+        this.frameInterval = 200; // ms between frames
 
         // Enable physics - use a circle hitbox for simplicity
         scene.physics.world.enable(this.graphics);
@@ -61,6 +68,7 @@ export class Enemy {
         this.healthBarWidth = fishConfig.size * 2;
         this.healthBarHeight = 4;
         this.healthBar = scene.add.graphics();
+        this.healthBar.setDepth(11); // Health bar above fish
         this.updateHealthBar();
 
         // Flee state
@@ -304,8 +312,19 @@ export class Enemy {
             if (currentTime - this.lastAttackTime >= this.attackCooldown) {
                 this.lastAttackTime = currentTime;
 
-                // Deal damage to target
-                const damage = Math.floor(this.fishConfig.size / 4);
+                // Base damage from size
+                let damage = Math.floor(this.fishConfig.size / 4);
+
+                // Size bonus: bigger fish vs smaller fish
+                const targetSize = target.fishData ? target.fishData.size : 20;
+                const sizeDiff = this.fishConfig.size - targetSize;
+                if (sizeDiff > 10) {
+                    // Significantly larger - extra damage
+                    damage = Math.floor(damage * 1.15);
+                } else if (sizeDiff > 5) {
+                    damage = Math.floor(damage * 1.08);
+                }
+
                 if (target.fishData && target.takeDamage) {
                     const killed = target.takeDamage(damage);
                     if (killed) {
@@ -345,18 +364,20 @@ export class Enemy {
         this.healthBar.x = this.graphics.x;
         this.healthBar.y = this.graphics.y;
 
-        // Handle special states first
-        if (this.state === Enemy.STATE.FLEEING) {
-            this.updateFleeing(this.scene.game.loop.delta);
-            return;
+        // Update animation frame
+        this.frameTimer += this.scene.game.loop.delta;
+        if (this.frameTimer >= this.frameInterval) {
+            this.frameTimer = 0;
+            const totalFrames = this.enemyType === 'fish_big' ? 5 : 4;
+            this.graphics.currentFrame = (this.graphics.currentFrame + 1) % totalFrames;
+            const newKey = `${this.graphics.baseKey}_${this.graphics.currentFrame}`;
+            // Only update texture if it exists
+            if (this.scene.textures.exists(newKey)) {
+                this.graphics.setTexture(newKey);
+            }
         }
 
-        if (this.state === Enemy.STATE.FISHING) {
-            this.updateFishing(this.scene.game.loop.delta);
-            return;
-        }
-
-        // Check for player detection
+        // ALWAYS prioritize attacking player if in range
         const playerInVision = this.isPlayerInVision(player);
         const playerInAttackRange = this.isPlayerInAttackRange(player);
 

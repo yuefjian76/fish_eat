@@ -1,0 +1,11 @@
+[   27131ms] TypeError: graphics.quadraticCurveTo is not a function
+    at FishFactory.drawShrimp (http://localhost:8888/src/entities/FishFactory.js:127:18)
+    at FishFactory.createFish (http://localhost:8888/src/entities/FishFactory.js:33:29)
+    at new Enemy (http://localhost:8888/src/entities/Enemy.js:21:37)
+    at GameScene.spawnFish (http://localhost:8888/src/scenes/GameScene.js:236:23)
+    at GameScene.create (http://localhost:8888/src/scenes/GameScene.js:153:18)
+    at initialize.create (https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js:1:936216)
+    at initialize.loadComplete (https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js:1:935620)
+    at a.emit (https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js:1:1642)
+    at initialize.loadComplete (https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js:1:527981)
+    at initialize.fileProcessComplete (https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js:1:527681)

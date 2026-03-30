@@ -1,0 +1,17 @@
+[    1694ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://localhost:8888/favicon.ico:0
+[   78921ms] [ERROR] Failed to process file: %s "%s" json mapsData @ https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js:0
+[   78931ms] Uncaught SyntaxError: Expected ',' or ']' after array element in JSON at position 74 (line 5 column 19)
+    at onProcess (https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js:0:553344)
+    at nextFile (https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js:0:527125)
+    at onLoad (https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js:0:520972)
+[   78941ms] TypeError: Cannot read properties of undefined (reading 'levelMapping')
+    at GameScene.getThemeForLevel (http://localhost:8888/src/scenes/GameScene.js:519:30)
+    at GameScene.createBackground (http://localhost:8888/src/scenes/GameScene.js:526:31)
+    at GameScene.create (http://localhost:8888/src/scenes/GameScene.js:117:14)
+    at initialize.create (https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js:1:936216)
+    at initialize.loadComplete (https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js:1:935620)
+    at a.emit (https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js:1:1642)
+    at initialize.loadComplete (https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js:1:527981)
+    at initialize.fileProcessComplete (https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js:1:527681)
+    at initialize.onProcessComplete (https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js:1:521475)
+    at initialize.onProcess (https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js:1:553482)

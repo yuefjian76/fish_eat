@@ -146,6 +146,9 @@ export class FishFactory {
             case 'anglerfish':
                 FishFactory.drawAnglerfish(graphics, size, color, darkerColor);
                 break;
+            case 'jellyfish':
+                FishFactory.drawJellyfish(graphics, size, color, darkerColor);
+                break;
             default:
                 // Default fish shape
                 FishFactory.drawDefaultFish(graphics, size, color, darkerColor);
@@ -407,6 +410,24 @@ export class FishFactory {
         // Eye
         graphics.fillStyle(0x000000, 1);
         graphics.fillCircle(size * 0.4, -size * 0.1, size * 0.12);
+    }
+
+    /**
+     * Draw jellyfish (floating with dome and tentacles)
+     */
+    static drawJellyfish(graphics, size, color, darkerColor) {
+        // Dome (semi-transparent)
+        graphics.fillStyle(color, 0.7);
+        graphics.fillEllipse(0, 0, size * 1.2, size * 0.8);
+        // Tentacles
+        graphics.fillStyle(darkerColor.color, 0.5);
+        for (let i = -2; i <= 2; i++) {
+            graphics.fillTriangle(
+                i * size * 0.2, size * 0.3,
+                i * size * 0.15, size * 1.2,
+                i * size * 0.25, size * 1.2
+            );
+        }
     }
 
     /**

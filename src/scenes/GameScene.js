@@ -24,8 +24,8 @@ class GameScene extends Phaser.Scene {
         this.level = 1;
         this.cursors = null;
         this.speed = 200;
-        this.hp = 100;
-        this.maxHp = 100;
+        this.hp = 50;
+        this.maxHp = 50;
         this.shiftKey = null;
         this.enemies = [];
         this.skillSystem = null;
@@ -52,8 +52,8 @@ class GameScene extends Phaser.Scene {
         this.score = 0;
         this.exp = 0;
         this.level = 1;
-        this.hp = 100;
-        this.maxHp = 100;
+        this.hp = 50;
+        this.maxHp = 50;
         this.difficulty = data.difficulty || 'easy';
     }
 
@@ -220,14 +220,15 @@ class GameScene extends Phaser.Scene {
         this.player.playerData = { ...playerConfig };
         this.player.isPlayer = true;
 
-        // Set HP from config with difficulty multiplier
-        this.maxHp = Math.floor(playerConfig.hp * this.playerHpMultiplier);
+        // Set HP - base 50, increased by level
+        this.maxHp = 50 + (this.level - 1) * 10;
         this.hp = this.maxHp;
 
         // Player health bar
         this.playerHealthBarWidth = playerConfig.size * 2;
         this.playerHealthBarHeight = 6;
         this.playerHealthBar = this.add.graphics();
+        this.playerHealthBar.setDepth(20);
         this.updatePlayerHealthBar();
     }
 
@@ -241,6 +242,10 @@ class GameScene extends Phaser.Scene {
 
         const barOffsetY = -this.player.playerData.size - 15;
 
+        // Subtle outer glow
+        this.playerHealthBar.fillStyle(0xFFAA00, 0.2);
+        this.playerHealthBar.fillRect(-this.playerHealthBarWidth / 2 - 0.5, barOffsetY - 0.5, this.playerHealthBarWidth + 1, this.playerHealthBarHeight + 1);
+
         // Background (dark)
         this.playerHealthBar.fillStyle(0x333333, 0.8);
         this.playerHealthBar.fillRect(-this.playerHealthBarWidth / 2, barOffsetY, this.playerHealthBarWidth, this.playerHealthBarHeight);
@@ -251,8 +256,8 @@ class GameScene extends Phaser.Scene {
         this.playerHealthBar.fillStyle(hpColor, 1);
         this.playerHealthBar.fillRect(-this.playerHealthBarWidth / 2, barOffsetY, this.playerHealthBarWidth * hpPercent, this.playerHealthBarHeight);
 
-        // Border
-        this.playerHealthBar.lineStyle(1, 0x000000, 0.5);
+        // Border (white for visibility)
+        this.playerHealthBar.lineStyle(1, 0xFFFFFF, 0.4);
         this.playerHealthBar.strokeRect(-this.playerHealthBarWidth / 2, barOffsetY, this.playerHealthBarWidth, this.playerHealthBarHeight);
     }
 
@@ -565,8 +570,7 @@ class GameScene extends Phaser.Scene {
         this.hp = this.hp + hpPerLevel;
         logger.info(`Level up HP: ${oldMaxHp} -> ${this.maxHp}`);
 
-        // Update health bar width based on new size
-        this.playerHealthBarWidth = oldPlayerData.size * 2;
+        // Health bar width stays at 80, just update it
 
         // Recreate player fish graphics with new size
         this.player = FishFactory.createFish(this, 'clownfish', oldPlayerData.size, oldPlayerData.color);

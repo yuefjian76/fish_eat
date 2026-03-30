@@ -117,6 +117,15 @@ describe('FishFactory', () => {
         });
     });
 
+    describe('drawJellyfish', () => {
+        test('draws jellyfish with dome and tentacles', () => {
+            const mockGraphics = createMockGraphics();
+            FishFactory.drawJellyfish(mockGraphics, 40, 0xADD8E6, { color: 0x88BBDD });
+            expect(mockGraphics.fillEllipse).toHaveBeenCalled(); // Dome
+            expect(mockGraphics.fillTriangle).toHaveBeenCalled(); // Tentacles
+        });
+    });
+
     describe('createPlayerFishFromSprite', () => {
         test('creates player sprite when texture exists', () => {
             const sprite = FishFactory.createPlayerFishFromSprite(mockScene, 1.5, 3);

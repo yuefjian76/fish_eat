@@ -33,5 +33,10 @@
     "hp": 30, "speed": 80, "size": 35, "damage": 10,
     "range": 200, "exp": 15, "behavior": "ranged",
     "color": "#4B0082", "strongAgainst": [], "weakTo": ["shark"]
+  },
+  "jellyfish": {
+    "hp": 25, "speed": 50, "size": 40, "damage": 8,
+    "aoe": true, "exp": 10, "behavior": "floating",
+    "color": "#ADD8E6", "strongAgainst": [], "weakTo": ["shark", "eel"]
   }
 }

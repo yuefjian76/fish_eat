@@ -532,3 +532,29 @@ describe('attackPlayer', () => {
         expect(damage).toBe(0);
     });
 });
+
+describe('getExpValue', () => {
+    test('returns expValue', () => {
+        const enemy = { expValue: 25 };
+
+        const getExpValueFn = Enemy.prototype.getExpValue;
+        expect(getExpValueFn.call(enemy)).toBe(25);
+    });
+});
+
+describe('destroy', () => {
+    test('destroy calls graphics.destroy and healthBar.destroy', () => {
+        const mockGraphics = { destroy: jest.fn() };
+        const mockHealthBar = { destroy: jest.fn() };
+        const enemy = {
+            graphics: mockGraphics,
+            healthBar: mockHealthBar
+        };
+
+        const destroyFn = Enemy.prototype.destroy;
+        destroyFn.call(enemy);
+
+        expect(mockGraphics.destroy).toHaveBeenCalled();
+        expect(mockHealthBar.destroy).toHaveBeenCalled();
+    });
+});

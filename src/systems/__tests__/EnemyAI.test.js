@@ -479,3 +479,56 @@ describe('isPlayerInAttackRange', () => {
         expect(isPlayerInAttackRangeFn.call(enemy, player)).toBe(false);
     });
 });
+
+describe('chasePlayer', () => {
+    test('chasePlayer calls physics.moveTo', () => {
+        const mockScene = {
+            physics: { moveTo: jest.fn() }
+        };
+        const enemy = {
+            scene: mockScene,
+            graphics: { x: 100, y: 100, rotation: 0 },
+            baseSpeed: 100,
+            chaseSpeedMultiplier: 1.5
+        };
+        const player = { x: 200, y: 150 };
+
+        const chasePlayerFn = Enemy.prototype.chasePlayer;
+        chasePlayerFn.call(enemy, player);
+
+        expect(mockScene.physics.moveTo).toHaveBeenCalled();
+    });
+});
+
+describe('attackPlayer', () => {
+    test('attackPlayer returns damage when off cooldown', () => {
+        const enemy = {
+            scene: { time: { now: 3000 } },
+            lastAttackTime: 0,
+            attackCooldown: 1500,
+            state: Enemy.STATE.CHASING,
+            fishConfig: { size: 40 }
+        };
+
+        const attackPlayerFn = Enemy.prototype.attackPlayer;
+        const damage = attackPlayerFn.call(enemy, {});
+
+        expect(damage).toBe(10); // 40 / 4 = 10
+        expect(enemy.lastAttackTime).toBe(3000);
+    });
+
+    test('attackPlayer returns 0 when on cooldown', () => {
+        const enemy = {
+            scene: { time: { now: 1000 } },
+            lastAttackTime: 500,
+            attackCooldown: 1500,
+            state: Enemy.STATE.ATTACKING,
+            fishConfig: { size: 40 }
+        };
+
+        const attackPlayerFn = Enemy.prototype.attackPlayer;
+        const damage = attackPlayerFn.call(enemy, {});
+
+        expect(damage).toBe(0);
+    });
+});

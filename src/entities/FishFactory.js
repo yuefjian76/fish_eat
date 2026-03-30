@@ -149,6 +149,9 @@ export class FishFactory {
             case 'jellyfish':
                 FishFactory.drawJellyfish(graphics, size, color, darkerColor);
                 break;
+            case 'seahorse':
+                FishFactory.drawSeahorse(graphics, size, color, darkerColor);
+                break;
             default:
                 // Default fish shape
                 FishFactory.drawDefaultFish(graphics, size, color, darkerColor);
@@ -428,6 +431,22 @@ export class FishFactory {
                 i * size * 0.25, size * 1.2
             );
         }
+    }
+
+    /**
+     * Draw seahorse with curved body
+     */
+    static drawSeahorse(graphics, size, color, darkerColor) {
+        // Curved body (using multiple ellipses)
+        graphics.fillStyle(color, 1);
+        graphics.fillEllipse(0, 0, size * 0.8, size * 1.5);
+        // Head
+        graphics.fillCircle(size * 0.2, -size * 0.6, size * 0.35);
+        // Snout
+        graphics.fillEllipse(size * 0.5, -size * 0.5, size * 0.3, size * 0.2);
+        // Tail curl
+        graphics.fillStyle(darkerColor.color, 1);
+        graphics.arc(-size * 0.2, size * 0.6, size * 0.3, Math.PI * 0.5, Math.PI * 1.5, false);
     }
 
     /**

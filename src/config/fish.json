@@ -38,5 +38,10 @@
     "hp": 25, "speed": 50, "size": 40, "damage": 8,
     "aoe": true, "exp": 10, "behavior": "floating",
     "color": "#ADD8E6", "strongAgainst": [], "weakTo": ["shark", "eel"]
+  },
+  "seahorse": {
+    "hp": 20, "speed": 200, "size": 25, "damage": 5,
+    "evasive": true, "exp": 12, "behavior": "evasive",
+    "color": "#FFD700", "strongAgainst": [], "weakTo": ["octopus"]
   }
 }

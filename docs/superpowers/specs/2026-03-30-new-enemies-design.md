@@ -64,30 +64,34 @@
 
 ## Boss敌人
 
+### 机制说明
+- **等级缩放**：Boss HP = 玩家等级 × 基础倍数，确保可战胜
+- **1v1机制**：Boss出现时，其他普通敌人自动游离战场，屏幕只剩玩家和Boss
+
 ### 深海大王乌贼 (Giant Squid Boss)
-- **HP**：玩家最大HP的50倍
+- **HP**：玩家等级 × 100（等级10时 = 1000 HP）
 - **阶段**：2阶段
 - **技能**：
-  - 触手横扫（近战范围伤害）
-  - 墨汁隐身（消失后从另一侧偷袭）
+  - 阶段1：触手横扫（近战范围伤害）
+  - 阶段2：墨汁隐身（消失后从另一侧偷袭）
 - **外观**：超大型乌贼 + 触手动画 + 眼睛发光
 
 ### 鲨鱼之王 (Shark King Boss)
-- **HP**：玩家最大HP的80倍
+- **HP**：玩家等级 × 150（等级10时 = 1500 HP）
 - **阶段**：3阶段
 - **技能**：
-  - 直线冲刺（快速穿越屏幕）
-  - 召唤小怪（每阶段召唤3-5条小鲨鱼）
-  - 怒吼击晕（范围攻击 + 玩家短暂眩晕）
+  - 阶段1：直线冲刺（快速穿越屏幕）
+  - 阶段2：召唤3条小鲨鱼助战
+  - 阶段3：怒吼击晕（范围攻击 + 玩家短暂眩晕）
 - **外观**：巨型白色鲨鱼 + 金色王冠 + 凶猛眼神
 
 ### 海底巨龙 (Sea Dragon Boss)
-- **HP**：玩家最大HP的100倍
+- **HP**：玩家等级 × 200（等级10时 = 2000 HP）
 - **阶段**：3阶段
 - **技能**：
-  - 喷火（扇形火焰攻击）
-  - 地震（全屏伤害）
-  - 召唤骨龙（召唤亡灵协助）
+  - 阶段1：喷火（扇形火焰攻击）
+  - 阶段2：地震（全屏伤害，伤害减半）
+  - 阶段3：召唤1只骨龙助战
 - **外观**：龙形 + 深海蓝色鳞片 + 发光触须
 
 ## 视觉效果
@@ -105,9 +109,23 @@
 - 专属血条（比普通敌人更大、更华丽）
 - 阶段转换特效（换色 + 冲击波）
 
+## Boss刷新机制
+
+### 1v1机制
+- **触发条件**：玩家达到特定等级时触发Boss战
+- **效果**：Boss出现后，所有普通敌人开始向外游离并消失
+- **战斗结束后**：普通敌人停止生成，进入短暂休息期，然后恢复正常刷新
+
+### Boss触发等级
+| Boss | 触发等级 | 刷新位置 |
+|------|----------|----------|
+| 深海大王乌贼 | 5级 | 屏幕中央从下方升起 |
+| 鲨鱼之王 | 10级 | 屏幕中央从左侧冲出 |
+| 海底巨龙 | 15级 | 屏幕中央从底部升起 |
+
 ## 数据配置
 
-### fish.json 扩展
+### fish.json 扩展（普通+精英）
 ```json
 {
   "shark": { "hp": 80, "speed": 150, "size": 60, "damage": 15, "exp": 25 },
@@ -117,10 +135,28 @@
   "octopus": { "hp": 50, "speed": 100, "size": 45, "damage": 20, "stealth": true, "exp": 20 },
   "eel": { "hp": 40, "speed": 250, "size": 50, "damage": 25, "dash": true, "exp": 18 },
   "mutant_shark": { "hp": 240, "speed": 180, "size": 80, "damage": 30, "enrage": true, "elite": true, "exp": 100 },
-  "giant_jellyfish": { "hp": 150, "speed": 60, "size": 120, "damage": 15, "chain_lightning": true, "elite": true, "exp": 120 },
-  "boss_squid": { "hp": 2000, "speed": 100, "size": 200, "damage": 40, "phases": 2, "boss": true, "exp": 500 },
-  "boss_shark_king": { "hp": 3000, "speed": 200, "size": 250, "damage": 50, "phases": 3, "boss": true, "exp": 800 },
-  "boss_sea_dragon": { "hp": 4000, "speed": 120, "size": 300, "damage": 60, "phases": 3, "boss": true, "exp": 1000 }
+  "giant_jellyfish": { "hp": 150, "speed": 60, "size": 120, "damage": 15, "chain_lightning": true, "elite": true, "exp": 120 }
+}
+```
+
+### Boss配置（动态HP）
+```json
+{
+  "boss_squid": {
+    "baseHp": 100, "hpPerLevel": 100, "speed": 100, "size": 200,
+    "damage": 40, "phases": 2, "boss": true, "exp": 500,
+    "triggerLevel": 5, "spawnAnimation": "rise_from_bottom"
+  },
+  "boss_shark_king": {
+    "baseHp": 150, "hpPerLevel": 150, "speed": 200, "size": 250,
+    "damage": 50, "phases": 3, "boss": true, "exp": 800,
+    "triggerLevel": 10, "spawnAnimation": "charge_from_left"
+  },
+  "boss_sea_dragon": {
+    "baseHp": 200, "hpPerLevel": 200, "speed": 120, "size": 300,
+    "damage": 60, "phases": 3, "boss": true, "exp": 1000,
+    "triggerLevel": 15, "spawnAnimation": "rise_from_bottom"
+  }
 }
 ```
 

@@ -364,3 +364,118 @@ describe('EnemyAI States', () => {
         });
     });
 });
+
+describe('updateHealthBar', () => {
+    test('updateHealthBar creates health bar graphics', () => {
+        const mockGraphics = {
+            clear: jest.fn().mockReturnThis(),
+            fillStyle: jest.fn().mockReturnThis(),
+            fillRect: jest.fn().mockReturnThis(),
+            lineStyle: jest.fn().mockReturnThis(),
+            strokeRect: jest.fn().mockReturnThis()
+        };
+        const enemy = {
+            healthBar: mockGraphics,
+            hp: 75,
+            maxHp: 100,
+            healthBarWidth: 60,
+            healthBarHeight: 4,
+            fishConfig: { size: 30 }
+        };
+
+        const updateHealthBarFn = Enemy.prototype.updateHealthBar;
+        updateHealthBarFn.call(enemy);
+
+        expect(mockGraphics.clear).toHaveBeenCalled();
+        expect(mockGraphics.fillStyle).toHaveBeenCalled();
+        expect(mockGraphics.fillRect).toHaveBeenCalled();
+    });
+
+    test('health bar color changes based on HP percentage', () => {
+        const mockGraphics = {
+            clear: jest.fn().mockReturnThis(),
+            fillStyle: jest.fn().mockReturnThis(),
+            fillRect: jest.fn().mockReturnThis(),
+            lineStyle: jest.fn().mockReturnThis(),
+            strokeRect: jest.fn().mockReturnThis()
+        };
+        const enemy = {
+            healthBar: mockGraphics,
+            hp: 20, // 20% HP - should be red
+            maxHp: 100,
+            healthBarWidth: 60,
+            healthBarHeight: 4,
+            fishConfig: { size: 30 }
+        };
+
+        const updateHealthBarFn = Enemy.prototype.updateHealthBar;
+        updateHealthBarFn.call(enemy);
+
+        // Second fillStyle call should be for health (0xff0000 for red when HP < 25%)
+        const fillStyleCalls = mockGraphics.fillStyle.mock.calls;
+        expect(fillStyleCalls[1][0]).toBe(0xff0000);
+    });
+});
+
+describe('isPlayerInVision', () => {
+    test('returns true when player within vision range', () => {
+        const enemy = {
+            graphics: { x: 100, y: 100 },
+            visionRange: 200
+        };
+        const player = { x: 150, y: 100 }; // Distance = 50 < 200
+
+        Phaser.Math.Distance.Between.mockReturnValue(50);
+
+        const isPlayerInVisionFn = Enemy.prototype.isPlayerInVision;
+        expect(isPlayerInVisionFn.call(enemy, player)).toBe(true);
+    });
+
+    test('returns false when player outside vision range', () => {
+        const enemy = {
+            graphics: { x: 100, y: 100 },
+            visionRange: 200
+        };
+        const player = { x: 400, y: 100 }; // Distance = 300 > 200
+
+        Phaser.Math.Distance.Between.mockReturnValue(300);
+
+        const isPlayerInVisionFn = Enemy.prototype.isPlayerInVision;
+        expect(isPlayerInVisionFn.call(enemy, player)).toBe(false);
+    });
+
+    test('returns false when player is null', () => {
+        const enemy = { graphics: { x: 100, y: 100 }, visionRange: 200 };
+
+        const isPlayerInVisionFn = Enemy.prototype.isPlayerInVision;
+        expect(isPlayerInVisionFn.call(enemy, null)).toBe(false);
+    });
+});
+
+describe('isPlayerInAttackRange', () => {
+    test('returns true when player within attack range', () => {
+        const enemy = {
+            graphics: { x: 100, y: 100 },
+            attackRange: 50
+        };
+        const player = { x: 130, y: 100 }; // Distance = 30 < 50
+
+        Phaser.Math.Distance.Between.mockReturnValue(30);
+
+        const isPlayerInAttackRangeFn = Enemy.prototype.isPlayerInAttackRange;
+        expect(isPlayerInAttackRangeFn.call(enemy, player)).toBe(true);
+    });
+
+    test('returns false when player outside attack range', () => {
+        const enemy = {
+            graphics: { x: 100, y: 100 },
+            attackRange: 50
+        };
+        const player = { x: 200, y: 100 }; // Distance = 100 > 50
+
+        Phaser.Math.Distance.Between.mockReturnValue(100);
+
+        const isPlayerInAttackRangeFn = Enemy.prototype.isPlayerInAttackRange;
+        expect(isPlayerInAttackRangeFn.call(enemy, player)).toBe(false);
+    });
+});

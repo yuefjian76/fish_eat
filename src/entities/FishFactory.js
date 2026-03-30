@@ -447,6 +447,7 @@ export class FishFactory {
         // Tail curl
         graphics.fillStyle(darkerColor.color, 1);
         graphics.arc(-size * 0.2, size * 0.6, size * 0.3, Math.PI * 0.5, Math.PI * 1.5, false);
+        graphics.strokePath();
     }
 
     /**

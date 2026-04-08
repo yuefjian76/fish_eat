@@ -152,6 +152,9 @@ export class FishFactory {
             case 'seahorse':
                 FishFactory.drawSeahorse(graphics, size, color, darkerColor);
                 break;
+            case 'octopus':
+                FishFactory.drawOctopus(graphics, size, color, darkerColor);
+                break;
             default:
                 // Default fish shape
                 FishFactory.drawDefaultFish(graphics, size, color, darkerColor);
@@ -448,6 +451,27 @@ export class FishFactory {
         graphics.fillStyle(darkerColor.color, 1);
         graphics.arc(-size * 0.2, size * 0.6, size * 0.3, Math.PI * 0.5, Math.PI * 1.5, false);
         graphics.strokePath();
+    }
+
+    /**
+     * Draw octopus (stealthy with head dome and tentacles)
+     */
+    static drawOctopus(graphics, size, color, darkerColor) {
+        // Head dome
+        graphics.fillStyle(color, 1);
+        graphics.fillEllipse(0, -size * 0.2, size, size * 1.2);
+        // Tentacles (8)
+        graphics.fillStyle(darkerColor.color, 1);
+        for (let i = 0; i < 8; i++) {
+            const angle = (i / 8) * Math.PI * 2;
+            const tx = Math.cos(angle) * size * 0.4;
+            const ty = size * 0.4 + Math.sin(angle) * size * 0.2;
+            graphics.fillTriangle(tx - size * 0.1, ty, tx + size * 0.1, ty, tx, ty + size * 0.5);
+        }
+        // Eyes
+        graphics.fillStyle(0xFFFF00, 1);
+        graphics.fillCircle(-size * 0.2, -size * 0.3, size * 0.1);
+        graphics.fillCircle(size * 0.2, -size * 0.3, size * 0.1);
     }
 
     /**

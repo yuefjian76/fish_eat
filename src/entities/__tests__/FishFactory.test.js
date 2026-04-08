@@ -135,6 +135,15 @@ describe('FishFactory', () => {
         });
     });
 
+    describe('drawOctopus', () => {
+        test('draws octopus with body and tentacles', () => {
+            const mockGraphics = createMockGraphics();
+            FishFactory.drawOctopus(mockGraphics, 45, 0x8B008B, { color: 0x660066 });
+            expect(mockGraphics.fillEllipse).toHaveBeenCalled(); // Body
+            expect(mockGraphics.fillTriangle).toHaveBeenCalled(); // Tentacles
+        });
+    });
+
     describe('createPlayerFishFromSprite', () => {
         test('creates player sprite when texture exists', () => {
             const sprite = FishFactory.createPlayerFishFromSprite(mockScene, 1.5, 3);

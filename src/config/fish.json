@@ -43,5 +43,10 @@
     "hp": 20, "speed": 200, "size": 25, "damage": 5,
     "evasive": true, "exp": 12, "behavior": "evasive",
     "color": "#FFD700", "strongAgainst": [], "weakTo": ["octopus"]
+  },
+  "octopus": {
+    "hp": 50, "speed": 100, "size": 45, "damage": 20,
+    "stealth": true, "exp": 20, "behavior": "stealth",
+    "color": "#8B008B", "strongAgainst": ["seahorse"], "weakTo": ["shark", "eel"]
   }
 }

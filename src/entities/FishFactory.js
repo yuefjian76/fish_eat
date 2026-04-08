@@ -155,6 +155,9 @@ export class FishFactory {
             case 'octopus':
                 FishFactory.drawOctopus(graphics, size, color, darkerColor);
                 break;
+            case 'eel':
+                FishFactory.drawEel(graphics, size, color, darkerColor);
+                break;
             default:
                 // Default fish shape
                 FishFactory.drawDefaultFish(graphics, size, color, darkerColor);
@@ -472,6 +475,25 @@ export class FishFactory {
         graphics.fillStyle(0xFFFF00, 1);
         graphics.fillCircle(-size * 0.2, -size * 0.3, size * 0.1);
         graphics.fillCircle(size * 0.2, -size * 0.3, size * 0.1);
+    }
+
+    /**
+     * Draw eel (elongated body for dash attacks)
+     */
+    static drawEel(graphics, size, color, darkerColor) {
+        // Long body
+        graphics.fillStyle(color, 1);
+        graphics.fillEllipse(0, 0, size * 2.5, size * 0.4);
+        // Striped pattern
+        graphics.fillStyle(darkerColor.color, 1);
+        for (let i = 0; i < 5; i++) {
+            graphics.fillRect(-size * 1 + i * size * 0.4, -size * 0.15, size * 0.1, size * 0.3);
+        }
+        // Tail fin
+        graphics.fillTriangle(-size * 1.2, 0, -size * 1.8, -size * 0.4, -size * 1.8, size * 0.4);
+        // Eye
+        graphics.fillStyle(0x000000, 1);
+        graphics.fillCircle(size * 1, -size * 0.05, size * 0.08);
     }
 
     /**

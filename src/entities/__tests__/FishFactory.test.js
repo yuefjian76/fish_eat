@@ -144,6 +144,15 @@ describe('FishFactory', () => {
         });
     });
 
+    describe('drawEel', () => {
+        test('draws eel with elongated body', () => {
+            const mockGraphics = createMockGraphics();
+            FishFactory.drawEel(mockGraphics, 50, 0xFFD700, { color: 0xCC9900 });
+            expect(mockGraphics.fillEllipse).toHaveBeenCalled(); // Body
+            expect(mockGraphics.fillTriangle).toHaveBeenCalled(); // Tail
+        });
+    });
+
     describe('createPlayerFishFromSprite', () => {
         test('creates player sprite when texture exists', () => {
             const sprite = FishFactory.createPlayerFishFromSprite(mockScene, 1.5, 3);

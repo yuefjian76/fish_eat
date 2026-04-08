@@ -48,5 +48,10 @@
     "hp": 50, "speed": 100, "size": 45, "damage": 20,
     "stealth": true, "exp": 20, "behavior": "stealth",
     "color": "#8B008B", "strongAgainst": ["seahorse"], "weakTo": ["shark", "eel"]
+  },
+  "eel": {
+    "hp": 40, "speed": 250, "size": 50, "damage": 25,
+    "dash": true, "exp": 18, "behavior": "dash",
+    "color": "#FFD700", "strongAgainst": [], "weakTo": ["shark"]
   }
 }

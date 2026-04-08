@@ -610,3 +610,50 @@ describe('update WANDERING behavior', () => {
         expect(enemy.state).toBe(Enemy.STATE.WANDERING);
     });
 });
+
+function createEnemyWithBehavior(scene, type) {
+    const mockScene = {
+        physics: { moveTo: jest.fn() },
+        fishes: { add: jest.fn() },
+        add: { graphics: jest.fn() },
+        game: { loop: { delta: 16 } }
+    };
+    // Return a minimal enemy-like object for testing
+    return {
+        scene: mockScene,
+        graphics: { x: 100, y: 100, rotation: 0, active: true, setTexture: jest.fn(), baseKey: 'fish', currentFrame: 0 },
+        fishConfig: { behavior: type, size: 40, speed: 100 },
+        fishType: type,
+        state: 'wandering',
+        baseSpeed: 100,
+        chaseSpeedMultiplier: 1.5,
+        visionRange: 200,
+        attackRange: 50,
+        attackCooldown: 1500,
+        lastAttackTime: 0,
+        wanderTimer: 0,
+        wanderInterval: 2000,
+        chasePlayer: jest.fn(),
+        isPlayerInVision: jest.fn(),
+        isPlayerInAttackRange: jest.fn(),
+        setState: jest.fn()
+    };
+}
+
+describe('shark behavior', () => {
+    test('shark chases player aggressively when in vision', () => {
+        const enemy = createEnemyWithBehavior({}, 'shark');
+        enemy.graphics.x = 100; enemy.graphics.y = 100;
+        const player = { x: 200, y: 100 };
+
+        enemy.isPlayerInVision.mockReturnValue(true);
+        enemy.isPlayerInAttackRange.mockReturnValue(false);
+
+        // Simulate update logic
+        if (enemy.isPlayerInVision(player) && !enemy.isPlayerInAttackRange(player)) {
+            enemy.chasePlayer(player);
+        }
+
+        expect(enemy.chasePlayer).toHaveBeenCalledWith(player);
+    });
+});

@@ -1,5 +1,6 @@
 // GameScene - Core game scene with arrow key and mouse movement
 import { Enemy } from '../entities/Enemy.js';
+import { BossEnemy } from '../entities/BossEnemy.js';
 import { TreasureBox } from '../entities/TreasureBox.js';
 import { FishFactory } from '../entities/FishFactory.js';
 import { SkillSystem } from '../systems/SkillSystem.js';
@@ -7,6 +8,8 @@ import { GrowthSystem } from '../systems/GrowthSystem.js';
 import { DriftBottleSystem } from '../systems/DriftBottleSystem.js';
 import { LuckSystem } from '../systems/LuckSystem.js';
 import { BackgroundSystem } from '../systems/BackgroundSystem.js';
+import { BossSystem } from '../systems/BossSystem.js';
+import { BossAnimation } from '../systems/BossAnimation.js';
 import { SkillBar } from '../ui/SkillBar.js';
 import { logger } from '../systems/DebugLogger.js';
 
@@ -46,6 +49,9 @@ class GameScene extends Phaser.Scene {
         this.treasureBoxes = null;
         this.isInvincible = false;
         this.doubleRewardsActive = false;
+        // Boss system
+        this.bossSystem = new BossSystem(this);
+        this.bossDefeated = { squid: false, sharkKing: false, seaDragon: false };
     }
 
     init(data) {
@@ -55,6 +61,7 @@ class GameScene extends Phaser.Scene {
         this.hp = 50;
         this.maxHp = 50;
         this.difficulty = data.difficulty || 'easy';
+        this.spawnTimer = null;
     }
 
     preload() {
@@ -190,7 +197,7 @@ class GameScene extends Phaser.Scene {
         );
 
         // Spawn timer
-        this.time.addEvent({
+        this.spawnTimer = this.time.addEvent({
             delay: 2000,
             callback: this.spawnFish,
             callbackScope: this,
@@ -312,6 +319,56 @@ class GameScene extends Phaser.Scene {
         const enemy = new Enemy(this, x, y, fishConfig, type, this.aiLevel);
         this.enemies.push(enemy);
         logger.debug(`Enemy spawned: type=${type}, x=${x}, y=${y}, aiLevel=${this.aiLevel}, enemyLevel=${enemyLevel}`);
+    }
+
+    /**
+     * Check if boss should spawn based on player level
+     */
+    checkBossSpawn() {
+        const level = this.growthSystem.getLevel();
+
+        // Boss spawn thresholds from design
+        if (level === 5 && !this.bossDefeated.squid) {
+            this.spawnBoss('boss_squid', 400, 700);
+        } else if (level === 10 && !this.bossDefeated.sharkKing) {
+            this.spawnBoss('boss_shark_king', -100, 384);
+        } else if (level === 15 && !this.bossDefeated.seaDragon) {
+            this.spawnBoss('boss_sea_dragon', 400, 700);
+        }
+    }
+
+    /**
+     * Spawn a boss enemy
+     */
+    spawnBoss(type, x, y) {
+        // Boss configs
+        const bossConfigs = {
+            'boss_squid': { baseHp: 100, hpPerLevel: 100, phases: 2, damage: 40, skills: ['tentacle_slap', 'ink_blind'] },
+            'boss_shark_king': { baseHp: 150, hpPerLevel: 150, phases: 3, damage: 50, skills: ['dash', 'summon', 'stun'] },
+            'boss_sea_dragon': { baseHp: 200, hpPerLevel: 200, phases: 3, damage: 60, skills: ['fire_breath', 'earthquake', 'summon'] }
+        };
+
+        const config = bossConfigs[type];
+        if (!config) return;
+
+        // Get player level for HP scaling
+        const playerLevel = this.growthSystem.getLevel();
+
+        // Create boss
+        const boss = new BossEnemy(this, x, y, type, config, playerLevel);
+
+        // Trigger boss fight (1v1 mode)
+        this.bossSystem.triggerBossFight(boss);
+
+        // Play entrance animation
+        const animType = type === 'boss_shark_king' ? 'charge_from_left' : 'rise_from_bottom';
+        this.bossAnimation = new BossAnimation(this);
+        this.bossAnimation.play(animType, boss);
+
+        // Pause normal enemy spawning
+        if (this.spawnTimer) {
+            this.spawnTimer.paused = true;
+        }
     }
 
     checkEat(player, fish) {
@@ -473,6 +530,15 @@ class GameScene extends Phaser.Scene {
         if (this.backgroundSystem) {
             this.backgroundSystem.update(delta);
         }
+
+        // Update boss health bar position
+        if (this.bossSystem.isInBossFight()) {
+            const boss = this.bossSystem.getCurrentBoss();
+            if (boss && boss.graphics) {
+                boss.healthBar.x = boss.graphics.x;
+                boss.healthBar.y = boss.graphics.y - boss.fishConfig.size - 20;
+            }
+        }
     }
 
     /**
@@ -616,6 +682,9 @@ class GameScene extends Phaser.Scene {
             const driftResult = this.driftBottleSystem.trigger();
             logger.info(`Level up - Drift bottle triggered: ${driftResult.message}`);
         }
+
+        // Check for boss spawn
+        this.checkBossSpawn();
 
         // Update background if theme changed
         const previousTheme = this.getThemeForLevel(this.level - 1);

@@ -64,5 +64,23 @@
     "hp": 150, "speed": 60, "size": 120, "damage": 15,
     "chain_lightning": true, "elite": true, "exp": 120,
     "behavior": "chain_lightning", "color": "#00FFFF", "strongAgainst": [], "weakTo": []
+  },
+  "boss_squid": {
+    "baseHp": 100, "hpPerLevel": 100, "size": 200, "damage": 40,
+    "phases": 2, "boss": true, "exp": 500,
+    "triggerLevel": 5, "spawnAnimation": "rise_from_bottom",
+    "color": "#8B0000", "strongAgainst": [], "weakTo": []
+  },
+  "boss_shark_king": {
+    "baseHp": 150, "hpPerLevel": 150, "size": 250, "damage": 50,
+    "phases": 3, "boss": true, "exp": 800,
+    "triggerLevel": 10, "spawnAnimation": "charge_from_left",
+    "color": "#FFFFFF", "strongAgainst": [], "weakTo": []
+  },
+  "boss_sea_dragon": {
+    "baseHp": 200, "hpPerLevel": 200, "size": 300, "damage": 60,
+    "phases": 3, "boss": true, "exp": 1000,
+    "triggerLevel": 15, "spawnAnimation": "rise_from_bottom",
+    "color": "#000080", "strongAgainst": [], "weakTo": []
   }
 }

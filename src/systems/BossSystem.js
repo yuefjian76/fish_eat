@@ -1,3 +1,5 @@
+import { Enemy } from '../entities/Enemy.js';
+
 export class BossSystem {
     constructor(scene) {
         this.scene = scene;
@@ -25,8 +27,8 @@ export class BossSystem {
         // Make other enemies flee
         if (this.scene.enemies) {
             this.scene.enemies.forEach(enemy => {
-                if (enemy !== boss && enemy.flee) {
-                    enemy.flee();
+                if (enemy !== boss && enemy.setState) {
+                    enemy.setState(Enemy.STATE.FLEEING, boss);
                 }
             });
         }

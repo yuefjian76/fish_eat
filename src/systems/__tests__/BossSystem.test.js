@@ -28,10 +28,11 @@ describe('BossSystem', () => {
     });
 
     test('other enemies flee when boss appears', () => {
-        const otherEnemy = { flee: jest.fn() };
+        const otherEnemy = { setState: jest.fn() };
         mockScene.enemies = [otherEnemy];
-        bossSystem.triggerBossFight({});
-        expect(otherEnemy.flee).toHaveBeenCalled();
+        const boss = {};
+        bossSystem.triggerBossFight(boss);
+        expect(otherEnemy.setState).toHaveBeenCalledWith('fleeing', boss);
     });
 
     test('ends boss fight and resumes normal spawning', () => {

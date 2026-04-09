@@ -512,14 +512,25 @@ export class FishFactory {
     }
 
     /**
+     * Add elite enemy glow effect (used by mutant shark, giant jellyfish)
+     */
+    static eliteGlow(graphics, size, glowColor = 0xFF0000) {
+        // Outer glow (semi-transparent)
+        graphics.fillStyle(glowColor, 0.3);
+        graphics.fillEllipse(0, 0, size * 2.5, size * 0.9);
+
+        // Inner glow (brighter)
+        graphics.fillStyle(glowColor, 0.5);
+        graphics.fillEllipse(0, 0, size * 2.2, size * 0.7);
+    }
+
+    /**
      * Draw mutant shark with red glow effect (enrage elite)
      */
     static drawMutantShark(graphics, size, color, darkerColor) {
         // First draw regular shark
         FishFactory.drawShark(graphics, size, color, darkerColor);
-        // Add red glow effect (outer ellipse with transparency)
-        graphics.fillStyle(0xFF0000, 0.3);
-        graphics.fillEllipse(0, 0, size * 2.8, size * 1.0);
+        FishFactory.eliteGlow(graphics, size, 0xFF0000); // Red glow
     }
 
     /**
@@ -528,9 +539,7 @@ export class FishFactory {
     static drawGiantJellyfish(graphics, size, color, darkerColor) {
         // First draw regular jellyfish
         FishFactory.drawJellyfish(graphics, size, color, darkerColor);
-        // Add electric glow effect
-        graphics.fillStyle(0x00FFFF, 0.2);
-        graphics.fillEllipse(0, 0, size * 1.5, size * 1.0);
+        FishFactory.eliteGlow(graphics, size, 0x00FFFF); // Cyan glow
     }
 
     /**

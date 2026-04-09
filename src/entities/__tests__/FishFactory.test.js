@@ -153,6 +153,15 @@ describe('FishFactory', () => {
         });
     });
 
+    describe('eliteGlow', () => {
+        test('adds glow ellipse to graphics', () => {
+            const mockGraphics = createMockGraphics();
+            FishFactory.eliteGlow(mockGraphics, 80, 0xFF4444);
+            expect(mockGraphics.fillStyle).toHaveBeenCalled();
+            expect(mockGraphics.fillEllipse).toHaveBeenCalled();
+        });
+    });
+
     describe('drawMutantShark', () => {
         test('draws mutant shark with red glow', () => {
             const mockGraphics = createMockGraphics();

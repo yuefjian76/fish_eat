@@ -161,6 +161,33 @@ describe('FishFactory', () => {
         });
     });
 
+    describe('drawBossSquid', () => {
+        test('draws giant squid with tentacles', () => {
+            const mockGraphics = createMockGraphics();
+            FishFactory.drawBossSquid(mockGraphics, 200, 0x8B0000, { color: 0x4B0000 });
+            expect(mockGraphics.fillEllipse).toHaveBeenCalled();
+            expect(mockGraphics.fillTriangle).toHaveBeenCalled(); // Tentacles
+        });
+    });
+
+    describe('drawBossSharkKing', () => {
+        test('draws shark king with crown', () => {
+            const mockGraphics = createMockGraphics();
+            FishFactory.drawBossSharkKing(mockGraphics, 250, 0xFFFFFF, { color: 0xCCCCCC });
+            expect(mockGraphics.fillEllipse).toHaveBeenCalled(); // Body
+            expect(mockGraphics.fillTriangle).toHaveBeenCalled(); // Crown
+        });
+    });
+
+    describe('drawBossSeaDragon', () => {
+        test('draws sea dragon with scales', () => {
+            const mockGraphics = createMockGraphics();
+            FishFactory.drawBossSeaDragon(mockGraphics, 300, 0x000080, { color: 0x000050 });
+            expect(mockGraphics.fillEllipse).toHaveBeenCalled();
+            expect(mockGraphics.fillTriangle).toHaveBeenCalled(); // Spikes
+        });
+    });
+
     describe('createPlayerFishFromSprite', () => {
         test('creates player sprite when texture exists', () => {
             const sprite = FishFactory.createPlayerFishFromSprite(mockScene, 1.5, 3);

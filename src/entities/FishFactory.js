@@ -164,6 +164,15 @@ export class FishFactory {
             case 'giant_jellyfish':
                 FishFactory.drawGiantJellyfish(graphics, size, color, darkerColor);
                 break;
+            case 'boss_squid':
+                FishFactory.drawBossSquid(graphics, size, color, darkerColor);
+                break;
+            case 'boss_shark_king':
+                FishFactory.drawBossSharkKing(graphics, size, color, darkerColor);
+                break;
+            case 'boss_sea_dragon':
+                FishFactory.drawBossSeaDragon(graphics, size, color, darkerColor);
+                break;
             default:
                 // Default fish shape
                 FishFactory.drawDefaultFish(graphics, size, color, darkerColor);
@@ -522,6 +531,111 @@ export class FishFactory {
         // Add electric glow effect
         graphics.fillStyle(0x00FFFF, 0.2);
         graphics.fillEllipse(0, 0, size * 1.5, size * 1.0);
+    }
+
+    /**
+     * Draw Giant Squid Boss (深海大王乌贼)
+     */
+    static drawBossSquid(graphics, size, color, darkerColor) {
+        // Main body (huge ellipse)
+        graphics.fillStyle(color, 1);
+        graphics.fillEllipse(0, 0, size * 1.5, size * 2);
+
+        // Head dome
+        graphics.fillEllipse(0, -size * 0.8, size, size * 0.8);
+
+        // Large eyes
+        graphics.fillStyle(0xFF0000, 1); // Glowing red
+        graphics.fillCircle(-size * 0.3, -size * 0.8, size * 0.15);
+        graphics.fillCircle(size * 0.3, -size * 0.8, size * 0.15);
+
+        // Tentacles (8 large ones)
+        graphics.fillStyle(darkerColor.color, 1);
+        for (let i = 0; i < 8; i++) {
+            const angle = (i / 8) * Math.PI - Math.PI / 2;
+            const tx = Math.cos(angle) * size * 0.6;
+            const ty = size * 0.5 + Math.sin(angle) * size * 0.3;
+            graphics.fillTriangle(
+                tx - size * 0.2, ty,
+                tx + size * 0.2, ty,
+                tx, ty + size * 1.2
+            );
+        }
+    }
+
+    /**
+     * Draw Shark King Boss (鲨鱼之王)
+     */
+    static drawBossSharkKing(graphics, size, color, darkerColor) {
+        // Draw base shark body
+        FishFactory.drawShark(graphics, size, color, darkerColor);
+
+        // Add golden crown
+        graphics.fillStyle(0xFFD700, 1);
+        const crownPoints = [
+            { x: -size * 0.4, y: -size * 0.5 },
+            { x: -size * 0.3, y: -size * 0.9 },
+            { x: -size * 0.1, y: -size * 0.6 },
+            { x: 0, y: -size * 1.0 },
+            { x: size * 0.1, y: -size * 0.6 },
+            { x: size * 0.3, y: -size * 0.9 },
+            { x: size * 0.4, y: -size * 0.5 }
+        ];
+        graphics.fillTriangle(
+            crownPoints[0].x, crownPoints[0].y,
+            crownPoints[1].x, crownPoints[1].y,
+            crownPoints[2].x, crownPoints[2].y
+        );
+        graphics.fillTriangle(
+            crownPoints[2].x, crownPoints[2].y,
+            crownPoints[3].x, crownPoints[3].y,
+            crownPoints[4].x, crownPoints[4].y
+        );
+        graphics.fillTriangle(
+            crownPoints[4].x, crownPoints[4].y,
+            crownPoints[5].x, crownPoints[5].y,
+            crownPoints[6].x, crownPoints[6].y
+        );
+    }
+
+    /**
+     * Draw Sea Dragon Boss (海底巨龙)
+     */
+    static drawBossSeaDragon(graphics, size, color, darkerColor) {
+        // Dragon body (elongated)
+        graphics.fillStyle(color, 1);
+        graphics.fillEllipse(0, 0, size * 2, size * 0.8);
+
+        // Dragon head
+        graphics.fillEllipse(size * 1.2, 0, size * 0.8, size * 0.6);
+
+        // Snout
+        graphics.fillTriangle(
+            size * 1.6, 0,
+            size * 2.2, -size * 0.2,
+            size * 2.2, size * 0.2
+        );
+
+        // Dorsal spikes
+        graphics.fillStyle(darkerColor.color, 1);
+        for (let i = 0; i < 6; i++) {
+            graphics.fillTriangle(
+                -size * 0.8 + i * size * 0.35, -size * 0.4,
+                -size * 0.7 + i * size * 0.35, -size * 1.0,
+                -size * 0.5 + i * size * 0.35, -size * 0.4
+            );
+        }
+
+        // Tail spikes
+        graphics.fillTriangle(
+            -size * 1.2, 0,
+            -size * 2.0, -size * 0.4,
+            -size * 1.8, 0
+        );
+
+        // Eyes
+        graphics.fillStyle(0xFFFF00, 1);
+        graphics.fillCircle(size * 1.4, -size * 0.15, size * 0.1);
     }
 
     /**

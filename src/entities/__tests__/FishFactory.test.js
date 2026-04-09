@@ -170,6 +170,15 @@ describe('FishFactory', () => {
         });
     });
 
+    describe('drawGiantJellyfish', () => {
+        test('draws giant jellyfish with electric glow', () => {
+            const mockGraphics = createMockGraphics();
+            FishFactory.drawGiantJellyfish(mockGraphics, 120, 0x00FFFF, { color: 0x00AAAA });
+            expect(mockGraphics.fillEllipse).toHaveBeenCalled();
+            expect(mockGraphics.fillTriangle).toHaveBeenCalled();
+        });
+    });
+
     describe('drawBossSquid', () => {
         test('draws giant squid with tentacles', () => {
             const mockGraphics = createMockGraphics();

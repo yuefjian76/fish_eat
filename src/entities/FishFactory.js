@@ -161,6 +161,9 @@ export class FishFactory {
             case 'mutant_shark':
                 FishFactory.drawMutantShark(graphics, size, color, darkerColor);
                 break;
+            case 'giant_jellyfish':
+                FishFactory.drawGiantJellyfish(graphics, size, color, darkerColor);
+                break;
             default:
                 // Default fish shape
                 FishFactory.drawDefaultFish(graphics, size, color, darkerColor);
@@ -508,6 +511,17 @@ export class FishFactory {
         // Add red glow effect (outer ellipse with transparency)
         graphics.fillStyle(0xFF0000, 0.3);
         graphics.fillEllipse(0, 0, size * 2.8, size * 1.0);
+    }
+
+    /**
+     * Draw giant jellyfish with electric glow effect (chain lightning elite)
+     */
+    static drawGiantJellyfish(graphics, size, color, darkerColor) {
+        // First draw regular jellyfish
+        FishFactory.drawJellyfish(graphics, size, color, darkerColor);
+        // Add electric glow effect
+        graphics.fillStyle(0x00FFFF, 0.2);
+        graphics.fillEllipse(0, 0, size * 1.5, size * 1.0);
     }
 
     /**

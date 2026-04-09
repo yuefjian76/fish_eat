@@ -284,6 +284,31 @@ export class Enemy {
     }
 
     /**
+     * Execute chain lightning attack - damages all nearby entities
+     */
+    executeChainLightning() {
+        if (!this.fishConfig.chain_lightning) return;
+
+        const range = this.chainLightningRange || 150;
+        const damage = this.fishConfig.damage || 10;
+
+        // Get all entities in range
+        const enemies = this.scene.fishes.getChildren();
+        enemies.forEach(enemy => {
+            if (enemy === this.graphics || !enemy.active) return;
+
+            const dist = Phaser.Math.Distance.Between(
+                this.graphics.x, this.graphics.y,
+                enemy.x, enemy.y
+            );
+
+            if (dist <= range && enemy.takeDamage) {
+                enemy.takeDamage(damage);
+            }
+        });
+    }
+
+    /**
      * Update fishing behavior - hunt smaller enemies
      * @param {number} delta - Time delta in ms
      */

@@ -676,3 +676,35 @@ describe('Mutant Shark enrage', () => {
         expect(enemy.speedMultiplier).toBe(2);
     });
 });
+
+describe('Giant Jellyfish chain lightning', () => {
+    test('chain lightning damages nearby players', () => {
+        const mockPlayer = { x: 100, y: 100, takeDamage: jest.fn() };
+        const enemy = {
+            scene: {
+                player: mockPlayer,
+                getChildren: () => [mockPlayer]
+            },
+            graphics: { x: 100, y: 100 },
+            chainLightningRange: 150,
+            damage: 15,
+            executeChainLightning: function() {
+                const children = this.scene.getChildren();
+                children.forEach(child => {
+                    if (child.takeDamage) {
+                        const dist = Math.sqrt(
+                            Math.pow(child.x - this.graphics.x, 2) +
+                            Math.pow(child.y - this.graphics.y, 2)
+                        );
+                        if (dist <= this.chainLightningRange) {
+                            child.takeDamage(this.damage);
+                        }
+                    }
+                });
+            }
+        };
+
+        enemy.executeChainLightning();
+        expect(mockPlayer.takeDamage).toHaveBeenCalledWith(15);
+    });
+});

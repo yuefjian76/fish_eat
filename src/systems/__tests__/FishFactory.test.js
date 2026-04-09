@@ -1,6 +1,7 @@
 /**
  * FishFactory Tests - Player Fish Enhancement
  */
+import { jest, describe, test, expect } from '@jest/globals';
 import { FishFactory } from '../../entities/FishFactory.js';
 
 describe('FishFactory - Player Fish', () => {
@@ -31,6 +32,26 @@ describe('FishFactory - Player Fish', () => {
 
         test('createFish is a static method on FishFactory', () => {
             expect(FishFactory).toHaveProperty('createFish');
+        });
+    });
+
+    describe('drawGiantJellyfish', () => {
+        test('drawGiantJellyfish method exists', () => {
+            expect(typeof FishFactory.drawGiantJellyfish).toBe('function');
+        });
+
+        test('drawGiantJellyfish is a static method on FishFactory', () => {
+            expect(FishFactory).toHaveProperty('drawGiantJellyfish');
+        });
+
+        test('draws giant jellyfish with electric glow', () => {
+            const mockGraphics = {
+                fillEllipse: jest.fn(),
+                fillStyle: jest.fn(),
+                fillTriangle: jest.fn()
+            };
+            FishFactory.drawGiantJellyfish(mockGraphics, 120, 0x00FFFF, { color: 0x00AAAA });
+            expect(mockGraphics.fillEllipse).toHaveBeenCalled();
         });
     });
 });

@@ -59,5 +59,10 @@
     "hp": 240, "speed": 180, "size": 80, "damage": 30,
     "enrage": true, "elite": true, "exp": 100,
     "behavior": "enrage", "color": "#FF4444", "strongAgainst": [], "weakTo": []
+  },
+  "giant_jellyfish": {
+    "hp": 150, "speed": 60, "size": 120, "damage": 15,
+    "chain_lightning": true, "elite": true, "exp": 120,
+    "behavior": "chain_lightning", "color": "#00FFFF", "strongAgainst": [], "weakTo": []
   }
 }

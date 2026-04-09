@@ -58,6 +58,10 @@ export class Enemy {
         this.chaseSpeedMultiplier = 1.5 * aiLevel;
         this.speedMultiplier = 1.0; // For enrage mechanic
 
+        // Chain lightning
+        this.chainLightningRange = 150;
+        this.chainLightningTimer = 0;
+
         // Health
         this.hp = fishConfig.hp;
         this.maxHp = fishConfig.hp;
@@ -403,6 +407,15 @@ export class Enemy {
         // Check for enrage (mutant shark)
         if (this.fishConfig.enrage) {
             this.updateEnrage();
+        }
+
+        // Check for chain lightning attack (periodic)
+        if (this.fishConfig.chain_lightning) {
+            this.chainLightningTimer = (this.chainLightningTimer || 0) + this.scene.game.loop.delta;
+            if (this.chainLightningTimer >= 2000) { // Every 2 seconds
+                this.chainLightningTimer = 0;
+                this.executeChainLightning();
+            }
         }
 
         // Update animation frame

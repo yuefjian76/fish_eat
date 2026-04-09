@@ -679,32 +679,27 @@ describe('Mutant Shark enrage', () => {
 
 describe('Giant Jellyfish chain lightning', () => {
     test('chain lightning damages nearby players', () => {
-        const mockPlayer = { x: 100, y: 100, takeDamage: jest.fn() };
-        const enemy = {
-            scene: {
-                player: mockPlayer,
-                getChildren: () => [mockPlayer]
-            },
-            graphics: { x: 100, y: 100 },
-            chainLightningRange: 150,
-            damage: 15,
-            executeChainLightning: function() {
-                const children = this.scene.getChildren();
-                children.forEach(child => {
-                    if (child.takeDamage) {
-                        const dist = Math.sqrt(
-                            Math.pow(child.x - this.graphics.x, 2) +
-                            Math.pow(child.y - this.graphics.y, 2)
-                        );
-                        if (dist <= this.chainLightningRange) {
-                            child.takeDamage(this.damage);
-                        }
-                    }
-                });
+        const mockTarget = {
+            x: 120, y: 100,
+            takeDamage: jest.fn(),
+            active: true
+        };
+        const mockScene = {
+            fishes: {
+                getChildren: jest.fn().mockReturnValue([mockTarget])
             }
         };
 
-        enemy.executeChainLightning();
-        expect(mockPlayer.takeDamage).toHaveBeenCalledWith(15);
+        const enemy = {
+            scene: mockScene,
+            graphics: { x: 100, y: 100 },
+            chainLightningRange: 150,
+            fishConfig: { chain_lightning: true, damage: 15 }
+        };
+
+        const executeChainLightningFn = Enemy.prototype.executeChainLightning;
+        executeChainLightningFn.call(enemy);
+
+        expect(mockTarget.takeDamage).toHaveBeenCalledWith(15);
     });
 });

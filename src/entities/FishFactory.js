@@ -158,6 +158,9 @@ export class FishFactory {
             case 'eel':
                 FishFactory.drawEel(graphics, size, color, darkerColor);
                 break;
+            case 'mutant_shark':
+                FishFactory.drawMutantShark(graphics, size, color, darkerColor);
+                break;
             default:
                 // Default fish shape
                 FishFactory.drawDefaultFish(graphics, size, color, darkerColor);
@@ -494,6 +497,17 @@ export class FishFactory {
         // Eye
         graphics.fillStyle(0x000000, 1);
         graphics.fillCircle(size * 1, -size * 0.05, size * 0.08);
+    }
+
+    /**
+     * Draw mutant shark with red glow effect (enrage elite)
+     */
+    static drawMutantShark(graphics, size, color, darkerColor) {
+        // First draw regular shark
+        FishFactory.drawShark(graphics, size, color, darkerColor);
+        // Add red glow effect (outer ellipse with transparency)
+        graphics.fillStyle(0xFF0000, 0.3);
+        graphics.fillEllipse(0, 0, size * 2.8, size * 1.0);
     }
 
     /**

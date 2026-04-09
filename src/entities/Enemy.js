@@ -56,6 +56,7 @@ export class Enemy {
         // Movement - adjusted by aiLevel
         this.baseSpeed = fishConfig.speed;
         this.chaseSpeedMultiplier = 1.5 * aiLevel;
+        this.speedMultiplier = 1.0; // For enrage mechanic
 
         // Health
         this.hp = fishConfig.hp;
@@ -107,6 +108,16 @@ export class Enemy {
         // Border
         this.healthBar.lineStyle(1, 0x000000, 0.5);
         this.healthBar.strokeRect(-this.healthBarWidth / 2, -this.fishConfig.size - 12, this.healthBarWidth, this.healthBarHeight);
+    }
+
+    /**
+     * Update enrage state for mutant shark - doubles speed when HP < 30%
+     */
+    updateEnrage() {
+        if (this.hp < this.maxHp * 0.3) {
+            this.speedMultiplier = 2.0;
+            this.chaseSpeedMultiplier = 2.0; // Also increase chase speed
+        }
     }
 
     /**
@@ -363,6 +374,11 @@ export class Enemy {
         // Update health bar position
         this.healthBar.x = this.graphics.x;
         this.healthBar.y = this.graphics.y;
+
+        // Check for enrage (mutant shark)
+        if (this.fishConfig.enrage) {
+            this.updateEnrage();
+        }
 
         // Update animation frame
         this.frameTimer += this.scene.game.loop.delta;

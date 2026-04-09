@@ -53,5 +53,11 @@
     "hp": 40, "speed": 250, "size": 50, "damage": 25,
     "dash": true, "exp": 18, "behavior": "dash",
     "color": "#FFD700", "strongAgainst": [], "weakTo": ["shark"]
+  },
+  "mutant_shark": {
+    "name": "变异鲨鱼",
+    "hp": 240, "speed": 180, "size": 80, "damage": 30,
+    "enrage": true, "elite": true, "exp": 100,
+    "behavior": "enrage", "color": "#FF4444", "strongAgainst": [], "weakTo": []
   }
 }

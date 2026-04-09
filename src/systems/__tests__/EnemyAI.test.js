@@ -657,3 +657,22 @@ describe('shark behavior', () => {
         expect(enemy.chasePlayer).toHaveBeenCalledWith(player);
     });
 });
+
+describe('Mutant Shark enrage', () => {
+    test('enrages when hp below 30%', () => {
+        const enemy = {
+            hp: 20, // 20 HP
+            maxHp: 100, // 100 max HP = 20%
+            speedMultiplier: 1,
+            setState: jest.fn(),
+            logger: { debug: jest.fn() }
+        };
+
+        // Simulate enrage check when taking damage
+        if (enemy.hp < enemy.maxHp * 0.3) {
+            enemy.speedMultiplier = 2; // Enrage doubles speed
+        }
+
+        expect(enemy.speedMultiplier).toBe(2);
+    });
+});

@@ -153,6 +153,14 @@ describe('FishFactory', () => {
         });
     });
 
+    describe('drawMutantShark', () => {
+        test('draws mutant shark with red glow', () => {
+            const mockGraphics = createMockGraphics();
+            FishFactory.drawMutantShark(mockGraphics, 80, 0xFF4444, { color: 0xAA2222 });
+            expect(mockGraphics.fillEllipse).toHaveBeenCalled();
+        });
+    });
+
     describe('createPlayerFishFromSprite', () => {
         test('creates player sprite when texture exists', () => {
             const sprite = FishFactory.createPlayerFishFromSprite(mockScene, 1.5, 3);

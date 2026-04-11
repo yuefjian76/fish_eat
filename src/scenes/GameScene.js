@@ -357,6 +357,9 @@ class GameScene extends Phaser.Scene {
         // Create boss
         const boss = new BossEnemy(this, x, y, type, config, playerLevel);
 
+        // Add boss to enemies array
+        this.enemies.push(boss);
+
         // Trigger boss fight (1v1 mode)
         this.bossSystem.triggerBossFight(boss);
 
@@ -536,7 +539,35 @@ class GameScene extends Phaser.Scene {
             const boss = this.bossSystem.getCurrentBoss();
             if (boss && boss.graphics) {
                 boss.healthBar.x = boss.graphics.x;
-                boss.healthBar.y = boss.graphics.y - boss.fishConfig.size - 20;
+                boss.healthBar.y = boss.graphics.y - (boss.bossConfig?.size || 100) - 20;
+
+                // Check if boss is defeated (HP <= 0)
+                if (boss.hp <= 0) {
+                    const bossTypeKey = boss.bossType.replace('boss_', '');
+                    this.bossDefeated[bossTypeKey] = true;
+                    this.bossSystem.endBossFight();
+
+                    // Resume normal enemy spawning
+                    if (this.spawnTimer) {
+                        this.spawnTimer.paused = false;
+                    }
+
+                    // Clean up boss visuals
+                    if (boss.healthBar) {
+                        boss.healthBar.destroy();
+                    }
+                    if (boss.graphics) {
+                        boss.graphics.destroy();
+                    }
+
+                    // Remove boss from enemies array
+                    const bossIndex = this.enemies.indexOf(boss);
+                    if (bossIndex !== -1) {
+                        this.enemies.splice(bossIndex, 1);
+                    }
+
+                    logger.info(`Boss defeated: ${boss.bossType}`);
+                }
             }
         }
     }

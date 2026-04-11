@@ -12,9 +12,11 @@ describe('TreasureBox', () => {
                     fillCircle: jest.fn().mockReturnThis(),
                     fillRect: jest.fn().mockReturnThis(),
                     lineStyle: jest.fn().mockReturnThis(),
+                    strokeCircle: jest.fn().mockReturnThis(),
                     strokeRect: jest.fn().mockReturnThis(),
                     setDepth: jest.fn().mockReturnThis(),
                     setOrigin: jest.fn().mockReturnThis(),
+                    setScale: jest.fn().mockReturnThis(),
                     body: {
                         setSize: jest.fn().mockReturnThis(),
                         setOffset: jest.fn().mockReturnThis(),
@@ -103,25 +105,30 @@ describe('TreasureBox', () => {
             expect(box.isCollected).toBe(true);
         });
 
-        test('stops float tween on collect', () => {
+        test('stops rise and wander tweens on collect', () => {
             const box = new TreasureBox(mockScene, 100, 200, TreasureBox.TYPE.COIN, 50);
-            box.floatTween = { stop: jest.fn() };
+            box.riseTween = { stop: jest.fn() };
+            box.wanderTween = { stop: jest.fn() };
             const mockPlayer = { x: 100, y: 200 };
             box.collect(mockPlayer);
-            expect(box.floatTween.stop).toHaveBeenCalled();
+            expect(box.riseTween.stop).toHaveBeenCalled();
+            expect(box.wanderTween.stop).toHaveBeenCalled();
         });
     });
 
     describe('destroy', () => {
-        test('destroys graphics', () => {
+        test('destroys graphics and bubble', () => {
             const mockGraphics = { destroy: jest.fn() };
             const mockGlow = { destroy: jest.fn() };
+            const mockBubble = { destroy: jest.fn() };
             const box = new TreasureBox(mockScene, 100, 200, TreasureBox.TYPE.COIN, 50);
             box.graphics = mockGraphics;
             box.glowGraphics = mockGlow;
+            box.bubbleGraphics = mockBubble;
             box.destroy();
             expect(mockGraphics.destroy).toHaveBeenCalled();
             expect(mockGlow.destroy).toHaveBeenCalled();
+            expect(mockBubble.destroy).toHaveBeenCalled();
         });
     });
 });

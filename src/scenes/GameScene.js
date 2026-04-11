@@ -875,16 +875,14 @@ class GameScene extends Phaser.Scene {
      * @param {object} treasureBoxGraphics - Treasure box graphics object
      */
     collectTreasureBox(player, treasureBoxGraphics) {
-        // Find the treasure box instance
-        const treasureBox = this.treasureBoxes.getChildren().find(
-            tb => tb === treasureBoxGraphics
-        );
+        // Get treasure box data directly from bubbleGraphics
+        const treasureBoxData = treasureBoxGraphics.treasureBoxData;
 
-        if (!treasureBox || !treasureBox.treasureBoxData || treasureBox.treasureBoxData.isCollected) {
+        if (!treasureBoxData || treasureBoxData.isCollected) {
             return;
         }
 
-        const reward = treasureBox.treasureBoxData.collect(player);
+        const reward = treasureBoxData.collect(player);
         if (!reward) return;
 
         // Apply reward

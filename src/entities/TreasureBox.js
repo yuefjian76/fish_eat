@@ -48,14 +48,6 @@ export class TreasureBox {
         this.graphics.setDepth(5);
         this.glowGraphics.setDepth(4);
 
-        // Add to treasure boxes group if it exists
-        if (scene.treasureBoxes) {
-            scene.treasureBoxes.add(this.graphics);
-        }
-
-        // Store reference to this TreasureBox instance on graphics
-        this.graphics.treasureBoxData = this;
-
         // Bubble properties
         this.state = TreasureBox.STATE.RISING;
         this.bubbleRadius = 30 + Math.random() * 10;
@@ -66,6 +58,14 @@ export class TreasureBox {
 
         // Create bubble graphics (drawn programmatically)
         this.createBubble();
+
+        // Add bubbleGraphics to treasure boxes group for collision detection
+        if (scene.treasureBoxes) {
+            scene.treasureBoxes.add(this.bubbleGraphics);
+        }
+
+        // Store reference to this TreasureBox instance on bubbleGraphics for collision detection
+        this.bubbleGraphics.treasureBoxData = this;
 
         // Rising animation
         this.startRising();

@@ -60,6 +60,9 @@ class GameScene extends Phaser.Scene {
         this.level = 1;
         this.hp = 50;
         this.maxHp = 50;
+        this.outOfCombatTimer = 0;
+        this.outOfCombatThreshold = 3000; // 3 seconds
+        this.healthRegenRate = 0.02; // 2% of max HP per second
         this.difficulty = data.difficulty || 'easy';
         this.spawnTimer = null;
     }
@@ -444,6 +447,7 @@ class GameScene extends Phaser.Scene {
             // Take damage (fish deals damage equal to fish size / 4)
             const damage = Math.floor(fishSize / 4);
             logger.debug(`Damage dealt to player: ${damage} (fishSize=${fishSize})`);
+            this.outOfCombatTimer = 0; // Reset out-of-combat timer on damage
             this.hp -= damage;
             if (this.hp < 0) this.hp = 0;
 
@@ -570,6 +574,14 @@ class GameScene extends Phaser.Scene {
                 }
             }
         }
+
+        // Health regeneration when out of combat
+        if (this.outOfCombatTimer >= this.outOfCombatThreshold && this.hp < this.maxHp) {
+            const regenAmount = this.maxHp * this.healthRegenRate * (delta / 1000);
+            this.hp = Math.min(this.hp + regenAmount, this.maxHp);
+        } else if (this.outOfCombatTimer < this.outOfCombatThreshold) {
+            this.outOfCombatTimer += delta;
+        }
     }
 
     /**
@@ -589,6 +601,7 @@ class GameScene extends Phaser.Scene {
 
         // Apply damage to player with difficulty multiplier
         const actualDamage = Math.floor(damage * this.enemyDamageMultiplier);
+        this.outOfCombatTimer = 0; // Reset out-of-combat timer on damage
         this.hp -= actualDamage;
         logger.debug(`HP change: -${actualDamage}, currentHP=${this.hp}/${this.maxHp}`);
         if (this.hp < 0) this.hp = 0;
@@ -663,8 +676,8 @@ class GameScene extends Phaser.Scene {
         const hpPerLevel = 10;
         const oldMaxHp = this.maxHp;
         this.maxHp = Math.floor(this.maxHp) + hpPerLevel;
-        // Also heal by the same amount (add to current HP)
-        this.hp = this.hp + hpPerLevel;
+        // Full heal on level up
+        this.hp = this.maxHp;
         logger.info(`Level up HP: ${oldMaxHp} -> ${this.maxHp}`);
 
         // Health bar width stays at 80, just update it

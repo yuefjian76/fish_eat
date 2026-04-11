@@ -672,8 +672,8 @@ class GameScene extends Phaser.Scene {
         const oldPlayerData = { ...oldPlayer.playerData };
         oldPlayerData.size += 2;
 
-        // Increase max HP per level (+10 HP per level)
-        const hpPerLevel = 10;
+        // Increase max HP per level (+20 HP per level)
+        const hpPerLevel = 20;
         const oldMaxHp = this.maxHp;
         this.maxHp = Math.floor(this.maxHp) + hpPerLevel;
         // Full heal on level up

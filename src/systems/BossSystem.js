@@ -38,9 +38,17 @@ export class BossSystem {
      * End boss fight
      */
     endBossFight() {
+        // Reset all FLEEING enemies back to WANDERING
+        if (this.scene.enemies) {
+            this.scene.enemies.forEach(enemy => {
+                if (enemy.state === Enemy.STATE.FLEEING) {
+                    enemy.setState(Enemy.STATE.WANDERING);
+                    enemy.attacker = null;
+                }
+            });
+        }
         this.currentBoss = null;
         this.inBossFight = false;
-        this.bossConfig = null;
     }
 
     /**

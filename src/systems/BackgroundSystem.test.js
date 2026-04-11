@@ -18,14 +18,35 @@ function createMockImage(x = 0, y = 0) {
     };
 }
 
+// Helper to create mock Phaser graphics object
+function createMockGraphics(x = 0, y = 0) {
+    return {
+        x,
+        y,
+        fillStyle: jest.fn().mockReturnThis(),
+        fillCircle: jest.fn().mockReturnThis(),
+        fillRect: jest.fn().mockReturnThis(),
+        lineStyle: jest.fn().mockReturnThis(),
+        strokeCircle: jest.fn().mockReturnThis(),
+        strokeRect: jest.fn().mockReturnThis(),
+        setDepth: jest.fn().mockReturnThis(),
+        setScale: jest.fn().mockReturnThis(),
+        setAlpha: jest.fn().mockReturnThis(),
+        destroy: jest.fn()
+    };
+}
+
 describe('BackgroundSystem', () => {
     let mockScene;
     let mockImageFactory;
+    let mockGraphicsFactory;
     let mockTween;
     let createdImages;
+    let createdGraphics;
 
     beforeEach(() => {
         createdImages = [];
+        createdGraphics = [];
 
         mockTween = {
             add: jest.fn().mockReturnValue({
@@ -46,9 +67,17 @@ describe('BackgroundSystem', () => {
             return img;
         };
 
+        // Create a new mock graphics factory each time
+        mockGraphicsFactory = () => {
+            const g = createMockGraphics();
+            createdGraphics.push(g);
+            return g;
+        };
+
         mockScene = {
             add: {
-                image: mockImageFactory
+                image: mockImageFactory,
+                graphics: mockGraphicsFactory
             },
             tweens: mockTween
         };
@@ -109,11 +138,11 @@ describe('BackgroundSystem', () => {
     });
 
     describe('createBubbleAnimation', () => {
-        test('creates 20 bubbles by default', () => {
+        test('creates 70 bubbles by default', () => {
             const system = new BackgroundSystem(mockScene);
             system._createBubbleAnimation();
 
-            expect(system.bubbles.length).toBe(20);
+            expect(system.bubbles.length).toBe(70);
         });
 
         test('creates bubble objects with required methods', () => {
@@ -140,13 +169,13 @@ describe('BackgroundSystem', () => {
             });
         });
 
-        test('bubbles have animation tween added', () => {
+        test('bubbles have animation tweens added', () => {
             const system = new BackgroundSystem(mockScene);
             system._createBubbleAnimation();
 
-            // Should add tween for each bubble
+            // Should add 2 tweens per bubble (rise + wobble) = 140 total
             expect(mockTween.add).toHaveBeenCalled();
-            expect(mockTween.add.mock.calls.length).toBe(20);
+            expect(mockTween.add.mock.calls.length).toBe(140);
         });
 
         test('bubble tweens have correct properties', () => {
@@ -157,7 +186,6 @@ describe('BackgroundSystem', () => {
             expect(tweenCall).toHaveProperty('targets');
             expect(tweenCall).toHaveProperty('y');
             expect(tweenCall).toHaveProperty('alpha');
-            expect(tweenCall).toHaveProperty('scale');
             expect(tweenCall).toHaveProperty('duration');
             expect(tweenCall).toHaveProperty('repeat', -1);
         });

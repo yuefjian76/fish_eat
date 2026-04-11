@@ -13,6 +13,12 @@ export class TreasureBox {
         DOUBLE_REWARDS: 'doubleRewards'
     };
 
+    static STATE = {
+        RISING: 'rising',
+        WANDERING: 'wandering',
+        BURSTING: 'bursting'
+    };
+
     constructor(scene, x, y, rewardType, rewardAmount) {
         this.scene = scene;
         this.x = x;
@@ -50,25 +56,19 @@ export class TreasureBox {
         // Store reference to this TreasureBox instance on graphics
         this.graphics.treasureBoxData = this;
 
-        // Floating animation
-        this.floatTween = scene.tweens.add({
-            targets: [this.graphics, this.glowGraphics],
-            y: y - 5,
-            duration: 800,
-            yoyo: true,
-            repeat: -1,
-            ease: 'Sine.easeInOut'
-        });
+        // Bubble properties
+        this.state = TreasureBox.STATE.RISING;
+        this.bubbleRadius = 30 + Math.random() * 10;
+        this.risingTargetY = 100; // Top threshold
+        this.wanderDirection = 1;
+        this.wanderTimer = 0;
+        this.wanderInterval = Phaser.Math.Between(2000, 3000);
 
-        // Glow pulse animation
-        scene.tweens.add({
-            targets: this.glowGraphics,
-            alpha: 0.5,
-            duration: 600,
-            yoyo: true,
-            repeat: -1,
-            ease: 'Sine.easeInOut'
-        });
+        // Create bubble graphics (drawn programmatically)
+        this.createBubble();
+
+        // Rising animation
+        this.startRising();
 
         // Label text
         this.createRewardLabel();
@@ -143,6 +143,86 @@ export class TreasureBox {
         this.label.setDepth(10);
     }
 
+    createBubble() {
+        this.bubbleGraphics = this.scene.add.graphics();
+        this.bubbleGraphics.setDepth(7);
+        this.bubbleGraphics.x = this.x;
+        this.bubbleGraphics.y = this.y;
+
+        // Draw bubble
+        this.drawBubble();
+
+        // Add to physics
+        this.scene.physics.world.enable(this.bubbleGraphics);
+        this.bubbleGraphics.body.setSize(this.bubbleRadius * 2, this.bubbleRadius * 2);
+        this.bubbleGraphics.body.setOffset(-this.bubbleRadius, -this.bubbleRadius);
+        this.bubbleGraphics.body.setImmovable(true);
+    }
+
+    drawBubble() {
+        const g = this.bubbleGraphics;
+        const r = this.bubbleRadius;
+
+        // Bubble outline
+        g.lineStyle(2, 0xAADDFF, 0.8);
+        g.strokeCircle(0, 0, r);
+
+        // Bubble fill (semi-transparent)
+        g.fillStyle(0xAADDFF, 0.2);
+        g.fillCircle(0, 0, r);
+
+        // Highlight reflection
+        g.fillStyle(0xFFFFFF, 0.4);
+        g.fillCircle(-r * 0.3, -r * 0.3, r * 0.2);
+    }
+
+    startRising() {
+        this.riseTween = this.scene.tweens.add({
+            targets: [this.graphics, this.glowGraphics, this.bubbleGraphics],
+            y: this.risingTargetY,
+            duration: Phaser.Math.Between(3000, 5000),
+            ease: 'Sine.easeInOut',
+            onComplete: () => {
+                this.state = TreasureBox.STATE.WANDERING;
+                this.startWandering();
+            }
+        });
+    }
+
+    startWandering() {
+        this.wanderTween = this.scene.tweens.add({
+            targets: [this.graphics, this.glowGraphics, this.bubbleGraphics],
+            x: this.x + this.wanderDirection * Phaser.Math.Between(50, 150),
+            duration: this.wanderInterval,
+            ease: 'Sine.easeInOut',
+            yoyo: true,
+            repeat: -1,
+            onRepeat: () => {
+                this.wanderDirection *= -1;
+            }
+        });
+
+        // Bubble wobble animation
+        this.scene.tweens.add({
+            targets: this.bubbleGraphics,
+            scaleX: 1.05,
+            scaleY: 0.95,
+            duration: 500,
+            yoyo: true,
+            repeat: -1
+        });
+
+        // Bubble flickering (alpha pulse) effect
+        this.scene.tweens.add({
+            targets: this.bubbleGraphics,
+            alpha: 0.6,
+            duration: 300,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
+    }
+
     /**
      * Collect the treasure box
      * @param {object} player - Player object
@@ -151,11 +231,21 @@ export class TreasureBox {
     collect(player) {
         if (this.isCollected) return null;
         this.isCollected = true;
+        this.state = TreasureBox.STATE.BURSTING;
 
         // Stop animations
-        if (this.floatTween) {
-            this.floatTween.stop();
-        }
+        if (this.riseTween) this.riseTween.stop();
+        if (this.wanderTween) this.wanderTween.stop();
+
+        // Burst animation for bubble
+        this.scene.tweens.add({
+            targets: this.bubbleGraphics,
+            scaleX: 1.5,
+            scaleY: 1.5,
+            alpha: 0,
+            duration: 200,
+            onComplete: () => this.bubbleGraphics.destroy()
+        });
 
         // Collection effect
         this.scene.tweens.add({
@@ -167,29 +257,19 @@ export class TreasureBox {
             onComplete: () => this.destroy()
         });
 
-        // Return reward info
-        return {
-            type: this.rewardType,
-            amount: this.rewardAmount
-        };
+        return { type: this.rewardType, amount: this.rewardAmount };
     }
 
     /**
      * Destroy the treasure box
      */
     destroy() {
-        if (this.floatTween) {
-            this.floatTween.stop();
-        }
-        if (this.graphics) {
-            this.graphics.destroy();
-        }
-        if (this.glowGraphics) {
-            this.glowGraphics.destroy();
-        }
-        if (this.label) {
-            this.label.destroy();
-        }
+        if (this.riseTween) this.riseTween.stop();
+        if (this.wanderTween) this.wanderTween.stop();
+        if (this.bubbleGraphics) this.bubbleGraphics.destroy();
+        if (this.graphics) this.graphics.destroy();
+        if (this.glowGraphics) this.glowGraphics.destroy();
+        if (this.label) this.label.destroy();
     }
 }
 

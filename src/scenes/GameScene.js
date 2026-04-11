@@ -279,12 +279,12 @@ class GameScene extends Phaser.Scene {
      */
     calculateEnemyLevel(playerLevel) {
         const roll = Math.random();
-        if (roll < 0.7) {
-            return playerLevel;  // 70%
-        } else if (roll < 0.9) {
-            return Math.max(1, playerLevel - 1);  // 20%
+        if (roll < 0.80) {
+            return playerLevel;                    // 80% same level
+        } else if (roll < 0.92) {
+            return Math.max(1, playerLevel - 1);  // 12% lower level
         } else {
-            return playerLevel + 1;  // 10%
+            return playerLevel + 1;               // 8% higher level
         }
     }
 

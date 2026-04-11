@@ -71,41 +71,91 @@ export class BackgroundSystem {
     }
 
     /**
-     * Create bubble animation using sprite sheet
+     * Create bubble animation using procedural drawing
      */
     _createBubbleAnimation() {
-        // Bubbles at depth 6, above background but below fish
-        for (let i = 0; i < 20; i++) {
-            const x = Math.random() * this.screenWidth;
-            const y = Math.random() * this.screenHeight + 50;
-            const scale = 0.5 + Math.random() * 1.0;
-
-            // Create bubble sprite
-            const bubble = this.scene.add.image(x, y, 'bubbles');
-            bubble.setDepth(6);
-            bubble.setScale(scale);
-            bubble.setAlpha(0.7);
-
-            // Animate bubble
-            this.scene.tweens.add({
-                targets: bubble,
-                y: -50,
-                x: x + (Math.random() - 0.5) * 100,
-                alpha: 0,
-                scale: scale * 1.5,
-                duration: 5000 + Math.random() * 5000,
-                repeat: -1,
-                yoyo: false,
-                onRepeat: () => {
-                    bubble.x = Math.random() * this.screenWidth;
-                    bubble.y = this.screenHeight + 20;
-                    bubble.alpha = 0.7;
-                    bubble.setScale(0.5 + Math.random() * 1.0);
-                }
-            });
-
-            this.bubbles.push(bubble);
+        const bubbleCount = 70;
+        for (let i = 0; i < bubbleCount; i++) {
+            this.createBubble();
         }
+    }
+
+    createBubble() {
+        const rand = Math.random();
+        const size = 3 + Math.pow(rand, 0.7) * 22; // 3-25 pixels
+        const x = Math.random() * this.screenWidth;
+        const y = Math.random() * this.screenHeight + 50;
+        const baseAlpha = 0.2 + rand * 0.5; // 0.2-0.7
+        const speed = 2000 + Math.random() * 6000; // 2-8 seconds
+
+        // Create bubble with procedural drawing
+        const bubble = this.scene.add.graphics();
+        bubble.fillStyle(0xAADDFF, baseAlpha);
+        bubble.fillCircle(size/2, size/2, size/2);
+        bubble.lineStyle(1, 0xCCEEFF, baseAlpha * 0.8);
+        bubble.strokeCircle(size/2, size/2, size/2);
+        bubble.fillStyle(0xFFFFFF, 0.5);
+        bubble.fillCircle(size * 0.3, size * 0.3, size * 0.15);
+
+        bubble.x = x;
+        bubble.y = y;
+        bubble.setDepth(6);
+
+        const targetY = -50;
+        const wobbleAmount = 30 + Math.random() * 50;
+        const wobbleSpeed = 500 + Math.random() * 1000;
+        const horizontalDrift = (25 - size) * 0.5;
+
+        // Rising animation
+        this.scene.tweens.add({
+            targets: bubble,
+            y: targetY,
+            x: x + horizontalDrift * (Math.random() > 0.5 ? 1 : -1),
+            alpha: { from: baseAlpha, to: 0 },
+            duration: speed,
+            ease: 'Sine.easeOut',
+            onRepeat: () => {
+                bubble.x = Math.random() * this.screenWidth;
+                bubble.y = this.screenHeight + 20;
+                bubble.alpha = baseAlpha;
+                bubble.setScale(1);
+                if (Math.random() < 0.05) {
+                    this.createRipple(bubble.x, 50);
+                }
+            },
+            repeat: -1
+        });
+
+        // Sine wave wobble
+        this.scene.tweens.add({
+            targets: bubble,
+            x: `+=${wobbleAmount}`,
+            duration: wobbleSpeed,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
+
+        this.bubbles.push(bubble);
+    }
+
+    createRipple(x, y) {
+        const ripple = this.scene.add.graphics();
+        ripple.x = x;
+        ripple.y = y;
+        ripple.setDepth(6);
+        ripple.lineStyle(2, 0xAADDFF, 0.6);
+        ripple.strokeCircle(0, 0, 5);
+
+        this.scene.tweens.add({
+            targets: ripple,
+            scaleX: 4,
+            scaleY: 0.3,
+            alpha: 0,
+            duration: 800,
+            ease: 'Quad.easeOut',
+            onComplete: () => ripple.destroy()
+        });
     }
 
     /**

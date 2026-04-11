@@ -1,73 +1,189 @@
 import { jest } from '@jest/globals';
+import { BossAnimation } from '../BossAnimation.js';
 
 describe('BossAnimation', () => {
-    test('boss rises from bottom with screen shake', () => {
-        const mockBoss = {
-            graphics: {
-                setPosition: jest.fn(),
-                setTint: jest.fn()
-            }
-        };
-        const mockScene = {
-            tweens: { add: jest.fn() },
+    let mockScene;
+    let mockBoss;
+
+    beforeEach(() => {
+        mockScene = {
+            tweens: { add: jest.fn(), killAll: jest.fn() },
             cameras: { main: { shake: jest.fn() } }
         };
 
-        // Create animation object with behavior
-        const animation = {
-            boss: mockBoss,
-            scene: mockScene,
-            play: function(type, boss) {
-                if (type === 'rise_from_bottom') {
-                    boss.graphics.setPosition(boss.graphics.x || 400, 700);
-                    this.scene.cameras.main.shake(500, 0.01);
-                    this.scene.tweens.add({
-                        targets: boss.graphics,
-                        y: 384,
-                        duration: 2000,
-                        ease: 'Sine.easeInOut'
-                    });
-                }
+        mockBoss = {
+            graphics: {
+                x: 400,
+                y: 384,
+                setPosition: jest.fn()
             }
         };
-
-        animation.play('rise_from_bottom', mockBoss);
-
-        expect(mockBoss.graphics.setPosition).toHaveBeenCalled();
-        expect(mockScene.cameras.main.shake).toHaveBeenCalled();
-        expect(mockScene.tweens.add).toHaveBeenCalled();
     });
 
-    test('boss charges from left', () => {
-        const mockBoss = {
-            graphics: {
-                setPosition: jest.fn(),
-                x: -100
-            }
-        };
-        const mockScene = {
-            tweens: { add: jest.fn() }
-        };
+    describe('constructor', () => {
+        test('initializes with scene and null animation', () => {
+            const animation = new BossAnimation(mockScene);
 
-        const animation = {
-            boss: mockBoss,
-            scene: mockScene,
-            play: function(type, boss) {
-                if (type === 'charge_from_left') {
-                    boss.graphics.setPosition(-100, 384);
-                    this.scene.tweens.add({
-                        targets: boss.graphics,
-                        x: 400,
-                        duration: 1500,
-                        ease: 'Quad.easeOut'
-                    });
+            expect(animation.scene).toBe(mockScene);
+            expect(animation.currentAnimation).toBeNull();
+        });
+    });
+
+    describe('play', () => {
+        test('sets currentAnimation when play is called', () => {
+            const animation = new BossAnimation(mockScene);
+
+            animation.play('rise_from_bottom', mockBoss);
+
+            expect(animation.currentAnimation).toBe('rise_from_bottom');
+        });
+
+        test('rise_from_bottom triggers rise animation', () => {
+            const animation = new BossAnimation(mockScene);
+
+            animation.play('rise_from_bottom', mockBoss);
+
+            expect(mockBoss.graphics.setPosition).toHaveBeenCalledWith(400, 700);
+            expect(mockScene.cameras.main.shake).toHaveBeenCalledWith(500, 0.01);
+            expect(mockScene.tweens.add).toHaveBeenCalledWith({
+                targets: mockBoss.graphics,
+                y: 384,
+                duration: 2000,
+                ease: 'Sine.easeInOut'
+            });
+        });
+
+        test('charge_from_left triggers charge animation', () => {
+            const animation = new BossAnimation(mockScene);
+
+            animation.play('charge_from_left', mockBoss);
+
+            expect(mockBoss.graphics.setPosition).toHaveBeenCalledWith(-100, 384);
+            expect(mockScene.tweens.add).toHaveBeenCalledWith({
+                targets: mockBoss.graphics,
+                x: 400,
+                duration: 1500,
+                ease: 'Quad.easeOut'
+            });
+        });
+
+        test('unknown animation type does nothing', () => {
+            const animation = new BossAnimation(mockScene);
+
+            animation.play('unknown_animation', mockBoss);
+
+            expect(animation.currentAnimation).toBe('unknown_animation');
+            expect(mockBoss.graphics.setPosition).not.toHaveBeenCalled();
+            expect(mockScene.tweens.add).not.toHaveBeenCalled();
+        });
+
+        test('rise_from_bottom without cameras does not throw', () => {
+            const sceneWithoutCameras = {
+                tweens: { add: jest.fn() }
+            };
+            const animation = new BossAnimation(sceneWithoutCameras);
+
+            // Should not throw
+            animation.play('rise_from_bottom', mockBoss);
+
+            expect(sceneWithoutCameras.tweens.add).toHaveBeenCalled();
+        });
+    });
+
+    describe('isPlaying', () => {
+        test('returns false when no animation has been played', () => {
+            const animation = new BossAnimation(mockScene);
+
+            expect(animation.isPlaying()).toBe(false);
+        });
+
+        test('returns true when animation is playing', () => {
+            const animation = new BossAnimation(mockScene);
+
+            animation.play('rise_from_bottom', mockBoss);
+
+            expect(animation.isPlaying()).toBe(true);
+        });
+
+        test('returns true after charge_from_left', () => {
+            const animation = new BossAnimation(mockScene);
+
+            animation.play('charge_from_left', mockBoss);
+
+            expect(animation.isPlaying()).toBe(true);
+        });
+    });
+
+    describe('stop', () => {
+        test('calls killAll on tweens', () => {
+            const animation = new BossAnimation(mockScene);
+
+            animation.play('rise_from_bottom', mockBoss);
+            animation.stop();
+
+            expect(mockScene.tweens.killAll).toHaveBeenCalled();
+        });
+
+        test('resets currentAnimation to null', () => {
+            const animation = new BossAnimation(mockScene);
+
+            animation.play('rise_from_bottom', mockBoss);
+            animation.stop();
+
+            expect(animation.currentAnimation).toBeNull();
+        });
+
+        test('stop when no animation does not throw', () => {
+            const animation = new BossAnimation(mockScene);
+
+            // Should not throw
+            animation.stop();
+
+            expect(animation.currentAnimation).toBeNull();
+        });
+
+        test('stop without tweens does not throw', () => {
+            const sceneWithoutTweens = {};
+            const animation = new BossAnimation(sceneWithoutTweens);
+
+            // Should not throw
+            animation.stop();
+
+            expect(animation.currentAnimation).toBeNull();
+        });
+    });
+
+    describe('playRiseFromBottom', () => {
+        test('uses default x position when graphics.x is undefined', () => {
+            const animation = new BossAnimation(mockScene);
+            const bossWithNoX = {
+                graphics: {
+                    x: undefined,
+                    y: 384,
+                    setPosition: jest.fn()
                 }
-            }
-        };
+            };
 
-        animation.play('charge_from_left', mockBoss);
+            animation.play('rise_from_bottom', bossWithNoX);
 
-        expect(mockBoss.graphics.setPosition).toHaveBeenCalled();
-        expect(mockScene.tweens.add).toHaveBeenCalled();
+            expect(bossWithNoX.graphics.setPosition).toHaveBeenCalledWith(400, 700);
+        });
+    });
+
+    describe('playChargeFromLeft', () => {
+        test('uses default y position when graphics.y is undefined', () => {
+            const animation = new BossAnimation(mockScene);
+            const bossWithNoY = {
+                graphics: {
+                    x: 400,
+                    y: undefined,
+                    setPosition: jest.fn()
+                }
+            };
+
+            animation.play('charge_from_left', bossWithNoY);
+
+            expect(bossWithNoY.graphics.setPosition).toHaveBeenCalledWith(-100, 384);
+        });
     });
 });

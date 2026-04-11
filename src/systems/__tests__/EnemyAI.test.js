@@ -703,3 +703,314 @@ describe('Giant Jellyfish chain lightning', () => {
         expect(mockTarget.takeDamage).toHaveBeenCalledWith(15);
     });
 });
+
+describe('updateEnrage', () => {
+    test('doubles speed when HP below 30%', () => {
+        const enemy = {
+            hp: 20,
+            maxHp: 100,
+            speedMultiplier: 1.0,
+            chaseSpeedMultiplier: 1.5
+        };
+
+        const updateEnrageFn = Enemy.prototype.updateEnrage;
+        updateEnrageFn.call(enemy);
+
+        expect(enemy.speedMultiplier).toBe(2.0);
+        expect(enemy.chaseSpeedMultiplier).toBe(2.0);
+    });
+
+    test('does nothing when HP above 30%', () => {
+        const enemy = {
+            hp: 40,
+            maxHp: 100,
+            speedMultiplier: 1.0,
+            chaseSpeedMultiplier: 1.5
+        };
+
+        const updateEnrageFn = Enemy.prototype.updateEnrage;
+        updateEnrageFn.call(enemy);
+
+        expect(enemy.speedMultiplier).toBe(1.0);
+        expect(enemy.chaseSpeedMultiplier).toBe(1.5);
+    });
+});
+
+describe('setRandomWanderDirection', () => {
+    test('returns early when scene is null', () => {
+        const enemy = {
+            scene: null,
+            graphics: { x: 100, y: 100, active: true }
+        };
+
+        const setRandomWanderDirectionFn = Enemy.prototype.setRandomWanderDirection;
+        setRandomWanderDirectionFn.call(enemy);
+
+        // If we get here without error, the guard clause worked
+        expect(enemy.scene).toBeNull();
+    });
+
+    test('returns early when physics is missing', () => {
+        const enemy = {
+            scene: {},
+            graphics: { x: 100, y: 100, active: true }
+        };
+
+        const setRandomWanderDirectionFn = Enemy.prototype.setRandomWanderDirection;
+        setRandomWanderDirectionFn.call(enemy);
+
+        expect(enemy.scene.physics).toBeUndefined();
+    });
+});
+
+describe('takeDamage flee behavior', () => {
+    test('does not flee when HP above 30%', () => {
+        const enemy = {
+            hp: 50,
+            maxHp: 100,
+            updateHealthBar: jest.fn(),
+            setState: jest.fn(),
+            logger: { debug: jest.fn() }
+        };
+
+        const takeDamageFn = Enemy.prototype.takeDamage;
+        takeDamageFn.call(enemy, 10, { x: 50, y: 100 });
+
+        expect(enemy.setState).not.toHaveBeenCalled();
+    });
+
+    test('does not flee when no attacker', () => {
+        const enemy = {
+            hp: 20,
+            maxHp: 100,
+            updateHealthBar: jest.fn(),
+            setState: jest.fn(),
+            logger: { debug: jest.fn() }
+        };
+
+        const takeDamageFn = Enemy.prototype.takeDamage;
+        takeDamageFn.call(enemy, 10, null);
+
+        expect(enemy.setState).not.toHaveBeenCalled();
+    });
+
+    test('may flee when HP below 30% and has attacker', () => {
+        // Mock Math.random to return 0.3 (below 0.5 threshold)
+        const originalRandom = Math.random;
+        Math.random = jest.fn().mockReturnValue(0.3);
+
+        const enemy = {
+            hp: 25,
+            maxHp: 100,
+            updateHealthBar: jest.fn(),
+            setState: jest.fn(),
+            logger: { debug: jest.fn() }
+        };
+
+        const takeDamageFn = Enemy.prototype.takeDamage;
+        takeDamageFn.call(enemy, 5, { x: 50, y: 100 });
+
+        expect(enemy.setState).toHaveBeenCalledWith(Enemy.STATE.FLEEING, { x: 50, y: 100 });
+
+        Math.random = originalRandom;
+    });
+});
+
+describe('updateFishing', () => {
+    test('finds smaller enemy as target', () => {
+        const mockTarget = {
+            x: 200, y: 100,
+            active: true,
+            fishData: { size: 20 },
+            expValue: 10
+        };
+        const mockScene = {
+            fishes: { getChildren: jest.fn().mockReturnValue([mockTarget]) },
+            physics: { moveTo: jest.fn() },
+            time: { now: 1000 }
+        };
+
+        const enemy = {
+            scene: mockScene,
+            graphics: { x: 100, y: 100, active: true },
+            fishConfig: { size: 40 },
+            fishingTarget: null,
+            attackRange: 50,
+            attackCooldown: 1500,
+            lastAttackTime: 0,
+            chaseSpeedMultiplier: 1.5,
+            baseSpeed: 100,
+            expValue: 10,
+            fishType: 'shark',
+            state: Enemy.STATE.FISHING,
+            setState: jest.fn(),
+            logger: { debug: jest.fn() }
+        };
+
+        const updateFishingFn = Enemy.prototype.updateFishing;
+        updateFishingFn.call(enemy, 16);
+
+        expect(enemy.fishingTarget).toBe(mockTarget);
+    });
+
+    test('returns to wandering when no targets found', () => {
+        const mockScene = {
+            fishes: { getChildren: jest.fn().mockReturnValue([]) },
+            physics: { moveTo: jest.fn() }
+        };
+
+        const enemy = {
+            scene: mockScene,
+            graphics: { x: 100, y: 100, active: true },
+            fishConfig: { size: 40 },
+            fishingTarget: null,
+            state: Enemy.STATE.FISHING,
+            setState: jest.fn()
+        };
+
+        const updateFishingFn = Enemy.prototype.updateFishing;
+        updateFishingFn.call(enemy, 16);
+
+        expect(enemy.state).toBe(Enemy.STATE.WANDERING);
+    });
+
+    test('applies damage bonus when significantly larger', () => {
+        // Ensure Phaser.Math.Distance.Between is properly mocked
+        const originalDistance = Phaser.Math.Distance.Between;
+        Phaser.Math.Distance.Between = jest.fn((x1, y1, x2, y2) => Math.sqrt((x2-x1)**2 + (y2-y1)**2));
+
+        const mockTarget = {
+            x: 105, y: 105,
+            active: true,
+            graphics: { active: true },
+            fishData: { size: 20 },
+            expValue: 10,
+            takeDamage: jest.fn().mockReturnValue(false)
+        };
+        const mockScene = {
+            fishes: { getChildren: jest.fn().mockReturnValue([mockTarget]) },
+            physics: { moveTo: jest.fn() },
+            time: { now: 2000 }
+        };
+
+        const enemy = {
+            scene: mockScene,
+            graphics: { x: 100, y: 100, active: true },
+            fishConfig: { size: 40 }, // 40 - 20 = 20 size diff (>10)
+            fishingTarget: mockTarget,
+            attackRange: 50,
+            attackCooldown: 1500,
+            lastAttackTime: 0,
+            chaseSpeedMultiplier: 1.5,
+            baseSpeed: 100,
+            expValue: 10,
+            fishType: 'shark',
+            state: Enemy.STATE.FISHING,
+            setState: jest.fn(),
+            logger: { debug: jest.fn() }
+        };
+
+        const updateFishingFn = Enemy.prototype.updateFishing;
+        updateFishingFn.call(enemy, 16);
+
+        // Base damage = floor(40/4) = 10, with 15% bonus = floor(10 * 1.15) = 11
+        expect(mockTarget.takeDamage).toHaveBeenCalledWith(11);
+
+        Phaser.Math.Distance.Between = originalDistance;
+    });
+
+    test('chases target when out of attack range', () => {
+        const mockTarget = {
+            x: 300, y: 100,
+            active: true,
+            graphics: { active: true },
+            fishData: { size: 20 }
+        };
+        const mockScene = {
+            fishes: { getChildren: jest.fn().mockReturnValue([mockTarget]) },
+            physics: { moveTo: jest.fn() }
+        };
+
+        const enemy = {
+            scene: mockScene,
+            graphics: { x: 100, y: 100, active: true },
+            fishConfig: { size: 40 },
+            fishingTarget: mockTarget,
+            attackRange: 50,
+            chaseSpeedMultiplier: 1.5,
+            baseSpeed: 100,
+            state: Enemy.STATE.FISHING,
+            setState: jest.fn()
+        };
+
+        const updateFishingFn = Enemy.prototype.updateFishing;
+        updateFishingFn.call(enemy, 16);
+
+        expect(mockScene.physics.moveTo).toHaveBeenCalled();
+    });
+});
+
+describe('executeChainLightning', () => {
+    test('does nothing when chain_lightning not enabled', () => {
+        const mockScene = {
+            fishes: { getChildren: jest.fn().mockReturnValue([]) }
+        };
+
+        const enemy = {
+            scene: mockScene,
+            graphics: { x: 100, y: 100 },
+            chainLightningRange: 150,
+            fishConfig: {}
+        };
+
+        const executeChainLightningFn = Enemy.prototype.executeChainLightning;
+        executeChainLightningFn.call(enemy);
+
+        // No error means early return worked
+        expect(enemy.fishConfig.chain_lightning).toBeUndefined();
+    });
+
+    test('skips self when calculating damage', () => {
+        const mockSelf = { x: 100, y: 100, active: true };
+        const mockScene = {
+            fishes: { getChildren: jest.fn().mockReturnValue([mockSelf]) }
+        };
+
+        const enemy = {
+            scene: mockScene,
+            graphics: mockSelf,
+            chainLightningRange: 150,
+            fishConfig: { chain_lightning: true, damage: 15 }
+        };
+
+        const executeChainLightningFn = Enemy.prototype.executeChainLightning;
+        executeChainLightningFn.call(enemy);
+
+        // Self should not have takeDamage called
+        // (The mock doesn't have takeDamage so it would fail if called)
+        expect(mockScene.fishes.getChildren).toHaveBeenCalled();
+    });
+
+    test('skips inactive enemies', () => {
+        const mockInactive = {
+            x: 120, y: 100,
+            active: false,
+            takeDamage: jest.fn()
+        };
+        const mockScene = {
+            fishes: { getChildren: jest.fn().mockReturnValue([mockInactive]) }
+        };
+
+        const enemy = {
+            scene: mockScene,
+            graphics: { x: 100, y: 100 },
+            chainLightningRange: 150,
+            fishConfig: { chain_lightning: true, damage: 15 }
+        };
+
+        const executeChainLightningFn = Enemy.prototype.executeChainLightning;
+        executeChainLightningFn.call(enemy);
+
+        expect(mockInactive.takeDamage).not.toHaveBeenCalled();
+    });
+});

@@ -3,6 +3,118 @@
  */
 export class FishFactory {
     /**
+     * Fish type to frame key mapping
+     */
+    static FISH_FRAME_CONFIG = {
+        // AI-generated frame animation (game art style)
+        clownfish: { baseKey: 'clownfish_swim', totalFrames: 6, isPlayer: true },
+        small_fish: { baseKey: null, totalFrames: 0, isPlayer: false },
+        shark: { baseKey: 'shark_anim', totalFrames: 4, isPlayer: false },
+        shrimp: { baseKey: 'shrimp_anim', totalFrames: 4, isPlayer: false },
+        jellyfish: { baseKey: 'jellyfish_swim', totalFrames: 4, isPlayer: false },
+        anglerfish: { baseKey: 'anglerfish_swim', totalFrames: 4, isPlayer: false },
+        seahorse: { baseKey: 'seahorse_swim', totalFrames: 4, isPlayer: false },
+        octopus: { baseKey: 'octopus_swim', totalFrames: 4, isPlayer: false },
+        eel: { baseKey: 'eel_swim', totalFrames: 4, isPlayer: false },
+        mutant_shark: { baseKey: 'mutant_shark_swim', totalFrames: 4, isPlayer: false },
+        giant_jellyfish: { baseKey: 'giant_jellyfish_swim', totalFrames: 4, isPlayer: false },
+        boss_squid: { baseKey: 'boss_squid_swim', totalFrames: 4, isPlayer: false },
+        boss_shark_king: { baseKey: 'shark_king_swim', totalFrames: 4, isPlayer: false },
+        boss_sea_dragon: { baseKey: 'boss_sea_dragon_swim', totalFrames: 4, isPlayer: false },
+    };
+
+    /**
+     * Create fish using AI-generated frame animation
+     * @param {Phaser.Scene} scene - Phaser scene
+     * @param {string} fishType - Type of fish (clownfish, shark, shrimp, jellyfish)
+     * @param {number} scale - Scale factor
+     * @param {number} frame - Animation frame
+     * @returns {Phaser.GameObjects.Image}
+     */
+    static createFishFromFrames(scene, fishType, scale = 1.0, frame = 0) {
+        const config = FishFactory.FISH_FRAME_CONFIG[fishType];
+
+        // Fall back to legacy sprite or procedural if no frames available
+        if (!config || !config.baseKey) {
+            // Try legacy sprite first
+            if (fishType === 'clownfish' || fishType === 'shark') {
+                return FishFactory.createEnemyFromSprite(scene, fishType === 'clownfish' ? 'fish' : 'fish_big', scale, frame);
+            }
+            // Procedural drawing fallback
+            const color = FishFactory.getFishColor(fishType);
+            const graphics = FishFactory.createFish(scene, fishType, 30 * scale, color);
+            return graphics;
+        }
+
+        // Frame key pattern: baseKey_frameNumber[_001]
+        // clownfish/small_fish use pattern: clownfish_swim_1
+        // others use pattern: shark_anim_1_001
+        const frameNum = (frame % config.totalFrames) + 1;
+        const usesClownfishPattern = config.baseKey.includes('clownfish');
+        const spriteKey = usesClownfishPattern
+            ? `${config.baseKey}_${frameNum}`
+            : `${config.baseKey}_${frameNum}_001`;
+
+        // Check if texture exists
+        const textureManager = scene.textures;
+        if (!textureManager.exists(spriteKey)) {
+            console.warn(`FishFactory: Frame texture '${spriteKey}' not found for '${fishType}', using fallback`);
+            // Fall back to procedural drawing
+            const fallbackColor = FishFactory.getFishColor(fishType);
+            const fallbackGraphics = FishFactory.createFish(scene, fishType, 30 * scale, fallbackColor);
+            fallbackGraphics.setDepth(config.isPlayer ? 100 : 30);
+            return fallbackGraphics;
+        }
+
+        // AI-generated frames are 512x512, need smaller scale to match game world
+        // Also apply slight transparency to blend with background
+        const aiScale = scale * 0.4; // Reduce size by 60%
+        const sprite = scene.add.image(0, 0, spriteKey);
+        sprite.setScale(aiScale);
+        sprite.setAlpha(0.85); // Slight transparency for blending
+        sprite.setDepth(config.isPlayer ? 100 : 30);
+
+        // Add glow for player fish (reduced to match smaller AI frame)
+        if (config.isPlayer) {
+            const glowGraphics = scene.add.graphics();
+            glowGraphics.fillStyle(0xFFFF88, 0.25);
+            glowGraphics.fillEllipse(0, 0, 60 * aiScale, 40 * aiScale);
+            glowGraphics.setDepth(99);
+            sprite.glowGraphics = glowGraphics;
+        }
+
+        // Store frame info for animation
+        sprite.currentFrame = frame;
+        sprite.totalFrames = config.totalFrames;
+        sprite.baseKey = config.baseKey;
+        sprite.fishType = fishType;
+
+        return sprite;
+    }
+
+    /**
+     * Get fish color by type
+     */
+    static getFishColor(fishType) {
+        const colors = {
+            clownfish: 0xFF6B6B,
+            shark: 0x666666,
+            shrimp: 0xFFB6C1,
+            jellyfish: 0xADD8E6,
+            anglerfish: 0x8B008B,
+            seahorse: 0xFFD700,
+            octopus: 0x9370DB,
+            eel: 0xFFD700,
+            mutant_shark: 0xDC143C,
+            giant_jellyfish: 0x00CED1,
+            boss_squid: 0x8B0000,
+            boss_shark_king: 0xFFD700,
+            boss_sea_dragon: 0x4169E1,
+        };
+        return colors[fishType] || 0xFF6B6B;
+    }
+
+    /**
      * Create player fish using sprite image (from asset pack)
      * @param {Phaser.Scene} scene - Phaser scene
      * @param {number} scale - Scale factor for the sprite
@@ -10,6 +122,11 @@ export class FishFactory {
      * @returns {Phaser.GameObjects.Image}
      */
     static createPlayerFishFromSprite(scene, scale = 1.0, frame = 0) {
+        // Try AI-generated clownfish frames first
+        if (scene.textures.exists('clownfish_swim_0')) {
+            return FishFactory.createFishFromFrames(scene, 'clownfish', scale, frame);
+        }
+
         const spriteKey = `player_swim_${frame}`;
 
         // Check if texture exists
@@ -19,18 +136,19 @@ export class FishFactory {
             // Fall back to procedural drawing
             const fallbackGraphics = FishFactory.createFish(scene, 'clownfish', 30, 0xFF6B6B);
             fallbackGraphics.scale = scale;
+            fallbackGraphics.setDepth(100); // Player at top
             return fallbackGraphics;
         }
 
         const sprite = scene.add.image(0, 0, spriteKey);
         sprite.setScale(scale);
-        sprite.setDepth(15); // Player at depth 15, above enemies
+        sprite.setDepth(50); // Player at depth 50, above all entities
 
-        // Add glow effect (bright yellow/orange to stand out)
+        // Add glow effect (bright yellow/orange to stand out) - no transparency
         const glowGraphics = scene.add.graphics();
-        glowGraphics.fillStyle(0xFFFF88, 0.3);
+        glowGraphics.fillStyle(0xFFFF88, 0.4);
         glowGraphics.fillEllipse(0, 0, 100 * scale, 70 * scale);
-        glowGraphics.setDepth(14); // Just below player
+        glowGraphics.setDepth(49); // Just below player
         glowGraphics.setPosition(0, 0);
         sprite.glowGraphics = glowGraphics;
 
@@ -45,39 +163,25 @@ export class FishFactory {
     /**
      * Create enemy fish using sprite image (from asset pack)
      * @param {Phaser.Scene} scene - Phaser scene
-     * @param {string} type - Enemy type ('fish' or 'fish_big')
+     * @param {string} type - Enemy type ('fish', 'fish_big', or specific fish type like 'shark', 'shrimp')
      * @param {number} scale - Scale factor for the sprite
      * @param {number} frame - Animation frame
      * @returns {Phaser.GameObjects.Image}
      */
     static createEnemyFromSprite(scene, type = 'fish', scale = 1.0, frame = 0) {
-        const baseKey = type === 'fish_big' ? 'enemy_fish_big' : 'enemy_fish';
-        const spriteKey = `${baseKey}_${frame}`;
+        // Map legacy types to fish types
+        const typeMapping = {
+            'fish': 'small_fish',
+            'fish_big': 'shark',
+        };
 
-        // Check if texture exists
-        const textureManager = scene.textures;
+        const fishType = typeMapping[type] || type;
 
-        if (!textureManager.exists(spriteKey)) {
-            console.warn(`FishFactory: Texture '${spriteKey}' not found, using fallback`);
-            // Fall back to procedural fish
-            const fallbackGraphics = FishFactory.createFish(scene, type === 'fish_big' ? 'shark' : 'clownfish', 30, 0xFF6B6B);
-            fallbackGraphics.scale = scale;
-            return fallbackGraphics;
-        }
-
-        const sprite = scene.add.image(0, 0, spriteKey);
-        sprite.setScale(scale);
-        sprite.setDepth(10); // Fish at depth 10, above background layers
-
-        // Add orange/red tint to make fish stand out against blue background
-        sprite.setTint(0xff8844);
-
-        // Store frame info for animation
-        sprite.currentFrame = frame;
-        sprite.totalFrames = type === 'fish_big' ? 5 : 4;
-        sprite.baseKey = baseKey;
-
-        return sprite;
+        // Use procedural drawing (AI frames disabled)
+        const fishColor = FishFactory.getFishColor(fishType);
+        const graphics = FishFactory.createFish(scene, fishType, 30 * scale, fishColor);
+        graphics.setDepth(30);
+        return graphics;
     }
 
     /**

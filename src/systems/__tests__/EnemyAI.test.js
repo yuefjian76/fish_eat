@@ -507,13 +507,15 @@ describe('attackPlayer', () => {
             lastAttackTime: 0,
             attackCooldown: 1500,
             state: Enemy.STATE.CHASING,
-            fishConfig: { size: 40 }
+            fishConfig: { size: 40 },
+            aiLevel: 1
         };
 
         const attackPlayerFn = Enemy.prototype.attackPlayer;
         const damage = attackPlayerFn.call(enemy, {});
 
-        expect(damage).toBe(10); // 40 / 4 = 10
+        // New formula: 2 + floor(log(size) * 3) = 2 + floor(3.688 * 3) = 2 + 11 = 13
+        expect(damage).toBe(13);
         expect(enemy.lastAttackTime).toBe(3000);
     });
 
@@ -694,13 +696,15 @@ describe('Giant Jellyfish chain lightning', () => {
             scene: mockScene,
             graphics: { x: 100, y: 100 },
             chainLightningRange: 150,
-            fishConfig: { chain_lightning: true, damage: 15 }
+            fishConfig: { chain_lightning: true, size: 40 },
+            aiLevel: 1
         };
 
         const executeChainLightningFn = Enemy.prototype.executeChainLightning;
         executeChainLightningFn.call(enemy);
 
-        expect(mockTarget.takeDamage).toHaveBeenCalledWith(15);
+        // New formula: 2 + floor(log(40) * 3) = 2 + 11 = 13
+        expect(mockTarget.takeDamage).toHaveBeenCalledWith(13);
     });
 });
 
@@ -907,14 +911,15 @@ describe('updateFishing', () => {
             fishType: 'shark',
             state: Enemy.STATE.FISHING,
             setState: jest.fn(),
-            logger: { debug: jest.fn() }
+            logger: { debug: jest.fn() },
+            aiLevel: 1
         };
 
         const updateFishingFn = Enemy.prototype.updateFishing;
         updateFishingFn.call(enemy, 16);
 
-        // Base damage = floor(40/4) = 10, with 15% bonus = floor(10 * 1.15) = 11
-        expect(mockTarget.takeDamage).toHaveBeenCalledWith(11);
+        // Base damage = 2 + floor(log(40) * 3) = 13, with 15% bonus = floor(13 * 1.15) = 14
+        expect(mockTarget.takeDamage).toHaveBeenCalledWith(14);
 
         Phaser.Math.Distance.Between = originalDistance;
     });

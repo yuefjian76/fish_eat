@@ -48,7 +48,7 @@ export class Enemy {
         this.state = Enemy.STATE.WANDERING;
         this.visionRange = Math.floor(200 * aiLevel);
         this.attackRange = Math.floor(50 * aiLevel);
-        this.attackCooldown = Math.floor(1500 / aiLevel); // Higher AI = faster attacks
+        this.attackCooldown = Math.floor(800 / aiLevel); // Higher AI = faster attacks
         this.lastAttackTime = 0;
         this.wanderTimer = 0;
         this.wanderInterval = Math.floor(2000 / aiLevel); // Higher AI = more active
@@ -196,8 +196,12 @@ export class Enemy {
         this.lastAttackTime = currentTime;
         this.state = Enemy.STATE.ATTACKING;
 
-        // Deal damage based on fish size
-        const damage = Math.floor(this.fishConfig.size / 4);
+        // Deal damage based on fish size AND level - logarithmic scale for balanced gameplay
+        // Same level enemies have consistent damage, high level enemies hit much harder
+        // Level 1: base damage, Level 2: ~1.5x, Level 3: ~2x, Level 4+: ~2.5x+
+        const sizeDamage = 2 + Math.floor(Math.log(this.fishConfig.size) * 3);
+        const levelMultiplier = 1 + ((this.aiLevel || 1) - 1) * 0.5; // 50% more damage per level
+        const damage = Math.max(5, Math.min(Math.floor(sizeDamage * levelMultiplier), 30));
         return damage;
     }
 
@@ -294,7 +298,10 @@ export class Enemy {
         if (!this.fishConfig.chain_lightning) return;
 
         const range = this.chainLightningRange || 150;
-        const damage = this.fishConfig.damage || 10;
+        // Use same damage formula as regular attack (size * level scaling)
+        const sizeDamage = 2 + Math.floor(Math.log(this.fishConfig.size) * 3);
+        const levelMultiplier = 1 + ((this.aiLevel || 1) - 1) * 0.5;
+        const damage = Math.max(5, Math.min(Math.floor(sizeDamage * levelMultiplier), 30));
 
         // Get all entities in range
         const enemies = this.scene.fishes.getChildren();
@@ -352,8 +359,10 @@ export class Enemy {
             if (currentTime - this.lastAttackTime >= this.attackCooldown) {
                 this.lastAttackTime = currentTime;
 
-                // Base damage from size
-                let damage = Math.floor(this.fishConfig.size / 4);
+                // Base damage using same formula as regular attack (size * level scaling)
+                const sizeDamage = 2 + Math.floor(Math.log(this.fishConfig.size) * 3);
+                const levelMultiplier = 1 + ((this.aiLevel || 1) - 1) * 0.5;
+                let damage = Math.max(5, Math.min(Math.floor(sizeDamage * levelMultiplier), 30));
 
                 // Size bonus: bigger fish vs smaller fish
                 const targetSize = target.fishData ? target.fishData.size : 20;

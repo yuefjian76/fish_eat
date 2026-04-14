@@ -36,7 +36,8 @@ describe('FishFactory', () => {
                     setScale: jest.fn().mockReturnThis(),
                     setDepth: jest.fn().mockReturnThis(),
                     setTint: jest.fn().mockReturnThis(),
-                    setSize: jest.fn().mockReturnThis()
+                    setSize: jest.fn().mockReturnThis(),
+                    setAlpha: jest.fn().mockReturnThis()
                 }))
             },
             textures: {
@@ -210,8 +211,9 @@ describe('FishFactory', () => {
         test('creates player sprite when texture exists', () => {
             const sprite = FishFactory.createPlayerFishFromSprite(mockScene, 1.5, 3);
             expect(sprite).toBeDefined();
-            expect(sprite.setScale).toHaveBeenCalledWith(1.5);
-            expect(sprite.setDepth).toHaveBeenCalledWith(15);
+            // AI frames are scaled: 1.5 * 0.4 = 0.6 (with floating point precision)
+            expect(sprite.setScale).toHaveBeenCalledWith(expect.closeTo(0.6, 5));
+            expect(sprite.setDepth).toHaveBeenCalledWith(100); // Player at top layer
         });
 
         test('falls back to procedural when texture not found', () => {
@@ -228,12 +230,10 @@ describe('FishFactory', () => {
     });
 
     describe('createEnemyFromSprite', () => {
-        test('creates enemy sprite for fish type', () => {
+        test('creates enemy sprite using procedural drawing', () => {
             const sprite = FishFactory.createEnemyFromSprite(mockScene, 'fish', 1.0, 0);
             expect(sprite).toBeDefined();
-            expect(sprite.setScale).toHaveBeenCalledWith(1.0);
-            expect(sprite.setDepth).toHaveBeenCalledWith(10);
-            expect(sprite.setTint).toHaveBeenCalledWith(0xff8844);
+            expect(sprite.setDepth).toHaveBeenCalledWith(30); // Enemy depth
         });
 
         test('creates enemy sprite for fish_big type', () => {

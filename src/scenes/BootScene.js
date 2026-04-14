@@ -23,15 +23,109 @@ class BootScene extends Phaser.Scene {
             progressBar.fillRect(370, 376, 284 * value, 16);
         });
 
-        // Load background images
-        this.load.image('bg_undersea', 'src/assets/images/background_undersea.png');
-        this.load.image('midground', 'src/assets/images/midground_undersea.png');
-        this.load.image('foreground', 'src/assets/images/foregound-merged.png');
+        // Load background images - theme backgrounds (multiple variations per theme)
+        this.load.image('bg_undersea_theme', 'src/assets/images/bg_undersea_theme.jpg');
+        this.load.image('background_undersea_theme2', 'src/assets/images/background_undersea_theme2.jpg');
+        this.load.image('background_undersea_theme3', 'src/assets/images/background_undersea_theme3.jpg');
+        this.load.image('bg_tropical_theme', 'src/assets/images/bg_tropical_theme.jpg');
+        this.load.image('background_tropical_theme', 'src/assets/images/background_tropical_theme.jpg');
+        this.load.image('background_tropical_theme3', 'src/assets/images/background_tropical_theme3.jpg');
+        this.load.image('bg_polar_theme', 'src/assets/images/bg_polar_theme.jpg');
+        this.load.image('background_polar_theme2', 'src/assets/images/background_polar_theme2.jpg');
+        this.load.image('background_polar_theme3', 'src/assets/images/background_polar_theme3.jpg');
+        // Load parallax layer images - theme-specific midground and foreground
+        this.load.image('midground_undersea_theme', 'src/assets/images/midground_undersea_theme.jpg');
+        this.load.image('midground_tropical_theme', 'src/assets/images/midground_tropical_theme.jpg');
+        this.load.image('midground_polar_theme', 'src/assets/images/midground_polar_theme.jpg');
+        this.load.image('foreground_undersea_theme', 'src/assets/images/foreground_undersea_theme.jpg');
+        this.load.image('foreground_tropical_theme', 'src/assets/images/foreground_tropical_theme.jpg');
+        this.load.image('foreground_polar_theme', 'src/assets/images/foreground_polar_theme.jpg');
         this.load.image('far', 'src/assets/images/far.png');
         this.load.image('sand', 'src/assets/images/sand.png');
         this.load.image('bubbles', 'src/assets/images/bubbles_fx.png');
 
-        // Load single-frame entity sprites (cropped from sprite sheets)
+        // Load AI-generated frame animations
+        // Clownfish (Player) - 6 frames (key pattern: baseKey_N.jpg)
+        this.load.image('clownfish_swim_1', 'src/assets/images/frames/clownfish/clownfish_swim_1.jpg');
+        this.load.image('clownfish_swim_2', 'src/assets/images/frames/clownfish/clownfish_swim_2.jpg');
+        this.load.image('clownfish_swim_3', 'src/assets/images/frames/clownfish/clownfish_swim_3.jpg');
+        this.load.image('clownfish_swim_4', 'src/assets/images/frames/clownfish/clownfish_swim_4.jpg');
+        this.load.image('clownfish_swim_5', 'src/assets/images/frames/clownfish/clownfish_swim_5.jpg');
+        this.load.image('clownfish_swim_6', 'src/assets/images/frames/clownfish/clownfish_swim_6.jpg');
+
+        // Shark - 4 frames (key pattern: baseKey_N_001.jpg)
+        this.load.image('shark_anim_1_001', 'src/assets/images/frames/shark/shark_anim_1_001.jpg');
+        this.load.image('shark_anim_2_001', 'src/assets/images/frames/shark/shark_anim_2_001.jpg');
+        this.load.image('shark_anim_3_001', 'src/assets/images/frames/shark/shark_anim_3_001.jpg');
+        this.load.image('shark_anim_4_001', 'src/assets/images/frames/shark/shark_anim_4_001.jpg');
+
+        // Shrimp - 4 frames
+        this.load.image('shrimp_anim_1_001', 'src/assets/images/frames/shrimp/shrimp_anim_1_001.jpg');
+        this.load.image('shrimp_anim_2_001', 'src/assets/images/frames/shrimp/shrimp_anim_2_001.jpg');
+        this.load.image('shrimp_anim_3_001', 'src/assets/images/frames/shrimp/shrimp_anim_3_001.jpg');
+        this.load.image('shrimp_anim_4_001', 'src/assets/images/frames/shrimp/shrimp_anim_4_001.jpg');
+
+        // Jellyfish - 4 frames (key pattern: jellyfish_swim_N_001.jpg)
+        this.load.image('jellyfish_swim_1_001', 'src/assets/images/frames/jellyfish/jellyfish_swim_1_001.jpg');
+        this.load.image('jellyfish_swim_2_001', 'src/assets/images/frames/jellyfish/jellyfish_swim_2_001.jpg');
+        this.load.image('jellyfish_swim_3_001', 'src/assets/images/frames/jellyfish/jellyfish_swim_3_001.jpg');
+        this.load.image('jellyfish_swim_4_001', 'src/assets/images/frames/jellyfish/jellyfish_swim_4_001.jpg');
+
+        // Anglerfish - 4 frames
+        this.load.image('anglerfish_swim_1_001', 'src/assets/images/frames/anglerfish/anglerfish_swim_1_001.jpg');
+        this.load.image('anglerfish_swim_2_001', 'src/assets/images/frames/anglerfish/anglerfish_swim_2_001.jpg');
+        this.load.image('anglerfish_swim_3_001', 'src/assets/images/frames/anglerfish/anglerfish_swim_3_001.jpg');
+        this.load.image('anglerfish_swim_4_001', 'src/assets/images/frames/anglerfish/anglerfish_swim_4_001.jpg');
+
+        // Seahorse - 4 frames
+        this.load.image('seahorse_swim_1_001', 'src/assets/images/frames/seahorse/seahorse_swim_1_001.jpg');
+        this.load.image('seahorse_swim_2_001', 'src/assets/images/frames/seahorse/seahorse_swim_2_001.jpg');
+        this.load.image('seahorse_swim_3_001', 'src/assets/images/frames/seahorse/seahorse_swim_3_001.jpg');
+        this.load.image('seahorse_swim_4_001', 'src/assets/images/frames/seahorse/seahorse_swim_4_001.jpg');
+
+        // Octopus - 4 frames
+        this.load.image('octopus_swim_1_001', 'src/assets/images/frames/octopus/octopus_swim_1_001.jpg');
+        this.load.image('octopus_swim_2_001', 'src/assets/images/frames/octopus/octopus_swim_2_001.jpg');
+        this.load.image('octopus_swim_3_001', 'src/assets/images/frames/octopus/octopus_swim_3_001.jpg');
+        this.load.image('octopus_swim_4_001', 'src/assets/images/frames/octopus/octopus_swim_4_001.jpg');
+
+        // Eel - 4 frames
+        this.load.image('eel_swim_1_001', 'src/assets/images/frames/eel/eel_swim_1_001.jpg');
+        this.load.image('eel_swim_2_001', 'src/assets/images/frames/eel/eel_swim_2_001.jpg');
+        this.load.image('eel_swim_3_001', 'src/assets/images/frames/eel/eel_swim_3_001.jpg');
+        this.load.image('eel_swim_4_001', 'src/assets/images/frames/eel/eel_swim_4_001.jpg');
+
+        // Mutant Shark - 4 frames
+        this.load.image('mutant_shark_swim_1_001', 'src/assets/images/frames/mutant_shark/mutant_shark_swim_1_001.jpg');
+        this.load.image('mutant_shark_swim_2_001', 'src/assets/images/frames/mutant_shark/mutant_shark_swim_2_001.jpg');
+        this.load.image('mutant_shark_swim_3_001', 'src/assets/images/frames/mutant_shark/mutant_shark_swim_3_001.jpg');
+        this.load.image('mutant_shark_swim_4_001', 'src/assets/images/frames/mutant_shark/mutant_shark_swim_4_001.jpg');
+
+        // Giant Jellyfish - 4 frames
+        this.load.image('giant_jellyfish_swim_1_001', 'src/assets/images/frames/giant_jellyfish/giant_jellyfish_swim_1_001.jpg');
+        this.load.image('giant_jellyfish_swim_2_001', 'src/assets/images/frames/giant_jellyfish/giant_jellyfish_swim_2_001.jpg');
+        this.load.image('giant_jellyfish_swim_3_001', 'src/assets/images/frames/giant_jellyfish/giant_jellyfish_swim_3_001.jpg');
+        this.load.image('giant_jellyfish_swim_4_001', 'src/assets/images/frames/giant_jellyfish/giant_jellyfish_swim_4_001.jpg');
+
+        // Shark King - 4 frames
+        this.load.image('shark_king_swim_1_001', 'src/assets/images/frames/shark_king/shark_king_swim_1_001.jpg');
+        this.load.image('shark_king_swim_2_001', 'src/assets/images/frames/shark_king/shark_king_swim_2_001.jpg');
+        this.load.image('shark_king_swim_3_001', 'src/assets/images/frames/shark_king/shark_king_swim_3_001.jpg');
+        this.load.image('shark_king_swim_4_001', 'src/assets/images/frames/shark_king/shark_king_swim_4_001.jpg');
+
+        // Boss Squid - 4 frames
+        this.load.image('boss_squid_swim_1_001', 'src/assets/images/frames/boss_squid/boss_squid_swim_1_001.jpg');
+        this.load.image('boss_squid_swim_2_001', 'src/assets/images/frames/boss_squid/boss_squid_swim_2_001.jpg');
+        this.load.image('boss_squid_swim_3_001', 'src/assets/images/frames/boss_squid/boss_squid_swim_3_001.jpg');
+        this.load.image('boss_squid_swim_4_001', 'src/assets/images/frames/boss_squid/boss_squid_swim_4_001.jpg');
+
+        // Boss Sea Dragon - 4 frames
+        this.load.image('boss_sea_dragon_swim_1_001', 'src/assets/images/frames/boss_sea_dragon/boss_sea_dragon_swim_1_001.jpg');
+        this.load.image('boss_sea_dragon_swim_2_001', 'src/assets/images/frames/boss_sea_dragon/boss_sea_dragon_swim_2_001.jpg');
+        this.load.image('boss_sea_dragon_swim_3_001', 'src/assets/images/frames/boss_sea_dragon/boss_sea_dragon_swim_3_001.jpg');
+        this.load.image('boss_sea_dragon_swim_4_001', 'src/assets/images/frames/boss_sea_dragon/boss_sea_dragon_swim_4_001.jpg');
+
+        // Legacy frames (fallback)
         this.load.image('player_swim_0', 'src/assets/images/frames/player_swim_0.png');
         this.load.image('player_swim_1', 'src/assets/images/frames/player_swim_1.png');
         this.load.image('player_swim_2', 'src/assets/images/frames/player_swim_2.png');

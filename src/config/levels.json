@@ -14,9 +14,9 @@
   ],
   "skillUnlocks": {
     "bite": 1,
-    "shield": 5,
-    "speed_up": 8,
-    "heal": 12
+    "shield": 2,
+    "speed_up": 4,
+    "heal": 6
   },
   "combo": {
     "timeWindow": 3,

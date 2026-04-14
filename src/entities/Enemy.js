@@ -196,12 +196,20 @@ export class Enemy {
         this.lastAttackTime = currentTime;
         this.state = Enemy.STATE.ATTACKING;
 
+        // Calculate type multiplier (if fish is strong against player, deal more damage)
+        let typeMultiplier = 1.0;
+        if (this.fishConfig.strongAgainst?.includes('clownfish')) {
+            typeMultiplier = 1.5; // Fish deals 50% more damage to player
+        } else if (this.fishConfig.weakTo?.includes('clownfish')) {
+            typeMultiplier = 0.5; // Fish deals 50% less damage to player
+        }
+
         // Deal damage based on fish size AND level - logarithmic scale for balanced gameplay
         // Same level enemies have consistent damage, high level enemies hit much harder
         // Level 1: base damage, Level 2: ~1.5x, Level 3: ~2x, Level 4+: ~2.5x+
         const sizeDamage = 2 + Math.floor(Math.log(this.fishConfig.size) * 3);
         const levelMultiplier = 1 + ((this.aiLevel || 1) - 1) * 0.5; // 50% more damage per level
-        const damage = Math.max(5, Math.min(Math.floor(sizeDamage * levelMultiplier), 30));
+        const damage = Math.max(5, Math.min(Math.floor(sizeDamage * levelMultiplier * typeMultiplier), 30));
         return damage;
     }
 
@@ -298,10 +306,10 @@ export class Enemy {
         if (!this.fishConfig.chain_lightning) return;
 
         const range = this.chainLightningRange || 150;
-        // Use same damage formula as regular attack (size * level scaling)
-        const sizeDamage = 2 + Math.floor(Math.log(this.fishConfig.size) * 3);
-        const levelMultiplier = 1 + ((this.aiLevel || 1) - 1) * 0.5;
-        const damage = Math.max(5, Math.min(Math.floor(sizeDamage * levelMultiplier), 30));
+        // Use centralized damage calculation (no type multiplier for AOE)
+        const damage = this.scene.battleSystem
+            ? this.scene.battleSystem.calculateEnemyDamage(this.fishConfig, this.aiLevel, 1.0)
+            : Math.max(5, Math.min(2 + Math.floor(Math.log(this.fishConfig.size) * 3), 15));
 
         // Get all entities in range
         const enemies = this.scene.fishes.getChildren();
@@ -359,23 +367,24 @@ export class Enemy {
             if (currentTime - this.lastAttackTime >= this.attackCooldown) {
                 this.lastAttackTime = currentTime;
 
-                // Base damage using same formula as regular attack (size * level scaling)
-                const sizeDamage = 2 + Math.floor(Math.log(this.fishConfig.size) * 3);
-                const levelMultiplier = 1 + ((this.aiLevel || 1) - 1) * 0.5;
-                let damage = Math.max(5, Math.min(Math.floor(sizeDamage * levelMultiplier), 30));
+                // Base damage using centralized formula
+                const damage = this.scene.battleSystem
+                    ? this.scene.battleSystem.calculateEnemyDamage(this.fishConfig, this.aiLevel, 1.0)
+                    : Math.max(5, Math.min(2 + Math.floor(Math.log(this.fishConfig.size) * 3), 15));
 
                 // Size bonus: bigger fish vs smaller fish
                 const targetSize = target.fishData ? target.fishData.size : 20;
                 const sizeDiff = this.fishConfig.size - targetSize;
+                let finalDamage = damage;
                 if (sizeDiff > 10) {
                     // Significantly larger - extra damage
-                    damage = Math.floor(damage * 1.15);
+                    finalDamage = Math.floor(damage * 1.15);
                 } else if (sizeDiff > 5) {
-                    damage = Math.floor(damage * 1.08);
+                    finalDamage = Math.floor(damage * 1.08);
                 }
 
                 if (target.fishData && target.takeDamage) {
-                    const killed = target.takeDamage(damage);
+                    const killed = target.takeDamage(finalDamage);
                     if (killed) {
                         // Gain 50% of target's exp
                         const expGained = Math.floor((target.expValue || 10) * 0.5);

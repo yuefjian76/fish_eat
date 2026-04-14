@@ -23,13 +23,25 @@ describe('BattleSystem', () => {
             expect(system.canAttack('shark', 'clownfish')).toBe(true);
         });
 
-        test('returns false if attacker is strong against target (type blocks attack)', () => {
+        test('returns true if attacker is strong against target (attacker can eat target)', () => {
             const fishData = {
                 clownfish: { strongAgainst: ['shrimp'] },
                 shrimp: {}
             };
             const system = new BattleSystem(fishData);
-            expect(system.canAttack('clownfish', 'shrimp')).toBe(false);
+            expect(system.canAttack('clownfish', 'shrimp')).toBe(true);
+        });
+
+        test('returns false if target is strong against attacker (target can eat attacker)', () => {
+            // shark strongAgainst clownfish means shark can eat clownfish
+            // So if clownfish attacks shark, shark can eat clownfish (clownfish shouldn't attack)
+            const fishData = {
+                clownfish: { strongAgainst: [] },
+                shark: { strongAgainst: ['clownfish'] }
+            };
+            const system = new BattleSystem(fishData);
+            // When target (shark) is predator of attacker (clownfish), attacker cannot attack
+            expect(system.canAttack('clownfish', 'shark')).toBe(false);
         });
 
         test('returns true if attacker is NOT strong against target', () => {

@@ -34,14 +34,33 @@ export class BattleSystem {
      */
     canAttack(attackerType, targetType) {
         const attackerConfig = this.fishData[attackerType];
+        const targetConfig = this.fishData[targetType];
         if (!attackerConfig) return false;
 
-        // Check if target is strong against attacker (attacker cannot deal damage)
+        // If attacker is strong against target (target is attacker's prey), attacker CAN attack
         if (attackerConfig.strongAgainst && attackerConfig.strongAgainst.includes(targetType)) {
+            return true;
+        }
+
+        // If target is strong against attacker (attacker is target's prey), attacker CANNOT attack
+        if (targetConfig && targetConfig.strongAgainst && targetConfig.strongAgainst.includes(attackerType)) {
             return false;
         }
 
         return true;
+    }
+
+    /**
+     * Calculate enemy damage to player based on size and level
+     * @param {object} enemyConfig - Enemy fish configuration
+     * @param {number} aiLevel - AI level of enemy
+     * @param {number} typeMultiplier - Type effectiveness multiplier (default 1.0)
+     * @returns {number} Calculated damage
+     */
+    calculateEnemyDamage(enemyConfig, aiLevel, typeMultiplier = 1.0) {
+        const sizeDamage = 2 + Math.floor(Math.log(enemyConfig.size) * 3);
+        const levelMultiplier = 1 + ((aiLevel || 1) - 1) * 0.5;
+        return Math.max(5, Math.min(Math.floor(sizeDamage * levelMultiplier * typeMultiplier), 30));
     }
 
     /**

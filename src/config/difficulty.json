@@ -8,8 +8,8 @@
         "max": 4
       },
       "aiLevel": 0.5,
-      "enemyDamageMultiplier": 0.3,
-      "playerHpMultiplier": 1.5,
+      "enemyDamageMultiplier": 0.5,
+      "playerHpMultiplier": 1.2,
       "unlockCondition": null
     },
     "normal": {
@@ -20,7 +20,7 @@
         "max": 6
       },
       "aiLevel": 0.8,
-      "enemyDamageMultiplier": 0.6,
+      "enemyDamageMultiplier": 0.75,
       "playerHpMultiplier": 1.0,
       "unlockCondition": {
         "type": "beatDifficulty",

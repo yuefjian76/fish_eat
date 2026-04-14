@@ -61,8 +61,9 @@ class GameScene extends Phaser.Scene {
         this.hp = 50;
         this.maxHp = 50;
         this.outOfCombatTimer = 0;
+        this.uiDirty = false;
         this.outOfCombatThreshold = 3000; // 3 seconds
-        this.healthRegenRate = 0.02; // 2% of max HP per second
+        this.healthRegenRate = 0.005; // 0.5% of max HP per second (slower regen)
         this.difficulty = data.difficulty || 'easy';
         this.spawnTimer = null;
     }
@@ -132,6 +133,9 @@ class GameScene extends Phaser.Scene {
         // Initialize BackgroundSystem and create full underwater background
         this.backgroundSystem = new BackgroundSystem(this, 1024, 768);
         this.backgroundSystem.createBackground(); // Creates gradient + light rays + particles + bubbles + corals + seaweed
+
+        // Update UI with theme name
+        this.scene.get('UIScene').updateTheme(this.backgroundSystem.themeConfig.name);
 
         // Create fish group
         this.fishes = this.physics.add.group();
@@ -217,7 +221,7 @@ class GameScene extends Phaser.Scene {
         this.player = FishFactory.createPlayerFish(this, 'clownfish', playerConfig.size, playerConfig.color);
         this.player.x = 512;
         this.player.y = 384;
-        this.player.setDepth(10); // Make sure player is visible above background
+        this.player.setDepth(100); // Player at top layer
 
         // Enable physics
         this.physics.world.enable(this.player);
@@ -261,7 +265,7 @@ class GameScene extends Phaser.Scene {
         this.playerHealthBar.fillRect(-this.playerHealthBarWidth / 2, barOffsetY, this.playerHealthBarWidth, this.playerHealthBarHeight);
 
         // Health (green to red based on percentage)
-        const hpPercent = this.hp / this.maxHp;
+        const hpPercent = Math.floor(this.hp) / Math.floor(this.maxHp);
         const hpColor = hpPercent > 0.5 ? 0x00ff00 : (hpPercent > 0.25 ? 0xffff00 : 0xff0000);
         this.playerHealthBar.fillStyle(hpColor, 1);
         this.playerHealthBar.fillRect(-this.playerHealthBarWidth / 2, barOffsetY, this.playerHealthBarWidth * hpPercent, this.playerHealthBarHeight);
@@ -289,7 +293,8 @@ class GameScene extends Phaser.Scene {
     }
 
     spawnFish() {
-        const fishTypes = ['clownfish', 'shrimp', 'shark'];
+        // Expanded fish types for more variety (excluding bosses and elite types)
+        const fishTypes = ['clownfish', 'shrimp', 'shark', 'anglerfish', 'jellyfish', 'seahorse', 'octopus', 'eel'];
         const type = Phaser.Utils.Array.GetRandom(fishTypes);
         const baseFishConfig = this.fishData[type];
 
@@ -409,6 +414,7 @@ class GameScene extends Phaser.Scene {
             this.exp = this.growthSystem.getExp();
             this.level = this.growthSystem.getLevel();
             this.score += expResult.expGained * 10;
+            this.uiDirty = true;
 
             // Remove fish from enemies array if it's an enemy
             const enemyIndex = this.enemies.findIndex(e => e.graphics === fish);
@@ -438,10 +444,10 @@ class GameScene extends Phaser.Scene {
         }
         // Take damage from larger fish (fish > player * 1.2)
         else if (fishSize > playerSize * 1.2) {
-            // Check if fish is weak to player (player strong against fish)
-            const fishWeakness = this.fishData[fishType].weakTo;
-            if (fishWeakness && fishWeakness.includes('clownfish')) {
-                return; // Player is strong against this fish, no damage
+            // Check if fish is strong against player (player is attacker's prey)
+            const fishStrength = this.fishData[fishType].strongAgainst;
+            if (fishStrength && fishStrength.includes('clownfish')) {
+                return; // Fish is strong against player, no damage
             }
 
             // Take damage (fish deals damage equal to fish size / 4)
@@ -450,12 +456,10 @@ class GameScene extends Phaser.Scene {
             this.outOfCombatTimer = 0; // Reset out-of-combat timer on damage
             this.hp -= damage;
             if (this.hp < 0) this.hp = 0;
+            this.uiDirty = true;
 
             // Update player health bar
             this.updatePlayerHealthBar();
-
-            // Update UI
-            this.scene.get('UIScene').updateUI(this.score, this.exp, this.level, this.hp, this.maxHp, this.growthSystem.getExpForLevel(this.level + 1));
 
             // Check game over
             if (this.hp <= 0) {
@@ -474,20 +478,16 @@ class GameScene extends Phaser.Scene {
         // Arrow key movement
         if (this.cursors.left.isDown) {
             this.player.body.setVelocityX(-currentSpeed);
-            logger.debug(`Player movement: left, speed=${currentSpeed}`);
         } else if (this.cursors.right.isDown) {
             this.player.body.setVelocityX(currentSpeed);
-            logger.debug(`Player movement: right, speed=${currentSpeed}`);
         } else {
             this.player.body.setVelocityX(0);
         }
 
         if (this.cursors.up.isDown) {
             this.player.body.setVelocityY(-currentSpeed);
-            logger.debug(`Player movement: up, speed=${currentSpeed}`);
         } else if (this.cursors.down.isDown) {
             this.player.body.setVelocityY(currentSpeed);
-            logger.debug(`Player movement: down, speed=${currentSpeed}`);
         } else {
             this.player.body.setVelocityY(0);
         }
@@ -512,8 +512,11 @@ class GameScene extends Phaser.Scene {
             }
         });
 
-        // Update UI with current HP
-        this.scene.get('UIScene').updateUI(this.score, this.exp, this.level, this.hp, this.maxHp, this.growthSystem.getExpForLevel(this.level + 1));
+        // Update UI only when values change (set uiDirty flag when modifying score/exp/level/hp/maxHp)
+        if (this.uiDirty) {
+            this.scene.get('UIScene').updateUI(this.score, this.exp, this.level, this.hp, this.maxHp, this.growthSystem.getExpForLevel(this.level + 1));
+            this.uiDirty = false;
+        }
 
         // Update all enemies
         this.enemies.forEach(enemy => {
@@ -590,10 +593,14 @@ class GameScene extends Phaser.Scene {
      * @param {number} damage - Damage dealt
      */
     onEnemyAttack(enemy, damage) {
-        // Check if player has shield
+        // Check if player has shield - shield absorbs damage first
         if (this.skillSystem && this.skillSystem.isPlayerShielded()) {
-            // Shield blocks damage
-            return;
+            const remainingDamage = this.skillSystem.damageShield(damage);
+            if (remainingDamage <= 0) {
+                // Shield absorbed all damage
+                return;
+            }
+            damage = remainingDamage;
         }
         if (this.isInvincible) {
             return;
@@ -605,12 +612,10 @@ class GameScene extends Phaser.Scene {
         this.hp -= actualDamage;
         logger.debug(`HP change: -${actualDamage}, currentHP=${this.hp}/${this.maxHp}`);
         if (this.hp < 0) this.hp = 0;
+        this.uiDirty = true;
 
         // Update player health bar
         this.updatePlayerHealthBar();
-
-        // Update UI
-        this.scene.get('UIScene').updateUI(this.score, this.exp, this.level, this.hp, this.maxHp, this.growthSystem.getExpForLevel(this.level + 1));
 
         // Check game over
         if (this.hp <= 0) {
@@ -678,6 +683,7 @@ class GameScene extends Phaser.Scene {
         this.maxHp = Math.floor(this.maxHp) + hpPerLevel;
         // Full heal on level up
         this.hp = this.maxHp;
+        this.uiDirty = true;
         logger.info(`Level up HP: ${oldMaxHp} -> ${this.maxHp}`);
 
         // Health bar width stays at 80, just update it
@@ -687,6 +693,7 @@ class GameScene extends Phaser.Scene {
         this.player.x = oldX;
         this.player.y = oldY;
         this.player.playerData = oldPlayerData;
+        this.player.setDepth(100); // Ensure player stays at top layer
 
         // Enable physics for new graphics
         this.physics.world.enable(this.player);
@@ -944,8 +951,8 @@ class GameScene extends Phaser.Scene {
                 break;
         }
 
-        // Update UI
-        this.scene.get('UIScene').updateUI(this.score, this.exp, this.level, this.hp, this.maxHp, this.growthSystem.getExpForLevel(this.level + 1));
+        // Mark UI dirty - update will be called in next update loop
+        this.uiDirty = true;
     }
 }
 

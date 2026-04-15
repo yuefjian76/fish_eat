@@ -1,0 +1,88 @@
+{
+  "skeleton": {
+    "hash": "jellyfish_anim",
+    "spine": "3.8.99",
+    "width": 512,
+    "height": 512,
+    "name": "jellyfish"
+  },
+  "bones": [
+    { "name": "root" },
+    { "name": "dome", "parent": "root", "length": 60, "x": 0, "y": 0 },
+    { "name": "tentacle_1", "parent": "dome", "length": 80, "x": 0, "y": 30 },
+    { "name": "tentacle_2", "parent": "dome", "length": 100, "x": 20, "y": 30 },
+    { "name": "tentacle_3", "parent": "dome", "length": 90, "x": -20, "y": 30 },
+    { "name": "tentacle_4", "parent": "dome", "length": 70, "x": 40, "y": 25 },
+    { "name": "tentacle_5", "parent": "dome", "length": 75, "x": -40, "y": 25 }
+  ],
+  "slots": [
+    { "name": "dome", "bone": "dome", "attachment": "dome" },
+    { "name": "tentacle_1", "bone": "tentacle_1", "attachment": "tentacle" },
+    { "name": "tentacle_2", "bone": "tentacle_2", "attachment": "tentacle" },
+    { "name": "tentacle_3", "bone": "tentacle_3", "attachment": "tentacle" },
+    { "name": "tentacle_4", "bone": "tentacle_4", "attachment": "tentacle" },
+    { "name": "tentacle_5", "bone": "tentacle_5", "attachment": "tentacle" }
+  ],
+  "skins": [
+    {
+      "name": "default",
+      "attachments": {
+        "dome": { "dome": { "type": "mesh", "width": 120, "height": 80 } },
+        "tentacle": { "tentacle": { "type": "mesh", "width": 15, "height": 100 } }
+      }
+    }
+  ],
+  "animations": {
+    "float": {
+      "bones": {
+        "dome": {
+          "translate": [
+            { "time": 0, "x": 0, "y": 0 },
+            { "time": 1.5, "x": 5, "y": -10 },
+            { "time": 3, "x": 0, "y": 0 }
+          ],
+          "scale": [
+            { "time": 0, "x": 1, "y": 1 },
+            { "time": 1.5, "x": 1.05, "y": 0.95 },
+            { "time": 3, "x": 1, "y": 1 }
+          ]
+        },
+        "tentacle_1": {
+          "rotate": [
+            { "time": 0, "angle": 0 },
+            { "time": 1, "angle": 15 },
+            { "time": 2, "angle": -15 },
+            { "time": 3, "angle": 0 }
+          ]
+        },
+        "tentacle_2": {
+          "rotate": [
+            { "time": 0, "angle": 0 },
+            { "time": 1.2, "angle": -12 },
+            { "time": 2.4, "angle": 12 },
+            { "time": 3, "angle": 0 }
+          ]
+        },
+        "tentacle_3": {
+          "rotate": [
+            { "time": 0, "angle": 0 },
+            { "time": 1.4, "angle": 10 },
+            { "time": 2.8, "angle": -10 },
+            { "time": 3, "angle": 0 }
+          ]
+        }
+      }
+    },
+    "pulse": {
+      "bones": {
+        "dome": {
+          "scale": [
+            { "time": 0, "x": 1, "y": 1 },
+            { "time": 0.3, "x": 0.85, "y": 1.15 },
+            { "time": 0.6, "x": 1, "y": 1 }
+          ]
+        }
+      }
+    }
+  }
+}

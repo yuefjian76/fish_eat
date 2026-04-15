@@ -1,0 +1,86 @@
+{
+  "skeleton": {
+    "hash": "seahorse_anim",
+    "spine": "3.8.99",
+    "width": 512,
+    "height": 512,
+    "name": "seahorse"
+  },
+  "bones": [
+    { "name": "root" },
+    { "name": "body", "parent": "root", "length": 80, "x": 0, "y": 0 },
+    { "name": "head", "parent": "body", "length": 40, "x": 50, "y": -20 },
+    { "name": "snout", "parent": "head", "length": 30, "x": 40, "y": 0 },
+    { "name": "tail", "parent": "body", "length": 70, "x": -60, "y": 30 },
+    { "name": "dorsal_fin", "parent": "body", "length": 25, "x": 0, "y": -35 }
+  ],
+  "slots": [
+    { "name": "body", "bone": "body", "attachment": "body" },
+    { "name": "head", "bone": "head", "attachment": "head" },
+    { "name": "snout", "bone": "snout", "attachment": "snout" },
+    { "name": "tail", "bone": "tail", "attachment": "tail" },
+    { "name": "dorsal_fin", "bone": "dorsal_fin", "attachment": "fin" },
+    { "name": "eye", "bone": "head", "attachment": "eye" }
+  ],
+  "skins": [
+    {
+      "name": "default",
+      "attachments": {
+        "body": { "body": { "type": "mesh", "width": 80, "height": 150 } },
+        "head": { "head": { "type": "mesh", "width": 50, "height": 50 } },
+        "snout": { "snout": { "type": "mesh", "width": 40, "height": 20 } },
+        "tail": { "tail": { "type": "mesh", "width": 20, "height": 80 } },
+        "fin": { "fin": { "type": "mesh", "width": 40, "height": 30 } },
+        "eye": { "eye": { "type": "mesh", "width": 20, "height": 20 } }
+      }
+    }
+  ],
+  "animations": {
+    "swim": {
+      "bones": {
+        "body": {
+          "rotate": [
+            { "time": 0, "angle": 0 },
+            { "time": 0.5, "angle": 5 },
+            { "time": 1, "angle": 0 },
+            { "time": 1.5, "angle": -5 },
+            { "time": 2, "angle": 0 }
+          ],
+          "translate": [
+            { "time": 0, "x": 0, "y": 0 },
+            { "time": 1, "x": 4, "y": -3 },
+            { "time": 2, "x": 0, "y": 0 }
+          ]
+        },
+        "tail": {
+          "rotate": [
+            { "time": 0, "angle": 0 },
+            { "time": 0.5, "angle": 20 },
+            { "time": 1, "angle": 0 },
+            { "time": 1.5, "angle": -20 },
+            { "time": 2, "angle": 0 }
+          ]
+        }
+      }
+    },
+    "idle": {
+      "bones": {
+        "body": {
+          "rotate": [
+            { "time": 0, "angle": 0 },
+            { "time": 2, "angle": 3 },
+            { "time": 4, "angle": 0 }
+          ]
+        },
+        "head": {
+          "rotate": [
+            { "time": 0, "angle": 0 },
+            { "time": 1.5, "angle": -5 },
+            { "time": 3, "angle": 5 },
+            { "time": 4.5, "angle": 0 }
+          ]
+        }
+      }
+    }
+  }
+}

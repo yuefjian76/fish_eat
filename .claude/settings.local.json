@@ -10,7 +10,17 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(ls -la /Users/yuefengjiang/AI/fish_eat/src/systems/*.js)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "mcp__MiniMax__web_search",
+      "WebFetch(domain:craftpix.net)",
+      "mcp__MiniMax__understand_image",
+      "Bash(curl -L -o underwater_tropical.zip \"https://craftpix.net/file/download/v4/public/138970,e58af40b2ea0c3b2d6a20e6d1b0f2e73.zip\")",
+      "Bash(curl -L \"https://img.craftpix.net/downloads/FreeUnderwaterWorldPixelArtBackgrounds.zip\" -o underwater_tropical.zip)",
+      "Bash(curl:*)",
+      "Bash(unzip -o tropical_mountains.zip -d tropical_mountains)",
+      "WebFetch(domain:opengameart.org)",
+      "Bash(unzip -o underwater_world_bg.zip -d underwater_world)",
+      "Bash(file underwater_world/*.png)"
     ]
   }
 }

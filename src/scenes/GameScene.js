@@ -408,6 +408,12 @@ class GameScene extends Phaser.Scene {
             logger.debug(`Eat check result: can eat ${fishType}`);
             fish.setData('eaten', true);
 
+            // Screen shake on eat (small positive feedback)
+            this.cameras.main.shake(50, 0.003);
+
+            // Create eat particle burst effect
+            this.createEatParticles(fish.x, fish.y);
+
             // Add experience using GrowthSystem
             const expGain = fish.fishData.exp;
             const expResult = this.growthSystem.addExperience(expGain, this.time.now, this.luckSystem);
@@ -504,6 +510,16 @@ class GameScene extends Phaser.Scene {
         // Update player health bar position
         this.playerHealthBar.x = this.player.x;
         this.playerHealthBar.y = this.player.y;
+
+        // Invincibility flashing effect
+        if (this.isInvincible) {
+            // Flash between visible and semi-transparent
+            this.player.alpha = this.player.alpha === 1 ? 0.4 : 1;
+            this.playerHealthBar.alpha = this.player.alpha;
+        } else {
+            this.player.alpha = 1;
+            this.playerHealthBar.alpha = 1;
+        }
 
         // Remove fish that are too far off screen
         this.fishes.getChildren().forEach(fish => {
@@ -613,6 +629,9 @@ class GameScene extends Phaser.Scene {
         logger.debug(`HP change: -${actualDamage}, currentHP=${this.hp}/${this.maxHp}`);
         if (this.hp < 0) this.hp = 0;
         this.uiDirty = true;
+
+        // Screen shake on damage
+        this.cameras.main.shake(100, 0.005);
 
         // Update player health bar
         this.updatePlayerHealthBar();
@@ -874,6 +893,47 @@ class GameScene extends Phaser.Scene {
                 treasureBox.destroy();
             }
         });
+    }
+
+    /**
+     * Create eat particle burst effect at position
+     * @param {number} x - X position
+     * @param {number} y - Y position
+     */
+    createEatParticles(x, y) {
+        const particleCount = 8;
+        const colors = [0xFFD700, 0xFFA500, 0xFF6347, 0xFFFF00]; // Gold, orange, tomato, yellow
+
+        for (let i = 0; i < particleCount; i++) {
+            const particle = this.add.graphics();
+            const size = Phaser.Math.Between(3, 6);
+            const color = colors[Math.floor(Math.random() * colors.length)];
+
+            particle.fillStyle(color, 1);
+            particle.fillCircle(size, size, size);
+            particle.x = x;
+            particle.y = y;
+            particle.setDepth(50);
+
+            // Animate outward in random direction
+            const angle = (i / particleCount) * Math.PI * 2 + Phaser.Math.Between(-0.3, 0.3);
+            const distance = Phaser.Math.Between(30, 60);
+            const targetX = x + Math.cos(angle) * distance;
+            const targetY = y + Math.sin(angle) * distance;
+
+            this.tweens.add({
+                targets: particle,
+                x: targetX,
+                y: targetY,
+                alpha: 0,
+                scale: 0.3,
+                duration: 400,
+                ease: 'Quad.easeOut',
+                onComplete: () => {
+                    particle.destroy();
+                }
+            });
+        }
     }
 
     /**

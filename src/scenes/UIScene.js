@@ -6,6 +6,7 @@ class UIScene extends Phaser.Scene {
         this.expText = null;
         this.levelText = null;
         this.hpText = null;
+        this.themeText = null;
         this.skillUnlockText = null;
     }
 
@@ -34,6 +35,17 @@ class UIScene extends Phaser.Scene {
             color: '#ff4444'
         });
 
+        // Theme display (top right)
+        this.themeText = this.add.text(this.scale.width - 20, 20, '', {
+            fontSize: '20px',
+            fontFamily: 'Arial',
+            color: '#88ccff',
+            stroke: '#000000',
+            strokeThickness: 3
+        });
+        this.themeText.setOrigin(1, 0);
+        this.themeText.setDepth(100);
+
         // Skill unlock notification (centered, initially hidden)
         this.skillUnlockText = this.add.text(512, 300, '', {
             fontSize: '28px',
@@ -52,7 +64,17 @@ class UIScene extends Phaser.Scene {
         const expDisplay = expForNextLevel !== null ? expForNextLevel : (level * 100);
         this.expText.setText(`经验: ${exp}/${expDisplay}`);
         this.levelText.setText(`等级: ${level}`);
-        this.hpText.setText(`血量: ${hp}/${maxHp}`);
+        this.hpText.setText(`血量: ${Math.floor(hp)}/${Math.floor(maxHp)}`);
+    }
+
+    /**
+     * Update theme display
+     * @param {string} themeName - Name of the current theme
+     */
+    updateTheme(themeName) {
+        if (this.themeText) {
+            this.themeText.setText(`主题: ${themeName}`);
+        }
     }
 
     /**

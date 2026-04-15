@@ -1,0 +1,109 @@
+{
+  "skeleton": {
+    "hash": "mutant_shark_anim",
+    "spine": "3.8.99",
+    "width": 512,
+    "height": 512,
+    "name": "mutant_shark"
+  },
+  "bones": [
+    { "name": "root" },
+    { "name": "body", "parent": "root", "length": 140, "x": 0, "y": 0 },
+    { "name": "head", "parent": "body", "length": 70, "x": 100, "y": 0 },
+    { "name": "tail_upper", "parent": "body", "length": 90, "x": -140, "y": 0 },
+    { "name": "tail_lower", "parent": "body", "length": 50, "x": -120, "y": 25 },
+    { "name": "dorsal_fin", "parent": "body", "length": 60, "x": -30, "y": -50 },
+    { "name": "pectoral_fin_left", "parent": "body", "length": 55, "x": 30, "y": 25, "rotation": -20 },
+    { "name": "pectoral_fin_right", "parent": "body", "length": 55, "x": 30, "y": -25, "rotation": 20 },
+    { "name": "aura", "parent": "body", "length": 180, "x": 0, "y": 0 }
+  ],
+  "slots": [
+    { "name": "aura", "bone": "aura", "attachment": "red_aura" },
+    { "name": "body", "bone": "body", "attachment": "body" },
+    { "name": "head", "bone": "head", "attachment": "head" },
+    { "name": "tail_upper", "bone": "tail_upper", "attachment": "tail" },
+    { "name": "tail_lower", "bone": "tail_lower", "attachment": "tail_lower" },
+    { "name": "dorsal_fin", "bone": "dorsal_fin", "attachment": "fin" },
+    { "name": "pectoral_fin_left", "bone": "pectoral_fin_left", "attachment": "fin" },
+    { "name": "pectoral_fin_right", "bone": "pectoral_fin_right", "attachment": "fin" },
+    { "name": "eye", "bone": "head", "attachment": "glowing_eye" }
+  ],
+  "skins": [
+    {
+      "name": "default",
+      "attachments": {
+        "aura": { "red_aura": { "type": "mesh", "width": 300, "height": 180 } },
+        "body": { "body": { "type": "mesh", "width": 280, "height": 120 } },
+        "head": { "head": { "type": "mesh", "width": 120, "height": 100 } },
+        "tail": { "tail": { "type": "mesh", "width": 120, "height": 100 } },
+        "tail_lower": { "tail_lower": { "type": "mesh", "width": 70, "height": 60 } },
+        "fin": { "fin": { "type": "mesh", "width": 60, "height": 80 } },
+        "glowing_eye": { "glowing_eye": { "type": "mesh", "width": 30, "height": 30 } }
+      }
+    }
+  ],
+  "animations": {
+    "swim": {
+      "bones": {
+        "body": {
+          "rotate": [
+            { "time": 0, "angle": 0 },
+            { "time": 0.25, "angle": 4 },
+            { "time": 0.5, "angle": 0 },
+            { "time": 0.75, "angle": -4 },
+            { "time": 1, "angle": 0 }
+          ],
+          "translate": [
+            { "time": 0, "x": 0, "y": 0 },
+            { "time": 0.5, "x": 12, "y": 0 },
+            { "time": 1, "x": 0, "y": 0 }
+          ]
+        },
+        "tail_upper": {
+          "rotate": [
+            { "time": 0, "angle": 0 },
+            { "time": 0.25, "angle": 20 },
+            { "time": 0.5, "angle": 0 },
+            { "time": 0.75, "angle": -20 },
+            { "time": 1, "angle": 0 }
+          ]
+        },
+        "aura": {
+          "scale": [
+            { "time": 0, "x": 1, "y": 1 },
+            { "time": 0.5, "x": 1.1, "y": 1.1 },
+            { "time": 1, "x": 1, "y": 1 }
+          ],
+          "alpha": [
+            { "time": 0, "alpha": 0.5 },
+            { "time": 0.5, "alpha": 0.7 },
+            { "time": 1, "alpha": 0.5 }
+          ]
+        }
+      }
+    },
+    "enrage": {
+      "bones": {
+        "body": {
+          "scale": [
+            { "time": 0, "x": 1, "y": 1 },
+            { "time": 0.2, "x": 1.1, "y": 1.1 },
+            { "time": 0.4, "x": 1, "y": 1 }
+          ]
+        },
+        "aura": {
+          "scale": [
+            { "time": 0, "x": 1, "y": 1 },
+            { "time": 0.2, "x": 1.5, "y": 1.5 },
+            { "time": 0.4, "x": 1, "y": 1 }
+          ],
+          "alpha": [
+            { "time": 0, "alpha": 0.5 },
+            { "time": 0.2, "alpha": 1 },
+            { "time": 0.4, "alpha": 0.5 }
+          ]
+        }
+      }
+    }
+  }
+}

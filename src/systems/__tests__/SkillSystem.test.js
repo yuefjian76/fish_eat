@@ -287,9 +287,14 @@ describe('SkillSystem', () => {
             expect(skillSystem.isPlayerShielded()).toBe(false);
         });
 
-        test('returns true when shield is active', () => {
-            skillSystem.activeEffects.shield = { startTime: Date.now(), duration: 5000 };
+        test('returns true when shield is active with HP > 0', () => {
+            skillSystem.activeEffects.shield = { startTime: Date.now(), duration: 5000, hp: 10, maxHp: 10 };
             expect(skillSystem.isPlayerShielded()).toBe(true);
+        });
+
+        test('returns false when shield HP is depleted', () => {
+            skillSystem.activeEffects.shield = { startTime: Date.now(), duration: 5000, hp: 0, maxHp: 10 };
+            expect(skillSystem.isPlayerShielded()).toBe(false);
         });
     });
 

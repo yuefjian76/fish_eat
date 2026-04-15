@@ -1,0 +1,3 @@
+[      67ms] [LOG] %c %c %c %c %c Phaser v3.60.0 (WebGL | Web Audio) %c https://phaser.io background: #ff0000 background: #ffff00 background: #00ff00 background: #00ffff color: #ffffff; background: #000000 background: transparent @ https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js:0
+[     204ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://localhost:8080/src/assets/images/frames/jellyfish/jellyfish_anim_2_001.jpg:0
+[     204ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://localhost:8080/src/assets/images/frames/jellyfish/jellyfish_anim_1_001.jpg:0

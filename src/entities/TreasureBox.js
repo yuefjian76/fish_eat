@@ -26,6 +26,7 @@ export class TreasureBox {
         this.rewardType = rewardType;
         this.rewardAmount = rewardAmount;
         this.isCollected = false;
+        this.canCollect = false; // 3 second delay before collection
 
         // Create treasure box graphics (glowing chest)
         this.graphics = scene.add.graphics();
@@ -72,6 +73,16 @@ export class TreasureBox {
 
         // Label text
         this.createRewardLabel();
+
+        // 3 second delay before collection allowed
+        if (scene.time) {
+            scene.time.delayedCall(3000, () => {
+                this.canCollect = true;
+            });
+        } else {
+            // Fallback for testing without time
+            this.canCollect = true;
+        }
     }
 
     /**
@@ -229,7 +240,7 @@ export class TreasureBox {
      * @returns {object} Reward info
      */
     collect(player) {
-        if (this.isCollected) return null;
+        if (this.isCollected || !this.canCollect) return null;
         this.isCollected = true;
         this.state = TreasureBox.STATE.BURSTING;
 

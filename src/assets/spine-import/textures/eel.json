@@ -1,0 +1,103 @@
+{
+  "skeleton": {
+    "hash": "eel_anim",
+    "spine": "3.8.99",
+    "width": 512,
+    "height": 512,
+    "name": "eel"
+  },
+  "bones": [
+    { "name": "root" },
+    { "name": "body_1", "parent": "root", "length": 50, "x": 0, "y": 0 },
+    { "name": "body_2", "parent": "body_1", "length": 50, "x": 50, "y": 0 },
+    { "name": "body_3", "parent": "body_2", "length": 50, "x": 50, "y": 0 },
+    { "name": "head", "parent": "body_1", "length": 40, "x": 60, "y": 0 },
+    { "name": "tail", "parent": "body_3", "length": 60, "x": -50, "y": 0 }
+  ],
+  "slots": [
+    { "name": "body", "bone": "body_1", "attachment": "body_segment" },
+    { "name": "head", "bone": "head", "attachment": "head" },
+    { "name": "tail", "bone": "tail", "attachment": "tail_fin" },
+    { "name": "eye", "bone": "head", "attachment": "eye" }
+  ],
+  "skins": [
+    {
+      "name": "default",
+      "attachments": {
+        "body_segment": { "body_segment": { "type": "mesh", "width": 160, "height": 40 } },
+        "head": { "head": { "type": "mesh", "width": 60, "height": 50 } },
+        "tail_fin": { "tail_fin": { "type": "mesh", "width": 80, "height": 60 } },
+        "eye": { "eye": { "type": "mesh", "width": 20, "height": 20 } }
+      }
+    }
+  ],
+  "animations": {
+    "dash": {
+      "bones": {
+        "body_1": {
+          "rotate": [
+            { "time": 0, "angle": 0 },
+            { "time": 0.1, "angle": -15 },
+            { "time": 0.2, "angle": 15 },
+            { "time": 0.3, "angle": -15 },
+            { "time": 0.4, "angle": 0 }
+          ],
+          "translate": [
+            { "time": 0, "x": 0, "y": 0 },
+            { "time": 0.2, "x": 50, "y": 0 },
+            { "time": 0.4, "x": 0, "y": 0 }
+          ]
+        },
+        "tail": {
+          "rotate": [
+            { "time": 0, "angle": 0 },
+            { "time": 0.1, "angle": 30 },
+            { "time": 0.2, "angle": -30 },
+            { "time": 0.3, "angle": 30 },
+            { "time": 0.4, "angle": 0 }
+          ]
+        }
+      }
+    },
+    "swim": {
+      "bones": {
+        "body_1": {
+          "rotate": [
+            { "time": 0, "angle": 0 },
+            { "time": 0.3, "angle": 8 },
+            { "time": 0.6, "angle": 0 },
+            { "time": 0.9, "angle": -8 },
+            { "time": 1.2, "angle": 0 }
+          ]
+        },
+        "body_2": {
+          "rotate": [
+            { "time": 0, "angle": 0 },
+            { "time": 0.3, "angle": 12 },
+            { "time": 0.6, "angle": 0 },
+            { "time": 0.9, "angle": -12 },
+            { "time": 1.2, "angle": 0 }
+          ]
+        },
+        "body_3": {
+          "rotate": [
+            { "time": 0, "angle": 0 },
+            { "time": 0.3, "angle": 18 },
+            { "time": 0.6, "angle": 0 },
+            { "time": 0.9, "angle": -18 },
+            { "time": 1.2, "angle": 0 }
+          ]
+        },
+        "tail": {
+          "rotate": [
+            { "time": 0, "angle": 0 },
+            { "time": 0.3, "angle": 25 },
+            { "time": 0.6, "angle": 0 },
+            { "time": 0.9, "angle": -25 },
+            { "time": 1.2, "angle": 0 }
+          ]
+        }
+      }
+    }
+  }
+}

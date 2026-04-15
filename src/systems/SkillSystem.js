@@ -202,6 +202,10 @@ export class SkillSystem {
 
         const player = this.player;
 
+        // Calculate shield HP (20% of max HP)
+        const maxHp = this.scene.maxHp || 50;
+        const shieldHp = Math.floor(maxHp * (skill.shieldHpPercent || 0.2));
+
         // Create shield effect - positioned at player center
         const shieldRadius = player.playerData.size + 15;
         const shieldGraphics = this.scene.add.graphics();
@@ -221,12 +225,14 @@ export class SkillSystem {
             loop: true
         });
 
-        // Store active effect
+        // Store active effect with shield HP
         this.activeEffects[skillId] = {
             graphics: shieldGraphics,
             updateEvent: shieldUpdate,
             startTime: this.scene.time.now,
-            duration: skill.duration * 1000
+            duration: skill.duration * 1000,
+            hp: shieldHp,
+            maxHp: shieldHp
         };
 
         // Mark player as shielded
@@ -238,9 +244,9 @@ export class SkillSystem {
             this.removeEffect(skillId);
         });
 
-        logger.debug(`Buff/debuff applied: ${skillId} (${skill.name}), duration=${skill.duration}s`);
+        logger.debug(`Buff/debuff applied: ${skillId} (${skill.name}), duration=${skill.duration}s, shieldHp=${shieldHp}`);
 
-        return { success: true, skillId, type: skill.type, duration: skill.duration };
+        return { success: true, skillId, type: skill.type, duration: skill.duration, shieldHp };
     }
 
     /**
@@ -413,10 +419,43 @@ export class SkillSystem {
 
     /**
      * Check if player is shielded
-     * @returns {boolean} True if shield is active
+     * @returns {boolean} True if shield is active with HP > 0
      */
     isPlayerShielded() {
-        return this.activeEffects['shield'] !== null;
+        const shield = this.activeEffects['shield'];
+        return shield !== null && shield.hp > 0;
+    }
+
+    /**
+     * Damage the shield
+     * @param {number} damage - Damage amount to absorb
+     * @returns {number} Remaining damage after shield absorption
+     */
+    damageShield(damage) {
+        const shield = this.activeEffects['shield'];
+        if (!shield || shield.hp <= 0) {
+            return damage;
+        }
+
+        const remainingDamage = Math.max(0, damage - shield.hp);
+        shield.hp = Math.max(0, shield.hp - damage);
+
+        // Update shield visual (reduce opacity based on remaining HP)
+        if (shield.graphics && !shield.graphics.destroyed) {
+            const hpPercent = shield.hp / shield.maxHp;
+            shield.graphics.clear();
+            shield.graphics.fillStyle(0x00aaff, 0.4 * hpPercent);
+            const player = this.player;
+            const shieldRadius = (player.playerData.size + 15) * hpPercent;
+            shield.graphics.fillCircle(player.x, player.y, shieldRadius);
+        }
+
+        // Break shield if HP depleted
+        if (shield.hp <= 0) {
+            this.removeEffect('shield');
+        }
+
+        return remainingDamage;
     }
 
     /**

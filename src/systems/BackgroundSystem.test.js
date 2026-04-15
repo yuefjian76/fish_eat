@@ -12,7 +12,10 @@ function createMockImage(x = 0, y = 0) {
         y,
         setDepth: jest.fn().mockReturnThis(),
         setScale: jest.fn().mockReturnThis(),
+        setDisplaySize: jest.fn().mockReturnThis(),
         setAlpha: jest.fn().mockReturnThis(),
+        setTint: jest.fn().mockReturnThis(),
+        clearTint: jest.fn().mockReturnThis(),
         setPosition: jest.fn().mockReturnThis(),
         destroy: jest.fn()
     };
@@ -102,6 +105,22 @@ describe('BackgroundSystem', () => {
             const system = new BackgroundSystem(mockScene, 1024, 768);
             expect(system.bubbleRespawnY).toBe(768 + 50);
         });
+
+        test('selects a random theme from available themes', () => {
+            const system = new BackgroundSystem(mockScene);
+            expect(BackgroundSystem.THEMES).toContain(system.theme);
+            expect(['undersea', 'tropical', 'polar']).toContain(system.theme);
+        });
+
+        test('sets themeConfig based on selected theme', () => {
+            const system = new BackgroundSystem(mockScene);
+            expect(system.themeConfig).toBeDefined();
+            expect(system.themeConfig).toHaveProperty('tint');
+            expect(system.themeConfig).toHaveProperty('bubbleColor');
+            expect(system.themeConfig).toHaveProperty('name');
+            expect(system.themeConfig).toHaveProperty('images');
+            expect(system.themeConfig.images).toHaveProperty('background');
+        });
     });
 
     describe('createBackground', () => {
@@ -129,9 +148,9 @@ describe('BackgroundSystem', () => {
             const system = new BackgroundSystem(mockScene);
             system.createBackground();
 
-            // At least some images should have setScale called
+            // At least some images should have setScale or setDisplaySize called
             const hasSetScale = createdImages.some(img =>
-                img.setScale.mock.calls.length > 0
+                img.setScale.mock.calls.length > 0 || img.setDisplaySize.mock.calls.length > 0
             );
             expect(hasSetScale).toBe(true);
         });

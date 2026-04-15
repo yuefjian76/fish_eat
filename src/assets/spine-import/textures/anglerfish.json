@@ -1,0 +1,83 @@
+{
+  "skeleton": {
+    "hash": "anglerfish_anim",
+    "spine": "3.8.99",
+    "width": 512,
+    "height": 512,
+    "name": "anglerfish"
+  },
+  "bones": [
+    { "name": "root" },
+    { "name": "body", "parent": "root", "length": 100, "x": 0, "y": 0 },
+    { "name": "lure_stem", "parent": "body", "length": 60, "x": 30, "y": -40 },
+    { "name": "lure_bulb", "parent": "lure_stem", "length": 20, "x": 60, "y": 0 },
+    { "name": "tail", "parent": "body", "length": 50, "x": -100, "y": 0 },
+    { "name": "dorsal_fin", "parent": "body", "length": 30, "x": 0, "y": -40 }
+  ],
+  "slots": [
+    { "name": "body", "bone": "body", "attachment": "body" },
+    { "name": "lure", "bone": "lure_bulb", "attachment": "lure_glow" },
+    { "name": "tail", "bone": "tail", "attachment": "tail" },
+    { "name": "dorsal_fin", "bone": "dorsal_fin", "attachment": "fin" },
+    { "name": "eye", "bone": "body", "attachment": "eye" }
+  ],
+  "skins": [
+    {
+      "name": "default",
+      "attachments": {
+        "body": { "body": { "type": "mesh", "width": 180, "height": 120 } },
+        "lure_glow": { "lure_glow": { "type": "mesh", "width": 40, "height": 40 } },
+        "tail": { "tail": { "type": "mesh", "width": 80, "height": 60 } },
+        "fin": { "fin": { "type": "mesh", "width": 50, "height": 50 } },
+        "eye": { "eye": { "type": "mesh", "width": 25, "height": 25 } }
+      }
+    }
+  ],
+  "animations": {
+    "swim": {
+      "bones": {
+        "body": {
+          "rotate": [
+            { "time": 0, "angle": 0 },
+            { "time": 0.4, "angle": 4 },
+            { "time": 0.8, "angle": 0 },
+            { "time": 1.2, "angle": -4 },
+            { "time": 1.6, "angle": 0 }
+          ]
+        },
+        "tail": {
+          "rotate": [
+            { "time": 0, "angle": 0 },
+            { "time": 0.4, "angle": 12 },
+            { "time": 0.8, "angle": 0 },
+            { "time": 1.2, "angle": -12 },
+            { "time": 1.6, "angle": 0 }
+          ]
+        },
+        "lure_stem": {
+          "rotate": [
+            { "time": 0, "angle": 0 },
+            { "time": 0.8, "angle": 10 },
+            { "time": 1.6, "angle": 0 }
+          ]
+        }
+      }
+    },
+    "lure": {
+      "bones": {
+        "lure_bulb": {
+          "scale": [
+            { "time": 0, "x": 1, "y": 1 },
+            { "time": 0.5, "x": 1.2, "y": 1.2 },
+            { "time": 1, "x": 1, "y": 1 }
+          ],
+          "alpha": [
+            { "time": 0, "alpha": 0.8 },
+            { "time": 0.5, "alpha": 1 },
+            { "time": 1, "alpha": 0.8 }
+          ]
+        }
+      }
+    }
+  }
+}

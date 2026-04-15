@@ -1,0 +1,73 @@
+{
+  "skeleton": {
+    "hash": "shrimp_anim",
+    "spine": "3.8.99",
+    "width": 512,
+    "height": 512,
+    "name": "shrimp"
+  },
+  "bones": [
+    { "name": "root" },
+    { "name": "body", "parent": "root", "length": 60, "x": 0, "y": 0 },
+    { "name": "tail_fan", "parent": "body", "length": 40, "x": -60, "y": 0 },
+    { "name": "antenna_left", "parent": "body", "length": 50, "x": 30, "y": -10 },
+    { "name": "antenna_right", "parent": "body", "length": 50, "x": 30, "y": 10 }
+  ],
+  "slots": [
+    { "name": "body", "bone": "body", "attachment": "body" },
+    { "name": "tail_fan", "bone": "tail_fan", "attachment": "tail_fan" },
+    { "name": "antenna_left", "bone": "antenna_left", "attachment": "antenna" },
+    { "name": "antenna_right", "bone": "antenna_right", "attachment": "antenna" },
+    { "name": "eye", "bone": "body", "attachment": "eye" }
+  ],
+  "skins": [
+    {
+      "name": "default",
+      "attachments": {
+        "body": { "body": { "type": "mesh", "width": 120, "height": 60 } },
+        "tail_fan": { "tail_fan": { "type": "mesh", "width": 60, "height": 50 } },
+        "antenna_left": { "antenna": { "type": "mesh", "width": 60, "height": 10 } },
+        "antenna_right": { "antenna": { "type": "mesh", "width": 60, "height": 10 } },
+        "eye": { "eye": { "type": "mesh", "width": 20, "height": 20 } }
+      }
+    }
+  ],
+  "animations": {
+    "swim": {
+      "bones": {
+        "body": {
+          "rotate": [
+            { "time": 0, "angle": 0 },
+            { "time": 0.15, "angle": 8 },
+            { "time": 0.3, "angle": 0 },
+            { "time": 0.45, "angle": -8 },
+            { "time": 0.6, "angle": 0 }
+          ],
+          "translate": [
+            { "time": 0, "x": 0, "y": 0 },
+            { "time": 0.3, "x": 3, "y": 2 },
+            { "time": 0.6, "x": 0, "y": 0 }
+          ]
+        },
+        "tail_fan": {
+          "rotate": [
+            { "time": 0, "angle": 0 },
+            { "time": 0.3, "angle": 15 },
+            { "time": 0.6, "angle": 0 }
+          ]
+        }
+      }
+    },
+    "idle": {
+      "bones": {
+        "body": {
+          "translate": [
+            { "time": 0, "x": 0, "y": 0 },
+            { "time": 1, "x": 0, "y": 3 },
+            { "time": 2, "x": 0, "y": 0 }
+          ]
+        }
+      }
+    }
+  }
+}

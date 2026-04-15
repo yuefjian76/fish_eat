@@ -1,0 +1,145 @@
+{
+  "skeleton": {
+    "hash": "boss_squid_anim",
+    "spine": "3.8.99",
+    "width": 512,
+    "height": 512,
+    "name": "boss_squid"
+  },
+  "bones": [
+    { "name": "root" },
+    { "name": "body", "parent": "root", "length": 120, "x": 0, "y": 0 },
+    { "name": "head", "parent": "body", "length": 80, "x": 80, "y": 0 },
+    { "name": "tentacle_1", "parent": "body", "length": 100, "x": -40, "y": 50 },
+    { "name": "tentacle_2", "parent": "body", "length": 120, "x": -20, "y": 60 },
+    { "name": "tentacle_3", "parent": "body", "length": 110, "x": 0, "y": 65 },
+    { "name": "tentacle_4", "parent": "body", "length": 115, "x": 20, "y": 60 },
+    { "name": "tentacle_5", "parent": "body", "length": 100, "x": 40, "y": 50 },
+    { "name": "tentacle_6", "parent": "body", "length": 90, "x": -60, "y": 40 },
+    { "name": "tentacle_7", "parent": "body", "length": 90, "x": 60, "y": 40 },
+    { "name": "tentacle_8", "parent": "body", "length": 80, "x": -70, "y": 20 },
+    { "name": "tentacle_9", "parent": "body", "length": 80, "x": 70, "y": 20 },
+    { "name": "ink_cloud", "parent": "body", "length": 150, "x": -50, "y": 0 }
+  ],
+  "slots": [
+    { "name": "body", "bone": "body", "attachment": "body" },
+    { "name": "head", "bone": "head", "attachment": "head" },
+    { "name": "tentacle_1", "bone": "tentacle_1", "attachment": "tentacle" },
+    { "name": "tentacle_2", "bone": "tentacle_2", "attachment": "tentacle" },
+    { "name": "tentacle_3", "bone": "tentacle_3", "attachment": "tentacle" },
+    { "name": "tentacle_4", "bone": "tentacle_4", "attachment": "tentacle" },
+    { "name": "tentacle_5", "bone": "tentacle_5", "attachment": "tentacle" },
+    { "name": "tentacle_6", "bone": "tentacle_6", "attachment": "tentacle" },
+    { "name": "tentacle_7", "bone": "tentacle_7", "attachment": "tentacle" },
+    { "name": "tentacle_8", "bone": "tentacle_8", "attachment": "tentacle" },
+    { "name": "tentacle_9", "bone": "tentacle_9", "attachment": "tentacle" },
+    { "name": "ink_cloud", "bone": "ink_cloud", "attachment": "ink" },
+    { "name": "eye_left", "bone": "head", "attachment": "glowing_eye" },
+    { "name": "eye_right", "bone": "head", "attachment": "glowing_eye" }
+  ],
+  "skins": [
+    {
+      "name": "default",
+      "attachments": {
+        "body": { "body": { "type": "mesh", "width": 200, "height": 200 } },
+        "head": { "head": { "type": "mesh", "width": 120, "height": 100 } },
+        "tentacle": { "tentacle": { "type": "mesh", "width": 25, "height": 130 } },
+        "ink": { "ink": { "type": "mesh", "width": 150, "height": 150 } },
+        "glowing_eye": { "glowing_eye": { "type": "mesh", "width": 30, "height": 30 } }
+      }
+    }
+  ],
+  "animations": {
+    "idle": {
+      "bones": {
+        "body": {
+          "translate": [
+            { "time": 0, "x": 0, "y": 0 },
+            { "time": 2, "x": 5, "y": 8 },
+            { "time": 4, "x": 0, "y": 0 }
+          ]
+        },
+        "tentacle_1": {
+          "rotate": [
+            { "time": 0, "angle": 0 },
+            { "time": 2, "angle": 15 },
+            { "time": 4, "angle": 0 }
+          ]
+        },
+        "tentacle_2": {
+          "rotate": [
+            { "time": 0, "angle": 0 },
+            { "time": 2.5, "angle": -12 },
+            { "time": 5, "angle": 0 }
+          ]
+        }
+      }
+    },
+    "swim": {
+      "bones": {
+        "body": {
+          "translate": [
+            { "time": 0, "x": 0, "y": 0 },
+            { "time": 0.5, "x": 10, "y": -8 },
+            { "time": 1, "x": 0, "y": 0 }
+          ]
+        },
+        "tentacle_1": {
+          "rotate": [
+            { "time": 0, "angle": 0 },
+            { "time": 0.25, "angle": 25 },
+            { "time": 0.5, "angle": 0 },
+            { "time": 0.75, "angle": -15 },
+            { "time": 1, "angle": 0 }
+          ]
+        },
+        "tentacle_2": {
+          "rotate": [
+            { "time": 0, "angle": 0 },
+            { "time": 0.3, "angle": -20 },
+            { "time": 0.6, "angle": 0 },
+            { "time": 0.9, "angle": 15 },
+            { "time": 1.2, "angle": 0 }
+          ]
+        }
+      }
+    },
+    "tentacle_slap": {
+      "bones": {
+        "tentacle_1": {
+          "rotate": [
+            { "time": 0, "angle": 0 },
+            { "time": 0.2, "angle": -60 },
+            { "time": 0.4, "angle": 45 },
+            { "time": 0.6, "angle": 0 }
+          ]
+        },
+        "tentacle_2": {
+          "rotate": [
+            { "time": 0.1, "angle": 0 },
+            { "time": 0.3, "angle": 55 },
+            { "time": 0.5, "angle": -40 },
+            { "time": 0.7, "angle": 0 }
+          ]
+        }
+      }
+    },
+    "ink_blind": {
+      "bones": {
+        "ink_cloud": {
+          "scale": [
+            { "time": 0, "x": 0, "y": 0 },
+            { "time": 0.5, "x": 1.5, "y": 1.5 },
+            { "time": 1, "x": 0, "y": 0 }
+          ],
+          "alpha": [
+            { "time": 0, "alpha": 0 },
+            { "time": 0.3, "alpha": 0.8 },
+            { "time": 0.7, "alpha": 0.8 },
+            { "time": 1, "alpha": 0 }
+          ]
+        }
+      }
+    }
+  }
+}

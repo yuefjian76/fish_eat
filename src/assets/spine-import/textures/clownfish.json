@@ -1,0 +1,94 @@
+{
+  "skeleton": {
+    "hash": "clownfish_anim",
+    "spine": "3.8.99",
+    "width": 512,
+    "height": 512,
+    "name": "clownfish"
+  },
+  "bones": [
+    { "name": "root" },
+    { "name": "body", "parent": "root", "length": 80, "x": 0, "y": 0 },
+    { "name": "tail", "parent": "body", "length": 50, "x": -80, "y": 0 },
+    { "name": "dorsal_fin", "parent": "body", "length": 30, "x": 0, "y": -25 },
+    { "name": "pectoral_fin_left", "parent": "body", "length": 25, "x": 10, "y": 10, "rotation": -30 },
+    { "name": "pectoral_fin_right", "parent": "body", "length": 25, "x": 10, "y": -10, "rotation": 30 }
+  ],
+  "slots": [
+    { "name": "body", "bone": "body", "attachment": "body" },
+    { "name": "tail", "bone": "tail", "attachment": "tail" },
+    { "name": "dorsal_fin", "bone": "dorsal_fin", "attachment": "dorsal_fin" },
+    { "name": "pectoral_fin_left", "bone": "pectoral_fin_left", "attachment": "pectoral_fin" },
+    { "name": "pectoral_fin_right", "bone": "pectoral_fin_right", "attachment": "pectoral_fin" },
+    { "name": "eye", "bone": "body", "attachment": "eye" }
+  ],
+  "skins": [
+    {
+      "name": "default",
+      "attachments": {
+        "body": { "body": { "type": "mesh", "width": 160, "height": 100 } },
+        "tail": { "tail": { "type": "mesh", "width": 80, "height": 60 } },
+        "dorsal_fin": { "dorsal_fin": { "type": "mesh", "width": 40, "height": 50 } },
+        "pectoral_fin_left": { "pectoral_fin": { "type": "mesh", "width": 30, "height": 40 } },
+        "pectoral_fin_right": { "pectoral_fin": { "type": "mesh", "width": 30, "height": 40 } },
+        "eye": { "eye": { "type": "mesh", "width": 30, "height": 30 } }
+      }
+    }
+  ],
+  "animations": {
+    "swim": {
+      "bones": {
+        "body": {
+          "rotate": [
+            { "time": 0, "angle": 0 },
+            { "time": 0.25, "angle": 5 },
+            { "time": 0.5, "angle": 0 },
+            { "time": 0.75, "angle": -5 },
+            { "time": 1, "angle": 0 }
+          ],
+          "translate": [
+            { "time": 0, "x": 0, "y": 0 },
+            { "time": 0.5, "x": 5, "y": 0 },
+            { "time": 1, "x": 0, "y": 0 }
+          ]
+        },
+        "tail": {
+          "rotate": [
+            { "time": 0, "angle": 0 },
+            { "time": 0.25, "angle": 15 },
+            { "time": 0.5, "angle": 0 },
+            { "time": 0.75, "angle": -15 },
+            { "time": 1, "angle": 0 }
+          ]
+        },
+        "pectoral_fin_left": {
+          "rotate": [
+            { "time": 0, "angle": 0 },
+            { "time": 0.5, "angle": 20 },
+            { "time": 1, "angle": 0 }
+          ]
+        },
+        "pectoral_fin_right": {
+          "rotate": [
+            { "time": 0, "angle": 0 },
+            { "time": 0.5, "angle": -20 },
+            { "time": 1, "angle": 0 }
+          ]
+        }
+      }
+    },
+    "idle": {
+      "bones": {
+        "body": {
+          "rotate": [
+            { "time": 0, "angle": 0 },
+            { "time": 1, "angle": 2 },
+            { "time": 2, "angle": 0 },
+            { "time": 3, "angle": -2 },
+            { "time": 4, "angle": 0 }
+          ]
+        }
+      }
+    }
+  }
+}

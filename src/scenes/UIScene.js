@@ -13,10 +13,18 @@ class UIScene extends Phaser.Scene {
         this.hpBar = null;
         this.expBar = null;
         this.vignetteGraphics = null;
-        this._lastHpRatio = -1; // dirty flag for vignette
+        this._lastVignetteAlpha = -1; // dirty flag for vignette
     }
 
     create() {
+        // Kill any lingering vignette tweens from a previous run of this scene
+        this._vignettePulsing = false;
+        if (this.vignetteGraphics) {
+            this.tweens.killTweensOf(this.vignetteGraphics);
+            this.vignetteGraphics.destroy();
+            this.vignetteGraphics = null;
+        }
+
         const W = this.scale.width;  // 1024
         const BAR_W = 300;
         const BAR_H = 14;
@@ -163,9 +171,11 @@ class UIScene extends Phaser.Scene {
             this.hpBar.fillRoundedRect(BAR_X, 14, BAR_W * ratio, BAR_H, { tl: 4, bl: 4, tr: ratio >= 0.98 ? 4 : 0, br: ratio >= 0.98 ? 4 : 0 });
         }
 
-        // Bright highlight strip
-        this.hpBar.fillStyle(0xffffff, 0.2);
-        this.hpBar.fillRect(BAR_X, 15, BAR_W * ratio, 3);
+        // Bright highlight strip (only when bar is non-empty)
+        if (ratio > 0) {
+            this.hpBar.fillStyle(0xffffff, 0.2);
+            this.hpBar.fillRect(BAR_X, 15, BAR_W * ratio, 3);
+        }
 
         if (this.hpLabel) {
             this.hpLabel.setText(`♥ ${Math.floor(hp)}/${Math.floor(maxHp)}`);
@@ -196,8 +206,8 @@ class UIScene extends Phaser.Scene {
     _drawVignette(hpRatio) {
         if (!this.vignetteGraphics) return;
         const alpha = this._vignetteAlpha(hpRatio);
-        if (Math.abs(alpha - this._lastHpRatio) < 0.01) return; // skip tiny changes
-        this._lastHpRatio = alpha;
+        if (Math.abs(alpha - this._lastVignetteAlpha) < 0.01) return; // skip tiny changes
+        this._lastVignetteAlpha = alpha;
 
         this.vignetteGraphics.clear();
         if (alpha <= 0) return;

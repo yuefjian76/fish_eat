@@ -8,15 +8,20 @@ class GameOverScene extends Phaser.Scene {
         const W = 1024, H = 768;
         const cx = W / 2;
 
-        // Handle difficulty unlocks + save stats
+        // Read previous bests BEFORE saving, so we can detect new records
+        const prevBestScore = this._getStat('fishEat_highScore', -1);
+        const prevBestLevel = this._getStat('fishEat_maxLevel', 0);
+
+        // Handle difficulty unlocks + save stats (writes new records to localStorage)
         this.handleUnlocks(data);
         this.saveStats(data);
 
-        // Load best stats for comparison
+        // Load updated best stats for display
         const bestScore = this._getStat('fishEat_highScore', 0);
         const bestLevel = this._getStat('fishEat_maxLevel', 1);
-        const isNewScoreRecord = data.score > (this._getStat('fishEat_highScore', -1));
-        const isNewLevelRecord = data.level > (this._getStat('fishEat_prevMaxLevel', 0));
+        // Compare against values read BEFORE saving to correctly detect new records
+        const isNewScoreRecord = data.score > prevBestScore;
+        const isNewLevelRecord = data.level > prevBestLevel;
 
         // ─── Dark overlay ────────────────────────────────────────────────────
         this.add.rectangle(cx, H / 2, W, H, 0x000011, 0.85);

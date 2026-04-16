@@ -304,9 +304,15 @@ export class Enemy {
     }
 
     /**
-     * Destroy this enemy
+     * Destroy this enemy — resets visual state before destroying GameObjects
+     * to avoid tween callbacks targeting destroyed/stale objects.
      */
     destroy() {
+        if (this.graphics && this.graphics.active) {
+            // Reset any in-progress special-behavior visuals
+            if (this.stealthActive) this.graphics.setAlpha(1.0);
+            if (this.isDashing || this.isEvading) this.graphics.setTint(0xFFFFFF);
+        }
         this.graphics.destroy();
         this.healthBar.destroy();
     }
@@ -720,6 +726,20 @@ export class Enemy {
         proj.body.setVelocity(vx, vy);
         proj.body.setAllowGravity(false);
 
+        // Tween a slight glow/bob so it's clearly identifiable
+        const glowTween = this.scene.tweens.add({
+            targets: proj, scaleX: 1.3, scaleY: 1.3,
+            yoyo: true, duration: 200, repeat: -1
+        });
+
+        /** Safe destroy: stop tween, remove physics body, then destroy GameObject */
+        const destroyProj = () => {
+            if (!proj.active) return;
+            glowTween.stop();
+            if (proj.body) this.scene.physics.world.remove(proj.body);
+            proj.destroy();
+        };
+
         // Check hit each frame via overlap registered by scene
         const hitCallback = () => {
             if (!proj.active) return;
@@ -728,22 +748,16 @@ export class Enemy {
                 if (this.scene.onEnemyAttack) {
                     this.scene.onEnemyAttack(this, this.rangedDamage);
                 }
-                proj.destroy();
+                destroyProj();
             }
         };
 
-        // Auto-destroy after 2 seconds or off-screen
-        this.scene.time.delayedCall(2000, () => { if (proj.active) proj.destroy(); });
-
-        // Tween a slight glow/bob so it's clearly identifiable
-        this.scene.tweens.add({
-            targets: proj, scaleX: 1.3, scaleY: 1.3,
-            yoyo: true, duration: 200, repeat: -1
-        });
+        // Auto-destroy after 2 seconds
+        this.scene.time.delayedCall(2000, destroyProj);
 
         // Register hit check in scene's update via a tracked list
         if (!this.scene.anglerProjectiles) this.scene.anglerProjectiles = [];
-        this.scene.anglerProjectiles.push({ proj, hitCallback, damage: this.rangedDamage });
+        this.scene.anglerProjectiles.push({ proj, hitCallback, damage: this.rangedDamage, destroyProj });
     }
 
     /**
@@ -770,21 +784,12 @@ export class Enemy {
         this.updateAoe(player);
         this.updateRanged(player, delta);
 
-        // If ranged fish is managing its own movement, skip normal AI movement
-        if (this.fishConfig.behavior === 'ranged' || this.fishConfig.range) {
-            // Ranged update above already set velocity; just update health bar & return
-            return;
-        }
-
-        // Evasive fish skip normal AI when actively fleeing a close threat
-        if (this.isEvading) return;
-
-        // Check for enrage (mutant shark)
+        // Check for enrage (mutant shark) — runs for all fish types
         if (this.fishConfig.enrage) {
             this.updateEnrage();
         }
 
-        // Check for chain lightning attack (periodic)
+        // Check for chain lightning attack (periodic) — runs for all fish types
         if (this.fishConfig.chain_lightning) {
             this.chainLightningTimer = (this.chainLightningTimer || 0) + delta;
             if (this.chainLightningTimer >= 2000) { // Every 2 seconds
@@ -805,6 +810,10 @@ export class Enemy {
                 this.graphics.setTexture(newKey);
             }
         }
+
+        // Ranged / evasive fish manage their own movement — skip normal chase/wander AI
+        if (this.fishConfig.behavior === 'ranged' || this.fishConfig.range) return;
+        if (this.isEvading) return;
 
         // ALWAYS prioritize attacking player if in range
         const playerInVision = this.isPlayerInVision(player);

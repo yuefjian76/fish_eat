@@ -204,8 +204,8 @@ class GameScene extends Phaser.Scene {
             this.isMouseActive = true;
         });
 
-        // Collision detection
-        this.physics.add.overlap(
+        // Collision detection — stored so we can re-register after level-up
+        this._eatOverlap = this.physics.add.overlap(
             this.player,
             this.fishes,
             this.checkEat,
@@ -214,7 +214,7 @@ class GameScene extends Phaser.Scene {
         );
 
         // Treasure box collision
-        this.physics.add.overlap(
+        this._boxOverlap = this.physics.add.overlap(
             this.player,
             this.treasureBoxes,
             this.collectTreasureBox,
@@ -799,6 +799,16 @@ class GameScene extends Phaser.Scene {
         this.player.body.setCollideWorldBounds(true);
         this.player.isPlayer = true;
 
+        // Re-register collision overlaps with the new player object
+        if (this._eatOverlap) this._eatOverlap.destroy();
+        this._eatOverlap = this.physics.add.overlap(
+            this.player, this.fishes, this.checkEat, null, this
+        );
+        if (this._boxOverlap) this._boxOverlap.destroy();
+        this._boxOverlap = this.physics.add.overlap(
+            this.player, this.treasureBoxes, this.collectTreasureBox, null, this
+        );
+
         // Update skill system to use new player reference
         if (this.skillSystem) {
             this.skillSystem.setPlayer(this.player, this);
@@ -1177,6 +1187,20 @@ class GameScene extends Phaser.Scene {
 
         // Mark UI dirty - update will be called in next update loop
         this.uiDirty = true;
+    }
+
+    /**
+     * Clean up resources when the scene shuts down (scene restart / game over).
+     * Prevents anglerfish projectile timers from firing into a dead scene.
+     */
+    shutdown() {
+        if (this.anglerProjectiles) {
+            this.anglerProjectiles.forEach(p => {
+                if (p.destroyProj) p.destroyProj();
+                else if (p.proj?.active) p.proj.destroy();
+            });
+            this.anglerProjectiles = [];
+        }
     }
 }
 

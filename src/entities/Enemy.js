@@ -86,11 +86,69 @@ export class Enemy {
         this.fishingChancePerSecond = 0.05; // 5% per second
         this.fishingVisionRange = 300;
 
+        // ── Special behavior states ───────────────────────────────────────────
+        this._initSpecialBehaviors();
+
         // Add to physics group
         scene.fishes.add(this.graphics);
 
         // Start wandering
         this.setRandomWanderDirection();
+    }
+
+    /**
+     * Initialise all special-behavior state variables once.
+     * Keeps constructor lean and behaviors encapsulated.
+     */
+    _initSpecialBehaviors() {
+        const cfg = this.fishConfig;
+
+        // ── Eel dash ────────────────────────────────────────────────────────
+        if (cfg.dash) {
+            this.dashCooldown    = 3000;   // ms between dashes
+            this.dashDuration    = 350;    // ms a single dash lasts
+            this.dashSpeed       = this.baseSpeed * 4;
+            this.lastDashTime    = -this.dashCooldown; // ready immediately
+            this.dashTimer       = 0;
+            this.isDashing       = false;
+        }
+
+        // ── Octopus stealth ────────────────────────────────────────────────
+        if (cfg.stealth) {
+            this.stealthCooldown  = 5000;
+            this.stealthDuration  = 2500;
+            this.stealthActive    = false;
+            this.stealthTimer     = 0;
+            this.lastStealthTime  = -this.stealthCooldown;
+        }
+
+        // ── Seahorse evasive ───────────────────────────────────────────────
+        if (cfg.evasive) {
+            this.evasionTriggerRange    = 180;
+            this.evasionSpeedMultiplier = 2.2;
+            this.isEvading              = false;
+            this.evasionTimer           = 0;
+            this.evasionDuration        = 1200; // ms per evasion burst
+        }
+
+        // ── Jellyfish AOE sting ─────────────────────────────────────────────
+        if (cfg.aoe) {
+            this.aoeCooldown   = 4000;
+            this.aoeRadius     = 100;
+            this.aoeDamage     = cfg.damage || 8;
+            this.lastAoeTime   = -this.aoeCooldown;
+        }
+
+        // ── Anglerfish ranged lure ──────────────────────────────────────────
+        if (cfg.range || cfg.behavior === 'ranged') {
+            this.rangedAttackRange = cfg.range || 200;
+            this.rangedCooldown    = 2500;
+            this.projectileSpeed   = 300;
+            this.rangedDamage      = cfg.damage || 10;
+            this.lastRangedTime    = -this.rangedCooldown;
+            // Preferred stand-off: keep at ~60% of ranged range
+            this.standOffRange     = this.rangedAttackRange * 0.65;
+        }
     }
 
     /**
@@ -141,7 +199,8 @@ export class Enemy {
     }
 
     /**
-     * Check if player is within vision range
+     * Check if player is within vision range.
+     * Stealthed octopus uses reduced vision range (hiding = not hunting).
      * @param {object} player - Player graphics object
      * @returns {boolean} True if player is in vision range
      */
@@ -151,7 +210,11 @@ export class Enemy {
             this.graphics.x, this.graphics.y,
             player.x, player.y
         );
-        return distance <= this.visionRange;
+        // Stealthed octopus has reduced vision (it's hiding, not hunting)
+        const effectiveRange = (this.stealthActive)
+            ? this.visionRange * 0.4
+            : this.visionRange;
+        return distance <= effectiveRange;
     }
 
     /**
@@ -407,6 +470,282 @@ export class Enemy {
         }
     }
 
+    // ════════════════════════════════════════════════════════════════════════
+    // Special Behavior Updates
+    // ════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Eel: dash toward player when off cooldown.
+     * While dashing the eel is visually tinted and moves at 4× speed.
+     */
+    updateDash(player, delta) {
+        if (!this.fishConfig.dash || !player || !this.graphics.active) return;
+        const now = this.scene.time.now;
+
+        if (this.isDashing) {
+            this.dashTimer += delta;
+            if (this.dashTimer >= this.dashDuration) {
+                // Dash finished
+                this.isDashing = false;
+                this.graphics.setTint(0xFFFFFF);
+                this.graphics.body.setVelocity(0, 0);
+            }
+            // During dash, velocity was already set — let physics carry it
+        } else {
+            // Check if we should start a new dash
+            if (now - this.lastDashTime >= this.dashCooldown) {
+                const dist = Phaser.Math.Distance.Between(
+                    this.graphics.x, this.graphics.y,
+                    player.x, player.y
+                );
+                if (dist <= this.visionRange && dist > this.attackRange) {
+                    // Launch dash
+                    this.isDashing = true;
+                    this.dashTimer = 0;
+                    this.lastDashTime = now;
+
+                    const dx = player.x - this.graphics.x;
+                    const dy = player.y - this.graphics.y;
+                    const len = Math.hypot(dx, dy) || 1;
+                    this.graphics.body.setVelocity(
+                        (dx / len) * this.dashSpeed,
+                        (dy / len) * this.dashSpeed
+                    );
+                    // Visual feedback: yellow tint while dashing
+                    this.graphics.setTint(0xFFEE00);
+                    this._spawnDashTrail();
+                }
+            }
+        }
+    }
+
+    /** Spawn brief particle trail for dash visual */
+    _spawnDashTrail() {
+        if (!this.scene.add) return;
+        for (let i = 0; i < 4; i++) {
+            this.scene.time.delayedCall(i * 60, () => {
+                if (!this.graphics || !this.graphics.active) return;
+                const spark = this.scene.add.graphics();
+                spark.fillStyle(0xFFEE00, 0.7);
+                spark.fillCircle(0, 0, 5);
+                spark.x = this.graphics.x;
+                spark.y = this.graphics.y;
+                spark.setDepth(9);
+                this.scene.tweens.add({
+                    targets: spark, alpha: 0, scaleX: 0, scaleY: 0,
+                    duration: 300, onComplete: () => spark.destroy()
+                });
+            });
+        }
+    }
+
+    /**
+     * Octopus: toggle stealth (go semi-transparent) to avoid player detection.
+     * While stealthed, the octopus is not in vision range calculations.
+     */
+    updateStealth(delta) {
+        if (!this.fishConfig.stealth || !this.graphics.active) return;
+        const now = this.scene.time.now;
+
+        if (this.stealthActive) {
+            this.stealthTimer += delta;
+            if (this.stealthTimer >= this.stealthDuration) {
+                // Come out of stealth
+                this.stealthActive = false;
+                this.stealthTimer = 0;
+                this.lastStealthTime = now;
+                this.graphics.setAlpha(1.0);
+            }
+        } else {
+            // Try to enter stealth when player is approaching
+            if (now - this.lastStealthTime >= this.stealthCooldown) {
+                const player = this.scene.player;
+                if (player) {
+                    const dist = Phaser.Math.Distance.Between(
+                        this.graphics.x, this.graphics.y,
+                        player.x, player.y
+                    );
+                    // Activate stealth when player gets within 250px
+                    if (dist < 250) {
+                        this.stealthActive = true;
+                        this.stealthTimer = 0;
+                        this.graphics.setAlpha(0.2);
+                        // Small ripple effect at activation
+                        this._spawnStealthRipple();
+                    }
+                }
+            }
+        }
+    }
+
+    /** Ripple effect when going stealthy */
+    _spawnStealthRipple() {
+        if (!this.scene.add) return;
+        const ripple = this.scene.add.graphics();
+        ripple.lineStyle(2, 0x8B008B, 0.8);
+        ripple.strokeCircle(0, 0, this.fishConfig.size);
+        ripple.x = this.graphics.x;
+        ripple.y = this.graphics.y;
+        ripple.setDepth(10);
+        this.scene.tweens.add({
+            targets: ripple, scaleX: 3, scaleY: 3, alpha: 0,
+            duration: 500, onComplete: () => ripple.destroy()
+        });
+    }
+
+    /**
+     * Seahorse: flee when the player gets too close.
+     * Uses a burst-of-speed evasion perpendicular to the threat vector.
+     */
+    updateEvasive(player, delta) {
+        if (!this.fishConfig.evasive || !player || !this.graphics.active) return;
+
+        const dx = player.x - this.graphics.x;
+        const dy = player.y - this.graphics.y;
+        const dist = Math.hypot(dx, dy);
+
+        if (dist < this.evasionTriggerRange) {
+            // Move directly away from the player at boosted speed
+            this.isEvading = true;
+            const len = dist || 1;
+            const speed = this.baseSpeed * this.evasionSpeedMultiplier;
+            this.graphics.body.setVelocity(
+                -(dx / len) * speed,
+                -(dy / len) * speed
+            );
+            this.graphics.setTint(0xFFD700);
+        } else if (this.isEvading) {
+            this.isEvading = false;
+            this.graphics.setTint(0xFFFFFF);
+        }
+    }
+
+    /**
+     * Jellyfish: AOE sting every 4 s — damages anything (including player) within radius.
+     */
+    updateAoe(player) {
+        if (!this.fishConfig.aoe || !this.graphics.active) return;
+        const now = this.scene.time.now;
+        if (now - this.lastAoeTime < this.aoeCooldown) return;
+
+        const player2 = this.scene.player || player;
+        if (!player2) return;
+
+        const dist = Phaser.Math.Distance.Between(
+            this.graphics.x, this.graphics.y,
+            player2.x, player2.y
+        );
+        if (dist > this.aoeRadius) return; // Player not in range
+
+        this.lastAoeTime = now;
+        // Visual pulse ring
+        this._spawnAoePulse();
+        // Damage the player via scene callback
+        if (this.scene.onEnemyAttack) {
+            this.scene.onEnemyAttack(this, this.aoeDamage);
+        }
+    }
+
+    /** Expanding ring visual for AOE attack */
+    _spawnAoePulse() {
+        if (!this.scene.add) return;
+        const ring = this.scene.add.graphics();
+        ring.lineStyle(3, 0xADD8E6, 0.9);
+        ring.strokeCircle(0, 0, 20);
+        ring.x = this.graphics.x;
+        ring.y = this.graphics.y;
+        ring.setDepth(12);
+        const targetScale = this.aoeRadius / 20;
+        this.scene.tweens.add({
+            targets: ring,
+            scaleX: targetScale, scaleY: targetScale,
+            alpha: 0, duration: 600,
+            onComplete: () => ring.destroy()
+        });
+    }
+
+    /**
+     * Anglerfish: ranged lure attack.
+     * Keeps distance; fires a slow-moving projectile toward the player.
+     */
+    updateRanged(player, delta) {
+        if ((!this.fishConfig.range && this.fishConfig.behavior !== 'ranged') ||
+            !player || !this.graphics.active) return;
+
+        const dx = player.x - this.graphics.x;
+        const dy = player.y - this.graphics.y;
+        const dist = Math.hypot(dx, dy);
+
+        // Maintain stand-off distance
+        if (dist < this.standOffRange) {
+            // Back away
+            const len = dist || 1;
+            const speed = this.baseSpeed;
+            this.graphics.body.setVelocity(-(dx / len) * speed, -(dy / len) * speed);
+        } else if (dist > this.rangedAttackRange) {
+            // Too far — approach slowly
+            const len = dist || 1;
+            const speed = this.baseSpeed * 0.6;
+            this.graphics.body.setVelocity((dx / len) * speed, (dy / len) * speed);
+        } else {
+            // In sweet-spot range — hover & shoot
+            this.graphics.body.setVelocity(0, 0);
+            const now = this.scene.time.now;
+            if (now - this.lastRangedTime >= this.rangedCooldown) {
+                this.lastRangedTime = now;
+                this._fireProjectile(player);
+            }
+        }
+    }
+
+    /** Spawn a lure projectile aimed at the player */
+    _fireProjectile(player) {
+        if (!this.scene.add) return;
+        const dx = player.x - this.graphics.x;
+        const dy = player.y - this.graphics.y;
+        const len = Math.hypot(dx, dy) || 1;
+        const vx = (dx / len) * this.projectileSpeed;
+        const vy = (dy / len) * this.projectileSpeed;
+
+        // Visual projectile
+        const proj = this.scene.add.graphics();
+        proj.fillStyle(0x9400D3, 1);
+        proj.fillCircle(0, 0, 7);
+        proj.x = this.graphics.x;
+        proj.y = this.graphics.y;
+        proj.setDepth(15);
+
+        // Enable physics on projectile
+        this.scene.physics.world.enable(proj);
+        proj.body.setVelocity(vx, vy);
+        proj.body.setAllowGravity(false);
+
+        // Check hit each frame via overlap registered by scene
+        const hitCallback = () => {
+            if (!proj.active) return;
+            const pDist = Phaser.Math.Distance.Between(proj.x, proj.y, player.x, player.y);
+            if (pDist < 20) {
+                if (this.scene.onEnemyAttack) {
+                    this.scene.onEnemyAttack(this, this.rangedDamage);
+                }
+                proj.destroy();
+            }
+        };
+
+        // Auto-destroy after 2 seconds or off-screen
+        this.scene.time.delayedCall(2000, () => { if (proj.active) proj.destroy(); });
+
+        // Tween a slight glow/bob so it's clearly identifiable
+        this.scene.tweens.add({
+            targets: proj, scaleX: 1.3, scaleY: 1.3,
+            yoyo: true, duration: 200, repeat: -1
+        });
+
+        // Register hit check in scene's update via a tracked list
+        if (!this.scene.anglerProjectiles) this.scene.anglerProjectiles = [];
+        this.scene.anglerProjectiles.push({ proj, hitCallback, damage: this.rangedDamage });
+    }
+
     /**
      * Update enemy AI
      * @param {object} player - Player graphics object
@@ -418,9 +757,27 @@ export class Enemy {
             return;
         }
 
+        const delta = this.scene.game.loop.delta;
+
         // Update health bar position
         this.healthBar.x = this.graphics.x;
         this.healthBar.y = this.graphics.y;
+
+        // ── Special behaviors (run first so they can override velocity) ──────
+        this.updateDash(player, delta);
+        this.updateStealth(delta);
+        this.updateEvasive(player, delta);
+        this.updateAoe(player);
+        this.updateRanged(player, delta);
+
+        // If ranged fish is managing its own movement, skip normal AI movement
+        if (this.fishConfig.behavior === 'ranged' || this.fishConfig.range) {
+            // Ranged update above already set velocity; just update health bar & return
+            return;
+        }
+
+        // Evasive fish skip normal AI when actively fleeing a close threat
+        if (this.isEvading) return;
 
         // Check for enrage (mutant shark)
         if (this.fishConfig.enrage) {
@@ -429,7 +786,7 @@ export class Enemy {
 
         // Check for chain lightning attack (periodic)
         if (this.fishConfig.chain_lightning) {
-            this.chainLightningTimer = (this.chainLightningTimer || 0) + this.scene.game.loop.delta;
+            this.chainLightningTimer = (this.chainLightningTimer || 0) + delta;
             if (this.chainLightningTimer >= 2000) { // Every 2 seconds
                 this.chainLightningTimer = 0;
                 this.executeChainLightning();
@@ -437,7 +794,7 @@ export class Enemy {
         }
 
         // Update animation frame
-        this.frameTimer += this.scene.game.loop.delta;
+        this.frameTimer += delta;
         if (this.frameTimer >= this.frameInterval) {
             this.frameTimer = 0;
             const totalFrames = this.enemyType === 'fish_big' ? 5 : 4;
@@ -479,7 +836,7 @@ export class Enemy {
             if (prevState !== this.state) {
                 logger.debug(`AI state change: ${this.fishType} ${prevState} -> ${this.state}`);
             }
-            this.wanderTimer += this.scene.game.loop.delta;
+            this.wanderTimer += delta;
 
             // Check for fishing transition (5% chance per second when player far)
             if (player) {
@@ -489,7 +846,7 @@ export class Enemy {
                 );
                 if (playerDistance > this.fishingVisionRange) {
                     // 5% chance per second (roughly 0.083% per frame at 60fps)
-                    const chanceThisFrame = this.fishingChancePerSecond * (this.scene.game.loop.delta / 1000);
+                    const chanceThisFrame = this.fishingChancePerSecond * (delta / 1000);
                     if (Math.random() < chanceThisFrame) {
                         this.setState(Enemy.STATE.FISHING);
                         return;

@@ -11,6 +11,8 @@ import { BackgroundSystem } from '../systems/BackgroundSystem.js';
 import { BossSystem } from '../systems/BossSystem.js';
 import { BossAnimation } from '../systems/BossAnimation.js';
 import { SkillBar } from '../ui/SkillBar.js';
+import { ComboSystem } from '../systems/ComboSystem.js';
+import { AudioSystem } from '../systems/AudioSystem.js';
 import { logger } from '../systems/DebugLogger.js';
 
 class GameScene extends Phaser.Scene {
@@ -66,6 +68,11 @@ class GameScene extends Phaser.Scene {
         this.healthRegenRate = 0.005; // 0.5% of max HP per second (slower regen)
         this.difficulty = data.difficulty || 'easy';
         this.spawnTimer = null;
+        // Stats tracking
+        this.killCount = 0;
+        this.gameStartTime = Date.now();
+        // Anglerfish projectile tracking
+        this.anglerProjectiles = [];
     }
 
     preload() {
@@ -115,6 +122,15 @@ class GameScene extends Phaser.Scene {
 
         // Create treasure boxes group
         this.treasureBoxes = this.physics.add.group();
+
+        // Initialize audio system (Web Audio, no files needed)
+        this.audioSystem = new AudioSystem();
+
+        // Initialize combo system
+        this.comboSystem = new ComboSystem(this.levelsData.combo || {});
+        this.comboSystem.setOnComboChange((count) => {
+            this.scene.get('UIScene').updateCombo(count);
+        });
 
         // Initialize growth system
         this.growthSystem = new GrowthSystem(this.levelsData);
@@ -175,14 +191,17 @@ class GameScene extends Phaser.Scene {
         }
 
         // Mouse control (alternative to arrow keys)
+        // Store mouse target for smooth chasing in update()
+        this.mouseTarget = null;
+        this.isMouseActive = false;
         this.input.on('pointermove', (pointer) => {
-            const targetX = pointer.x;
-            const targetY = pointer.y;
-            const angle = Phaser.Math.Angle.Between(
-                this.player.x, this.player.y, targetX, targetY
-            );
-            this.player.rotation = angle;
-            this.physics.moveTo(this.player, targetX, targetY, 200);
+            this.mouseTarget = { x: pointer.x, y: pointer.y };
+            this.isMouseActive = true;
+        });
+        // Disable mouse control when clicking (avoid accidental mouse drift)
+        this.input.on('pointerdown', (pointer) => {
+            this.mouseTarget = { x: pointer.x, y: pointer.y };
+            this.isMouseActive = true;
         });
 
         // Collision detection
@@ -414,13 +433,23 @@ class GameScene extends Phaser.Scene {
             // Create eat particle burst effect
             this.createEatParticles(fish.x, fish.y);
 
+            // Play eat sound (bigger fish = deeper sound)
+            const isBig = fishSize >= 40;
+            if (this.audioSystem) this.audioSystem.play(isBig ? 'eat_big' : 'eat');
+
+            // Update combo
+            const comboMultiplier = this.comboSystem.onEat(this.time.now);
+
             // Add experience using GrowthSystem
             const expGain = fish.fishData.exp;
             const expResult = this.growthSystem.addExperience(expGain, this.time.now, this.luckSystem);
             this.exp = this.growthSystem.getExp();
             this.level = this.growthSystem.getLevel();
-            this.score += expResult.expGained * 10;
+            this.score += Math.floor(expResult.expGained * 10 * comboMultiplier);
             this.uiDirty = true;
+
+            // Track kill count
+            this.killCount++;
 
             // Remove fish from enemies array if it's an enemy
             const enemyIndex = this.enemies.findIndex(e => e.graphics === fish);
@@ -469,7 +498,7 @@ class GameScene extends Phaser.Scene {
 
             // Check game over
             if (this.hp <= 0) {
-                this.scene.start('GameOverScene', { score: this.score, level: this.level, difficulty: this.difficulty });
+                this.scene.start('GameOverScene', { score: this.score, level: this.level, difficulty: this.difficulty, kills: this.killCount, survivalTime: Math.floor((Date.now() - this.gameStartTime) / 1000) });
             }
         }
     }
@@ -481,20 +510,50 @@ class GameScene extends Phaser.Scene {
             currentSpeed = this.speed * 1.8;
         }
 
-        // Arrow key movement
-        if (this.cursors.left.isDown) {
-            this.player.body.setVelocityX(-currentSpeed);
-        } else if (this.cursors.right.isDown) {
-            this.player.body.setVelocityX(currentSpeed);
+        // Keyboard takes priority over mouse
+        const keyboardActive = this.cursors.left.isDown || this.cursors.right.isDown ||
+                               this.cursors.up.isDown || this.cursors.down.isDown;
+
+        if (keyboardActive) {
+            // Keyboard mode: disable mouse control while keys are held
+            this.isMouseActive = false;
+
+            if (this.cursors.left.isDown) {
+                this.player.body.setVelocityX(-currentSpeed);
+            } else if (this.cursors.right.isDown) {
+                this.player.body.setVelocityX(currentSpeed);
+            } else {
+                this.player.body.setVelocityX(0);
+            }
+
+            if (this.cursors.up.isDown) {
+                this.player.body.setVelocityY(-currentSpeed);
+            } else if (this.cursors.down.isDown) {
+                this.player.body.setVelocityY(currentSpeed);
+            } else {
+                this.player.body.setVelocityY(0);
+            }
+        } else if (this.isMouseActive && this.mouseTarget) {
+            // Mouse chasing mode: smooth movement with dead zone + easing
+            const DEAD_ZONE = 8;
+            const EASE_ZONE = 80;
+            const dx = this.mouseTarget.x - this.player.x;
+            const dy = this.mouseTarget.y - this.player.y;
+            const dist = Math.hypot(dx, dy);
+
+            if (dist <= DEAD_ZONE) {
+                // Within dead zone — stop to prevent jitter
+                this.player.body.setVelocityX(0);
+                this.player.body.setVelocityY(0);
+            } else {
+                // Scale speed down in ease zone for smooth approach
+                const scale = dist < EASE_ZONE ? dist / EASE_ZONE : 1.0;
+                const effectiveSpeed = currentSpeed * scale;
+                this.player.body.setVelocityX((dx / dist) * effectiveSpeed);
+                this.player.body.setVelocityY((dy / dist) * effectiveSpeed);
+            }
         } else {
             this.player.body.setVelocityX(0);
-        }
-
-        if (this.cursors.up.isDown) {
-            this.player.body.setVelocityY(-currentSpeed);
-        } else if (this.cursors.down.isDown) {
-            this.player.body.setVelocityY(currentSpeed);
-        } else {
             this.player.body.setVelocityY(0);
         }
 
@@ -541,6 +600,20 @@ class GameScene extends Phaser.Scene {
 
         // Remove dead enemies from the array
         this.enemies = this.enemies.filter(enemy => enemy.graphics.active);
+
+        // Process anglerfish projectile hits
+        if (this.anglerProjectiles && this.anglerProjectiles.length > 0) {
+            this.anglerProjectiles = this.anglerProjectiles.filter(p => {
+                if (!p.proj || !p.proj.active) return false;
+                p.hitCallback();
+                return p.proj.active;
+            });
+        }
+
+        // Update combo system (check expiry)
+        if (this.comboSystem) {
+            this.comboSystem.update(time);
+        }
 
         // Update skill system (cooldowns)
         if (this.skillSystem) {
@@ -633,12 +706,15 @@ class GameScene extends Phaser.Scene {
         // Screen shake on damage
         this.cameras.main.shake(100, 0.005);
 
+        // Play hurt sound
+        if (this.audioSystem) this.audioSystem.play('hurt');
+
         // Update player health bar
         this.updatePlayerHealthBar();
 
         // Check game over
         if (this.hp <= 0) {
-            this.scene.start('GameOverScene', { score: this.score, level: this.level, difficulty: this.difficulty });
+            this.scene.start('GameOverScene', { score: this.score, level: this.level, difficulty: this.difficulty, kills: this.killCount, survivalTime: Math.floor((Date.now() - this.gameStartTime) / 1000) });
         }
     }
 
@@ -734,6 +810,12 @@ class GameScene extends Phaser.Scene {
         // Destroy old graphics
         oldPlayer.destroy();
 
+        // Level-up visual effects: shockwave + level text popup
+        this.playLevelUpEffects(oldX, oldY);
+
+        // Play level-up sound
+        if (this.audioSystem) this.audioSystem.play('level_up');
+
         // Check for newly unlocked skills
         const newlyUnlocked = this.growthSystem.getNewlyUnlockedSkills(this.level - 1);
         if (newlyUnlocked.length > 0) {
@@ -767,6 +849,85 @@ class GameScene extends Phaser.Scene {
             }
             this.backgroundSystem = new BackgroundSystem(this, 1024, 768);
             this.backgroundSystem.createBackground();
+        }
+    }
+
+    /**
+     * Play level-up visual effects: expanding shockwave rings + floating level text
+     * @param {number} x - Player X position
+     * @param {number} y - Player Y position
+     */
+    playLevelUpEffects(x, y) {
+        // 1. Flash the camera white briefly
+        this.cameras.main.flash(300, 255, 255, 200, false);
+
+        // 2. Three expanding shockwave rings with staggered delays
+        for (let i = 0; i < 3; i++) {
+            this.time.delayedCall(i * 100, () => {
+                const ring = this.add.graphics();
+                ring.lineStyle(3 - i, 0xFFD700, 1);
+                ring.strokeCircle(0, 0, 10);
+                ring.x = x;
+                ring.y = y;
+                ring.setDepth(150);
+
+                this.tweens.add({
+                    targets: ring,
+                    scaleX: 8 + i * 3,
+                    scaleY: 8 + i * 3,
+                    alpha: 0,
+                    duration: 600,
+                    ease: 'Quad.easeOut',
+                    onComplete: () => ring.destroy()
+                });
+            });
+        }
+
+        // 3. Floating "LEVEL UP!" text
+        const levelText = this.add.text(x, y - 30, `LEVEL ${this.level}!`, {
+            fontSize: '28px',
+            fontFamily: 'Arial Black, Arial',
+            color: '#FFD700',
+            stroke: '#000000',
+            strokeThickness: 4
+        });
+        levelText.setOrigin(0.5);
+        levelText.setDepth(200);
+        levelText.setScale(0.5);
+
+        this.tweens.add({
+            targets: levelText,
+            y: y - 100,
+            scale: 1.2,
+            alpha: 0,
+            duration: 1200,
+            ease: 'Quad.easeOut',
+            onComplete: () => levelText.destroy()
+        });
+
+        // 4. Gold star particles burst
+        for (let i = 0; i < 12; i++) {
+            this.time.delayedCall(50, () => {
+                const star = this.add.text(x, y, '★', {
+                    fontSize: `${12 + Math.random() * 10}px`,
+                    color: `hsl(${45 + Math.random() * 30}, 100%, 60%)`
+                });
+                star.setOrigin(0.5);
+                star.setDepth(149);
+
+                const angle = (i / 12) * Math.PI * 2;
+                const dist = 50 + Math.random() * 40;
+                this.tweens.add({
+                    targets: star,
+                    x: x + Math.cos(angle) * dist,
+                    y: y + Math.sin(angle) * dist,
+                    alpha: 0,
+                    scale: 0.3,
+                    duration: 700,
+                    ease: 'Quad.easeOut',
+                    onComplete: () => star.destroy()
+                });
+            });
         }
     }
 
@@ -951,6 +1112,9 @@ class GameScene extends Phaser.Scene {
 
         const reward = treasureBoxData.collect(player);
         if (!reward) return;
+
+        // Play collect sound
+        if (this.audioSystem) this.audioSystem.play('collect');
 
         // Apply reward
         switch (reward.type) {

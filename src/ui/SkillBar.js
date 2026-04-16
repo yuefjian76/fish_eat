@@ -176,7 +176,7 @@ export class SkillBar {
                 // Draw arc to show remaining cooldown
                 const startAngle = -Math.PI / 2;
                 const endAngle = startAngle + (2 * Math.PI * cooldownPercent);
-                slot.cooldownOverlay.slice(25, 0, 25, startAngle, endAngle, false);
+                slot.cooldownOverlay.slice(0, 0, 25, startAngle, endAngle, false);
                 slot.cooldownOverlay.fillPath();
 
                 // Show cooldown text

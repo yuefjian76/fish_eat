@@ -68,6 +68,7 @@ export class BossEnemy extends Enemy {
         }
     }
 
+    /**
      * Get the HP threshold for current phase
      */
     getPhaseThreshold() {

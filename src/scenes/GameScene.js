@@ -91,6 +91,9 @@ class GameScene extends Phaser.Scene {
 
         // Apply permanent upgrades
         this._applyUpgrades();
+
+        // Store daily challenge flag for use in create()
+        this.dailyChallenge = data?.dailyChallenge || false;
     }
 
     preload() {
@@ -138,7 +141,7 @@ class GameScene extends Phaser.Scene {
         this.playerHpMultiplier = this.difficultyConfig.playerHpMultiplier || 1.0;
 
         // Daily challenge
-        if (data && data.dailyChallenge) {
+        if (this.dailyChallenge) {
             try {
                 const challengeData = JSON.parse(localStorage.getItem('fishEat_dailyChallenge') || '{}');
                 this.dailyChallenge = challengeData;

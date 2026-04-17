@@ -737,9 +737,21 @@ class GameScene extends Phaser.Scene {
                     this.bossDefeated[bossTypeKey] = true;
                     this.bossSystem.endBossFight();
 
-                    // Resume normal enemy spawning
+                    // Resume normal enemy spawning with gradual recovery (5 fish over 3s)
                     if (this.spawnTimer) {
                         this.spawnTimer.paused = false;
+                        // Immediately spawn a few fish, then resume normal rate
+                        let recovered = 0;
+                        const recoverInterval = setInterval(() => {
+                            if (recovered >= 5) {
+                                clearInterval(recoverInterval);
+                                return;
+                            }
+                            if (this.enemies.length < this.enemyCountMax) {
+                                this.spawnFish();
+                                recovered++;
+                            }
+                        }, 600);
                     }
 
                     // Clean up boss visuals

@@ -45,31 +45,29 @@ class BootScene extends Phaser.Scene {
         this.load.image('bubbles', 'src/assets/images/bubbles_fx.png');
 
         // Load AI-generated frame animations
-        // Clownfish (Player) - 6 frames (key pattern: baseKey_N.jpg)
-        this.load.image('clownfish_swim_1', 'src/assets/images/frames/clownfish/clownfish_swim_1.jpg');
-        this.load.image('clownfish_swim_2', 'src/assets/images/frames/clownfish/clownfish_swim_2.jpg');
-        this.load.image('clownfish_swim_3', 'src/assets/images/frames/clownfish/clownfish_swim_3.jpg');
-        this.load.image('clownfish_swim_4', 'src/assets/images/frames/clownfish/clownfish_swim_4.jpg');
-        this.load.image('clownfish_swim_5', 'src/assets/images/frames/clownfish/clownfish_swim_5.jpg');
-        this.load.image('clownfish_swim_6', 'src/assets/images/frames/clownfish/clownfish_swim_6.jpg');
+        // Clownfish (Player) - 4 transparent PNG frames
+        this.load.image('transparent_clownfish_001', 'src/assets/images/frames/clownfish/transparent_clownfish_001.png');
+        this.load.image('transparent_clownfish_002', 'src/assets/images/frames/clownfish/transparent_clownfish_002.png');
+        this.load.image('transparent_clownfish_003', 'src/assets/images/frames/clownfish/transparent_clownfish_003.png');
+        this.load.image('transparent_clownfish_004', 'src/assets/images/frames/clownfish/transparent_clownfish_004.png');
 
-        // Shark - 4 frames (key pattern: baseKey_N_001.jpg)
-        this.load.image('shark_anim_1_001', 'src/assets/images/frames/shark/shark_anim_1_001.jpg');
-        this.load.image('shark_anim_2_001', 'src/assets/images/frames/shark/shark_anim_2_001.jpg');
-        this.load.image('shark_anim_3_001', 'src/assets/images/frames/shark/shark_anim_3_001.jpg');
-        this.load.image('shark_anim_4_001', 'src/assets/images/frames/shark/shark_anim_4_001.jpg');
+        // Shark - 4 transparent PNG frames
+        this.load.image('transparent_shark_001', 'src/assets/images/frames/shark/transparent_shark_001.png');
+        this.load.image('transparent_shark_002', 'src/assets/images/frames/shark/transparent_shark_002.png');
+        this.load.image('transparent_shark_003', 'src/assets/images/frames/shark/transparent_shark_003.png');
+        this.load.image('transparent_shark_004', 'src/assets/images/frames/shark/transparent_shark_004.png');
 
-        // Shrimp - 4 frames
-        this.load.image('shrimp_anim_1_001', 'src/assets/images/frames/shrimp/shrimp_anim_1_001.jpg');
-        this.load.image('shrimp_anim_2_001', 'src/assets/images/frames/shrimp/shrimp_anim_2_001.jpg');
-        this.load.image('shrimp_anim_3_001', 'src/assets/images/frames/shrimp/shrimp_anim_3_001.jpg');
-        this.load.image('shrimp_anim_4_001', 'src/assets/images/frames/shrimp/shrimp_anim_4_001.jpg');
+        // Shrimp - 4 transparent PNG frames
+        this.load.image('transparent_shrimp_001', 'src/assets/images/frames/shrimp/transparent_shrimp_001.png');
+        this.load.image('transparent_shrimp_002', 'src/assets/images/frames/shrimp/transparent_shrimp_002.png');
+        this.load.image('transparent_shrimp_003', 'src/assets/images/frames/shrimp/transparent_shrimp_003.png');
+        this.load.image('transparent_shrimp_004', 'src/assets/images/frames/shrimp/transparent_shrimp_004.png');
 
-        // Jellyfish - 4 frames (key pattern: jellyfish_swim_N_001.jpg)
-        this.load.image('jellyfish_swim_1_001', 'src/assets/images/frames/jellyfish/jellyfish_swim_1_001.jpg');
-        this.load.image('jellyfish_swim_2_001', 'src/assets/images/frames/jellyfish/jellyfish_swim_2_001.jpg');
-        this.load.image('jellyfish_swim_3_001', 'src/assets/images/frames/jellyfish/jellyfish_swim_3_001.jpg');
-        this.load.image('jellyfish_swim_4_001', 'src/assets/images/frames/jellyfish/jellyfish_swim_4_001.jpg');
+        // Jellyfish - 4 transparent PNG frames
+        this.load.image('transparent_jellyfish_001', 'src/assets/images/frames/jellyfish/transparent_jellyfish_001.png');
+        this.load.image('transparent_jellyfish_002', 'src/assets/images/frames/jellyfish/transparent_jellyfish_002.png');
+        this.load.image('transparent_jellyfish_003', 'src/assets/images/frames/jellyfish/transparent_jellyfish_003.png');
+        this.load.image('transparent_jellyfish_004', 'src/assets/images/frames/jellyfish/transparent_jellyfish_004.png');
 
         // Anglerfish - 4 frames
         this.load.image('anglerfish_swim_1_001', 'src/assets/images/frames/anglerfish/anglerfish_swim_1_001.jpg');

@@ -80,8 +80,8 @@ class GameScene extends Phaser.Scene {
         this.uiDirty = false;
         this.outOfCombatThreshold = 3000; // 3 seconds
         this.healthRegenRate = 0.005; // 0.5% of max HP per second (slower regen)
-        this.difficulty = data.difficulty || 'easy';
-        this.fishType = data.fishType || 'clownfish';
+        this.difficulty = (data && data.difficulty) || 'easy';
+        this.fishType = (data && data.fishType) || 'clownfish';
         this.spawnTimer = null;
         // Stats tracking
         this.killCount = 0;
@@ -138,7 +138,7 @@ class GameScene extends Phaser.Scene {
         this.playerHpMultiplier = this.difficultyConfig.playerHpMultiplier || 1.0;
 
         // Daily challenge
-        if (data.dailyChallenge) {
+        if (data && data.dailyChallenge) {
             try {
                 const challengeData = JSON.parse(localStorage.getItem('fishEat_dailyChallenge') || '{}');
                 this.dailyChallenge = challengeData;

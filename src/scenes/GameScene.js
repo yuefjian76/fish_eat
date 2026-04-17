@@ -14,6 +14,7 @@ import { SkillBar } from '../ui/SkillBar.js';
 import { ComboSystem } from '../systems/ComboSystem.js';
 import { AudioSystem } from '../systems/AudioSystem.js';
 import { AchievementSystem } from '../systems/AchievementSystem.js';
+import { DailyChallengeSystem } from '../systems/DailyChallengeSystem.js';
 import { logger } from '../systems/DebugLogger.js';
 
 /** @param {'player_damage'|'enemy_damage'|'heal'|'exp'|string} type */
@@ -80,6 +81,7 @@ class GameScene extends Phaser.Scene {
         this.outOfCombatThreshold = 3000; // 3 seconds
         this.healthRegenRate = 0.005; // 0.5% of max HP per second (slower regen)
         this.difficulty = data.difficulty || 'easy';
+        this.fishType = data.fishType || 'clownfish';
         this.spawnTimer = null;
         // Stats tracking
         this.killCount = 0;
@@ -132,6 +134,25 @@ class GameScene extends Phaser.Scene {
         this.aiLevel = this.difficultyConfig.aiLevel;
         this.enemyDamageMultiplier = this.difficultyConfig.enemyDamageMultiplier || 1.0;
         this.playerHpMultiplier = this.difficultyConfig.playerHpMultiplier || 1.0;
+
+        // Daily challenge
+        if (data.dailyChallenge) {
+            try {
+                const challengeData = JSON.parse(localStorage.getItem('fishEat_dailyChallenge') || '{}');
+                this.dailyChallenge = challengeData;
+
+                // Apply to stats
+                if (challengeData.id === 'speed_freak') this.speed *= 1.5;
+                if (challengeData.id === 'turtle') this.speed *= 0.6;
+                if (challengeData.modifier?.id === 'half_hp') { this.maxHp *= 0.5; this.hp = this.maxHp; }
+                if (challengeData.modifier?.id === 'double_hp') { this.maxHp *= 2; this.hp = this.maxHp; }
+
+                // Apply to enemy spawning (pass to spawnFish)
+                this._challengeEnemySizeMultiplier = (challengeData.id === 'giant_mode') ? 1.5 :
+                                                     (challengeData.id === 'tiny_mode') ? 0.7 : 1.0;
+                this._challengeEnemySpeedMultiplier = (challengeData.id === 'ninja') ? 1.8 : 1.0;
+            } catch (e) { /* ignore */ }
+        }
 
         // Load drops configuration
         this.dropsData = this.cache.json.get('dropsData');
@@ -273,10 +294,10 @@ class GameScene extends Phaser.Scene {
     }
 
     createPlayer() {
-        const playerConfig = this.fishData.clownfish;
+        const playerConfig = this.fishData[this.fishType] || this.fishData.clownfish;
 
-        // Use FishFactory to draw the player as a clownfish with enhanced visuals
-        this.player = FishFactory.createPlayerFish(this, 'clownfish', playerConfig.size, playerConfig.color);
+        // Use FishFactory to draw the player fish with enhanced visuals
+        this.player = FishFactory.createPlayerFish(this, this.fishType, playerConfig.size, playerConfig.color);
         this.player.x = 512;
         this.player.y = 384;
         this.player.setDepth(100); // Player at top layer
@@ -289,12 +310,15 @@ class GameScene extends Phaser.Scene {
         this.player.body.setBounce(0.3);
         this.player.body.setCollideWorldBounds(true);
 
-        this.player.playerData = { ...playerConfig };
+        this.player.playerData = { ...playerConfig, fishType: this.fishType };
         this.player.isPlayer = true;
 
-        // Set HP - base 50, increased by level
-        this.maxHp = 50 + (this.level - 1) * 10;
+        // Set HP - based on fish type, increased by level
+        this.maxHp = playerConfig.hp + (this.level - 1) * 10;
         this.hp = this.maxHp;
+
+        // Set base speed based on fish type
+        this.speed = playerConfig.speed;
 
         // Player health bar
         this.playerHealthBarWidth = playerConfig.size * 2;
@@ -445,8 +469,8 @@ class GameScene extends Phaser.Scene {
         const fishConfig = {
             ...baseFishConfig,
             hp: Math.floor(baseFishConfig.hp * scaleFactor),
-            size: Math.floor(baseFishConfig.size * scaleFactor),
-            speed: Math.floor(baseFishConfig.speed * scaleFactor),
+            size: Math.floor(baseFishConfig.size * scaleFactor * (this._challengeEnemySizeMultiplier || 1)),
+            speed: Math.floor(baseFishConfig.speed * scaleFactor * (this._challengeEnemySpeedMultiplier || 1)),
             exp: Math.floor(baseFishConfig.exp * scaleFactor)
         };
 
@@ -519,6 +543,12 @@ class GameScene extends Phaser.Scene {
         // Pause normal enemy spawning
         if (this.spawnTimer) {
             this.spawnTimer.paused = true;
+        }
+
+        // Show boss UI
+        const uiScene = this.scene.get('UIScene');
+        if (uiScene && uiScene.showBossHealthBar) {
+            uiScene.showBossHealthBar('深海霸主', boss.maxHp || 500);
         }
     }
 
@@ -850,6 +880,12 @@ class GameScene extends Phaser.Scene {
                     }
 
                     logger.info(`Boss defeated: ${boss.bossType}`);
+
+                    // Hide boss health bar
+                    const uiScene = this.scene.get('UIScene');
+                    if (uiScene && uiScene.hideBossHealthBar) {
+                        uiScene.hideBossHealthBar();
+                    }
                 }
             }
         }
@@ -889,7 +925,12 @@ class GameScene extends Phaser.Scene {
         this._spawnTimer += this.game.loop.delta;
         if (this._spawnTimer >= this._currentSpawnInterval) {
             this._spawnTimer = 0;
-            this.spawnFish();
+            // Highlander challenge: only 1 enemy allowed
+            if (this.dailyChallenge?.id === 'highlander' && this.enemies.length >= 1) {
+                // Skip spawning
+            } else {
+                this.spawnFish();
+            }
         }
 
         // Draw wave indicator

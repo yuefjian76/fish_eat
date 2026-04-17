@@ -1,4 +1,6 @@
 // MenuScene - Start menu with title and difficulty selection
+import { DailyChallengeSystem } from '../systems/DailyChallengeSystem.js';
+
 class MenuScene extends Phaser.Scene {
     constructor() {
         super({ key: 'MenuScene' });
@@ -22,8 +24,22 @@ class MenuScene extends Phaser.Scene {
         // Load unlocked difficulties from localStorage
         this.loadUnlockedDifficulties();
 
+        // ─── Background swimming fish ───────────────────────────────────
+        this._bgFishGroup = [];
+        const fishColors = [0x3366aa, 0x44aa77, 0xaa5533, 0x556688, 0x668844];
+        for (let i = 0; i < 8; i++) {
+            const fish = this.add.ellipse(0, 0, 20, 12, fishColors[i % fishColors.length], 0.25);
+            fish.setDepth(1);
+            fish.setY(100 + Math.random() * 600);
+            const dir = Math.random() > 0.5 ? 1 : -1;
+            fish.setScale(dir, 1);
+            const speed = 30 + Math.random() * 50;
+            fish._speed = speed * dir;
+            this._bgFishGroup.push(fish);
+        }
+
         // Title
-        this.add.text(centerX, 120, '鱼吃鱼', {
+        const titleText = this.add.text(centerX, 120, '鱼吃鱼', {
             fontSize: '72px',
             fontFamily: 'Arial',
             color: '#00ff88',
@@ -46,6 +62,77 @@ class MenuScene extends Phaser.Scene {
         // Create difficulty buttons
         this.createDifficultyButtons(centerX, 330);
 
+        // Daily challenge
+        const challengeSystem = new DailyChallengeSystem();
+        const challenge = challengeSystem.getChallenge();
+
+        const challengeBtn = this.add.text(centerX, 460, `${challenge.emoji} 今日挑战: ${challenge.name} ${challenge.modifier.emoji}`, {
+            fontSize: '18px',
+            fontFamily: 'Arial',
+            color: '#FFD700',
+            backgroundColor: '#332200',
+            padding: { x: 20, y: 10 }
+        }).setOrigin(0.5).setInteractive();
+
+        challengeBtn.on('pointerover', () => challengeBtn.setStyle({ color: '#FFFF00' }));
+        challengeBtn.on('pointerout', () => challengeBtn.setStyle({ color: '#FFD700' }));
+        challengeBtn.on('pointerdown', () => {
+            // Store challenge in a global or pass via scene data
+            localStorage.setItem('fishEat_dailyChallenge', JSON.stringify(challenge));
+            this.scene.start('GameScene', { difficulty: this.selectedDifficulty, fishType: this.selectedFish, dailyChallenge: true });
+        });
+
+        this.add.text(centerX, 488, `${challenge.desc} | ${challenge.modifier.desc}`, {
+            fontSize: '14px',
+            fontFamily: 'Arial',
+            color: '#aaaaaa'
+        }).setOrigin(0.5);
+
+        // Fish species selection
+        this.add.text(centerX, 270, '选择鱼种', {
+            fontSize: '24px',
+            fontFamily: 'Arial',
+            color: '#ffffff'
+        }).setOrigin(0.5);
+
+        const fishOptions = [
+            { key: 'clownfish', name: '小丑鱼', emoji: '🐠', desc: '平衡型 - 速度与攻击均衡', color: 0xFF6B6B },
+            { key: 'shrimp', name: '小虾', emoji: '🦐', desc: '敏捷型 - 移动速度快，体型小', color: 0xFFB347 },
+            { key: 'shark', name: '鲨鱼', emoji: '🦈', desc: '力量型 - 攻击力强，体型大', color: 0x87CEEB }
+        ];
+
+        const cardW = 180;
+        const cardH = 120;
+        const spacing = 20;
+        const startX = centerX - (fishOptions.length * cardW + (fishOptions.length - 1) * spacing) / 2;
+
+        this.fishCards = {};
+        fishOptions.forEach((fish, i) => {
+            const x = startX + i * (cardW + spacing);
+            const card = this.add.graphics();
+            card.fillStyle(fish.color, 0.3);
+            card.fillRoundedRect(x, 330, cardW, cardH, 8);
+            card.lineStyle(2, fish.color, 0.8);
+            card.strokeRoundedRect(x, 330, cardW, cardH, 8);
+            card.setDepth(5);
+
+            const label = this.add.text(x + cardW/2, 355, fish.emoji, { fontSize: '36px' }).setOrigin(0.5).setDepth(6);
+            const name = this.add.text(x + cardW/2, 395, fish.name, { fontSize: '16px', fontFamily: 'Arial', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5).setDepth(6);
+            const desc = this.add.text(x + cardW/2, 420, fish.desc.split(' - ')[1], { fontSize: '11px', fontFamily: 'Arial', color: '#aaaaaa' }).setOrigin(0.5).setDepth(6);
+
+            const hitArea = this.add.rectangle(x + cardW/2, 330 + cardH/2, cardW, cardH, 0x000000, 0);
+            hitArea.setDepth(7);
+            hitArea.setInteractive({ useHandCursor: true });
+
+            hitArea.on('pointerdown', () => this._selectFish(fish.key));
+
+            this.fishCards[fish.key] = { card, label, name, desc, hitArea, hitAreaRect: { x, y: 330, w: cardW, h: cardH }, color: fish.color };
+        });
+
+        // Select default
+        this.selectedFish = 'clownfish';
+        this._updateFishCards();
+
         // Start button
         const startBtn = this.add.text(centerX, 520, '开始游戏', {
             fontSize: '36px',
@@ -58,7 +145,7 @@ class MenuScene extends Phaser.Scene {
         startBtn.on('pointerover', () => startBtn.setStyle({ color: '#ffff00' }));
         startBtn.on('pointerout', () => startBtn.setStyle({ color: '#ffffff' }));
         startBtn.on('pointerdown', () => {
-            this.scene.start('GameScene', { difficulty: this.selectedDifficulty });
+            this.scene.start('GameScene', { difficulty: this.selectedDifficulty, fishType: this.selectedFish });
             this.scene.launch('UIScene');
         });
 
@@ -300,6 +387,22 @@ class MenuScene extends Phaser.Scene {
         try {
             return parseInt(localStorage.getItem('fishEat_currency') || '0');
         } catch { return 0; }
+    }
+
+    _selectFish(key) {
+        this.selectedFish = key;
+        this._updateFishCards();
+    }
+
+    _updateFishCards() {
+        Object.entries(this.fishCards).forEach(([k, v]) => {
+            const isSelected = k === this.selectedFish;
+            v.card.clear();
+            v.card.fillStyle(isSelected ? 0x00aa66 : 0x333333, isSelected ? 0.5 : 0.3);
+            v.card.fillRoundedRect(v.hitAreaRect.x, v.hitAreaRect.y, v.hitAreaRect.w, v.hitAreaRect.h, 8);
+            v.card.lineStyle(2, isSelected ? 0xffd700 : v.color || 0x666666, 0.8);
+            v.card.strokeRoundedRect(v.hitAreaRect.x, v.hitAreaRect.y, v.hitAreaRect.w, v.hitAreaRect.h, 8);
+        });
     }
 }
 

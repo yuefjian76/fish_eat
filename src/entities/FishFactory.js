@@ -187,26 +187,36 @@ export class FishFactory {
     /**
      * Create player fish with enhanced visuals and glow
      * @param {Phaser.Scene} scene - Phaser scene
-     * @param {string} fishType - Type of fish
+     * @param {string} fishType - Type of fish (clownfish, shrimp, shark)
      * @param {number} size - Size of fish
      * @param {number} color - Color as number
      * @returns {Phaser.GameObjects.Graphics}
      */
     static createPlayerFish(scene, fishType, size, color) {
-        // Try to use sprite if available, otherwise fall back to procedural
-        try {
-            const sprite = FishFactory.createPlayerFishFromSprite(scene, size / 30);
+        // Try to use AI-generated frames if available for the fish type
+        const frameConfig = FishFactory.FISH_FRAME_CONFIG[fishType];
+        const hasFrames = frameConfig && frameConfig.baseKey && scene.textures.exists(`${frameConfig.baseKey}_1`);
+
+        if (hasFrames) {
+            // Use frame-based rendering
+            const sprite = FishFactory.createFishFromFrames(scene, fishType, size / 30, 0);
             sprite.setSize(size * 2, size * 1.5);
+            // Add player glow
+            const glowGraphics = scene.add.graphics();
+            glowGraphics.fillStyle(0xFFFF88, 0.25);
+            glowGraphics.fillEllipse(0, 0, 60 * (size / 30) * 0.4, 40 * (size / 30) * 0.4);
+            glowGraphics.setDepth(99);
+            sprite.glowGraphics = glowGraphics;
             return sprite;
-        } catch (e) {
+        } else {
             // Fall back to procedural drawing
             const playerSize = size * 1.1;
             const graphics = FishFactory.createFish(scene, fishType, playerSize, color);
 
             const glowGraphics = scene.add.graphics();
-            glowGraphics.fillStyle(0xFFFFFF, 0.2);
+            glowGraphics.fillStyle(0xFFFF88, 0.25);
             glowGraphics.fillEllipse(0, 0, playerSize * 2.5, playerSize * 1.8);
-            glowGraphics.setDepth(-1);
+            glowGraphics.setDepth(99);
 
             graphics.glowGraphics = glowGraphics;
             return graphics;

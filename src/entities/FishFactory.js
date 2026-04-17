@@ -7,7 +7,8 @@ export class FishFactory {
      */
     static FISH_FRAME_CONFIG = {
         // AI-generated frame animation (game art style)
-        clownfish: { baseKey: 'clownfish_swim', totalFrames: 6, isPlayer: true },
+        // Transparent PNG files
+        clownfish: { baseKey: 'transparent_clownfish', totalFrames: 4, isPlayer: true, useTransparent: true },
         small_fish: { baseKey: null, totalFrames: 0, isPlayer: false },
         shark: { baseKey: 'shark_anim', totalFrames: 4, isPlayer: false },
         shrimp: { baseKey: 'shrimp_anim', totalFrames: 4, isPlayer: false },
@@ -47,10 +48,15 @@ export class FishFactory {
         }
 
         // Get the first frame texture to create the sprite
-        const usesClownfishPattern = config.baseKey.includes('clownfish');
-        const firstFrameKey = usesClownfishPattern
-            ? `${config.baseKey}_1`
-            : `${config.baseKey}_1_001`;
+        // Handle different naming conventions:
+        // - transparent_clownfish uses: transparent_clownfish_001, transparent_clownfish_002, etc.
+        // - others use: shark_anim_1_001, shark_anim_2_001, etc.
+        let firstFrameKey;
+        if (config.useTransparent) {
+            firstFrameKey = `${config.baseKey}_001`;
+        } else {
+            firstFrameKey = `${config.baseKey}_1_001`;
+        }
 
         // Check if texture exists
         const textureManager = scene.textures;
@@ -67,12 +73,14 @@ export class FishFactory {
         const aiScale = scale * 0.4; // Reduce size by 60%
         const sprite = scene.add.sprite(0, 0, firstFrameKey);
         sprite.setScale(aiScale);
-        sprite.setAlpha(0.85); // Slight transparency for blending
+        // Transparent PNGs use full opacity; JPG backgrounds use 0.85 for blending
+        sprite.setAlpha(config.useTransparent ? 1.0 : 0.85);
         sprite.setDepth(config.isPlayer ? 100 : 30);
 
         // Store fish type for animation lookup
         sprite.fishType = fishType;
         sprite.animKey = config.baseKey;
+        sprite.useTransparent = config.useTransparent;
 
         // Add glow for player fish
         if (config.isPlayer) {

@@ -153,10 +153,10 @@ class BootScene extends Phaser.Scene {
      * Create Phaser animations for all fish types from individual frame images.
      */
     createFishAnimations() {
-        // Clownfish (player) - 6 frames
+        // Clownfish (player) - 4 transparent PNG frames
         this.anims.create({
             key: 'clownfish_swim',
-            frames: [1, 2, 3, 4, 5, 6].map(i => ({ key: `clownfish_swim_${i}`, frame: null })),
+            frames: [1, 2, 3, 4].map(i => ({ key: `transparent_clownfish_00${i}`, frame: null })),
             frameRate: 8,
             repeat: -1
         });

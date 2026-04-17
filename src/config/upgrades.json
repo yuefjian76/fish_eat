@@ -1,0 +1,44 @@
+{
+  "starting_hp": {
+    "name": "初始生命",
+    "description": "游戏开始时增加最大生命值",
+    "maxLevel": 10,
+    "costPerLevel": 100,
+    "effect": { "type": "max_hp_bonus", "value": 20 }
+  },
+  "starting_speed": {
+    "name": "初始速度",
+    "description": "提升基础移动速度",
+    "maxLevel": 5,
+    "costPerLevel": 80,
+    "effect": { "type": "speed_bonus", "value": 15 }
+  },
+  "damage_boost": {
+    "name": "伤害增强",
+    "description": "增加撕咬技能的伤害",
+    "maxLevel": 10,
+    "costPerLevel": 120,
+    "effect": { "type": "damage_bonus", "value": 5 }
+  },
+  "hp_regen": {
+    "name": "生命恢复",
+    "description": "每秒恢复少量生命值",
+    "maxLevel": 5,
+    "costPerLevel": 150,
+    "effect": { "type": "hp_regen", "value": 1 }
+  },
+  "exp_boost": {
+    "name": "经验加成",
+    "description": "获得额外经验值",
+    "maxLevel": 10,
+    "costPerLevel": 100,
+    "effect": { "type": "exp_bonus", "value": 0.1 }
+  },
+  "luck_boost": {
+    "name": "幸运提升",
+    "description": "增加漂流瓶和宝箱的好运效果",
+    "maxLevel": 5,
+    "costPerLevel": 200,
+    "effect": { "type": "luck_bonus", "value": 0.1 }
+  }
+}

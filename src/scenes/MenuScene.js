@@ -9,6 +9,7 @@ class MenuScene extends Phaser.Scene {
 
     preload() {
         this.load.json('difficultyData', 'src/config/difficulty.json');
+        this.load.json('upgradesData', 'src/config/upgrades.json');
     }
 
     create() {
@@ -61,8 +62,24 @@ class MenuScene extends Phaser.Scene {
             this.scene.launch('UIScene');
         });
 
+        // ─── Shop button ───────────────────────────────────────────────
+        const currency = this._getCurrency();
+        const shopBtn = this.add.text(centerX, 580, `🏪 商店  💰 ${currency}`, {
+            fontSize: '22px',
+            fontFamily: 'Arial',
+            color: '#ffd700',
+            backgroundColor: '#332200',
+            padding: { x: 24, y: 10 }
+        }).setOrigin(0.5).setInteractive();
+
+        shopBtn.on('pointerover', () => shopBtn.setStyle({ color: '#ffcc00' }));
+        shopBtn.on('pointerout', () => shopBtn.setStyle({ color: '#ffd700' }));
+        shopBtn.on('pointerdown', () => {
+            this.scene.start('ShopScene');
+        });
+
         // Instructions
-        this.add.text(centerX, 620, '使用方向键或鼠标控制鱼\n大的鱼可以吃掉小的鱼', {
+        this.add.text(centerX, 660, '使用方向键或鼠标控制鱼\n大的鱼可以吃掉小的鱼', {
             fontSize: '20px',
             fontFamily: 'Arial',
             color: '#aaaaaa',
@@ -277,6 +294,12 @@ class MenuScene extends Phaser.Scene {
 
         scene.unlockedDifficulties = unlockedDifficulties;
         scene.saveUnlockedDifficulties();
+    }
+
+    _getCurrency() {
+        try {
+            return parseInt(localStorage.getItem('fishEat_currency') || '0');
+        } catch { return 0; }
     }
 }
 

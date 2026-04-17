@@ -4,6 +4,7 @@ import MenuScene from './scenes/MenuScene.js';
 import GameScene from './scenes/GameScene.js';
 import UIScene from './scenes/UIScene.js';
 import GameOverScene from './scenes/GameOverScene.js';
+import ShopScene from './scenes/ShopScene.js';
 
 // Phaser Game Configuration
 const config = {
@@ -19,7 +20,7 @@ const config = {
             debug: false
         }
     },
-    scene: [BootScene, MenuScene, GameScene, UIScene, GameOverScene]
+    scene: [BootScene, MenuScene, GameScene, UIScene, GameOverScene, ShopScene]
 };
 
 // Create the game instance

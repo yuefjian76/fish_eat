@@ -93,13 +93,28 @@ class GameOverScene extends Phaser.Scene {
             }).setOrigin(0.5);
         }
 
+        // ─── Currency earned display ───────────────────────────────────────
+        const currencyEarned = Math.floor((data.score || 0) / 10);
+        const currencyBg = this.add.graphics();
+        currencyBg.fillStyle(0x332200, 0.8);
+        currencyBg.fillRoundedRect(cx - 160, panelY + panelH + (data.unlocked ? 62 : 10), 320, 36, 6);
+        this.add.text(cx, panelY + panelH + (data.unlocked ? 80 : 28), `💰 本局获得 ${currencyEarned} 金币`, {
+            fontSize: '18px', fontFamily: 'Arial', color: '#ffd700',
+            stroke: '#000000', strokeThickness: 2
+        }).setOrigin(0.5);
+
         // ─── Buttons ────────────────────────────────────────────────────────
-        const btnY = panelY + panelH + (data.unlocked ? 70 : 20);
+        const btnY = panelY + panelH + (data.unlocked ? 120 : 58);
 
         const restartBtn = this._makeButton(cx - 120, btnY + 50, '重新开始', 0x008844);
         restartBtn.on('pointerdown', () => {
             this.scene.start('GameScene', { difficulty: data.difficulty || 'easy' });
             this.scene.launch('UIScene');
+        });
+
+        const shopBtn = this._makeButton(cx + 120, btnY + 50, '商店', 0x886600);
+        shopBtn.on('pointerdown', () => {
+            this.scene.start('ShopScene');
         });
 
         const menuBtn = this._makeButton(cx + 120, btnY + 50, '返回菜单', 0x444466);
@@ -147,6 +162,11 @@ class GameOverScene extends Phaser.Scene {
 
             const prevLevel = this._getStat('fishEat_maxLevel', 1);
             if (level > prevLevel) localStorage.setItem('fishEat_maxLevel', level);
+
+            // Award currency based on score (1 coin per 10 score)
+            const currencyEarned = Math.floor(score / 10);
+            const prevCurrency = parseInt(localStorage.getItem('fishEat_currency') || '0');
+            localStorage.setItem('fishEat_currency', (prevCurrency + currencyEarned).toString());
         } catch (e) {}
     }
 

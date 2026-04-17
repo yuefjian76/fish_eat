@@ -86,6 +86,9 @@ class GameScene extends Phaser.Scene {
         this.gameStartTime = Date.now();
         // Anglerfish projectile tracking
         this.anglerProjectiles = [];
+
+        // Apply permanent upgrades
+        this._applyUpgrades();
     }
 
     preload() {
@@ -353,6 +356,32 @@ class GameScene extends Phaser.Scene {
      * @returns {number} Difficulty multiplier (1.0 = normal)
      */
     _getDifficultyMultiplier() {
+        const levelBonus = Math.max(0, this.level - 5) * 0.05; // +5% per level above 5
+        const survivalBonus = Math.min((Date.now() - this.gameStartTime) / 120000, 0.3); // max +30% at 2 min
+        return 1.0 + levelBonus + survivalBonus;
+    }
+
+    /**
+     * Apply permanent upgrades from shop (loaded from localStorage).
+     */
+    _applyUpgrades() {
+        try {
+            const levels = JSON.parse(localStorage.getItem('fishEat_upgrades') || '{}');
+
+            // starting_hp: +20 HP per level
+            const startingHpLevel = levels['starting_hp'] || 0;
+            this.maxHp += startingHpLevel * 20;
+            this.hp = this.maxHp;
+
+            // starting_speed: +15 speed per level
+            const startingSpeedLevel = levels['starting_speed'] || 0;
+            this.speed += startingSpeedLevel * 15;
+
+            // hp_regen: +0.2% per level
+            const hpRegenLevel = levels['hp_regen'] || 0;
+            this.healthRegenRate += hpRegenLevel * 0.002;
+        } catch (e) { /* ignore */ }
+    }
         const levelBonus = Math.max(0, this.level - 5) * 0.05; // +5% per level above 5
         const survivalBonus = Math.min((Date.now() - this.gameStartTime) / 120000, 0.3); // max +30% at 2 min
         return 1.0 + levelBonus + survivalBonus;

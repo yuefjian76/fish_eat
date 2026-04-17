@@ -183,6 +183,12 @@ class GameScene extends Phaser.Scene {
         // Create player fish
         this.createPlayer();
 
+        // 3-second spawn invincibility
+        this._spawnInvincible = true;
+        this._spawnInvincibleTimer = 3000; // 3 seconds
+        this._spawnFlashTimer = 0;
+        this._spawnFlashInterval = 100; // flash every 100ms
+
         // Setup skill system with player reference
         this.skillSystem.setPlayer(this.player, this);
 
@@ -606,6 +612,11 @@ class GameScene extends Phaser.Scene {
                 return; // Fish is strong against player, no damage
             }
 
+            // Check if player is spawn-invincible
+            if (this._spawnInvincible) {
+                return; // Skip damage
+            }
+
             // Take damage (fish deals damage equal to fish size / 4)
             const damage = Math.floor(fishSize / 4);
             logger.debug(`Damage dealt to player: ${damage} (fishSize=${fishSize})`);
@@ -625,6 +636,31 @@ class GameScene extends Phaser.Scene {
     }
 
     update(time, delta) {
+        // Handle spawn invincibility flashing
+        if (this._spawnInvincible) {
+            this._spawnFlashTimer += this.game.loop.delta;
+            if (this._spawnFlashTimer >= this._spawnFlashInterval) {
+                this._spawnFlashTimer = 0;
+                if (this.player.graphics && this.player.graphics.list[0]) {
+                    const currentAlpha = this.player.graphics.list[0].alpha;
+                    this.player.graphics.list[0].setAlpha(currentAlpha > 0.5 ? 0.3 : 1.0);
+                }
+                // Also flash the player container
+                const currentPlayerAlpha = this.player.alpha;
+                this.player.setAlpha(currentPlayerAlpha > 0.5 ? 0.3 : 1.0);
+            }
+
+            this._spawnInvincibleTimer -= this.game.loop.delta;
+            if (this._spawnInvincibleTimer <= 0) {
+                this._spawnInvincible = false;
+                // Restore full opacity
+                if (this.player.graphics && this.player.playerData) {
+                    this.player.graphics.list[0]?.setAlpha(1.0);
+                }
+                this.player.setAlpha(1.0);
+            }
+        }
+
         // Current speed (base + acceleration if shift pressed, or speed_up buff)
         let currentSpeed = this.shiftKey.isDown ? this.speed * 1.8 : this.speed;
         if (this.skillSystem && this.skillSystem.isActive('speed_up')) {
@@ -844,6 +880,10 @@ class GameScene extends Phaser.Scene {
             damage = remainingDamage;
         }
         if (this.isInvincible) {
+            return;
+        }
+        // Check if player is spawn-invincible
+        if (this._spawnInvincible) {
             return;
         }
 

@@ -98,45 +98,51 @@ class MenuScene extends Phaser.Scene {
             color: '#aaaaaa'
         }).setOrigin(0.5);
 
-        // Fish species selection
-        this.add.text(centerX, 270, '选择鱼种', {
-            fontSize: '24px',
+        // Fish species selection (right side, vertical)
+        this.add.text(centerX + 280, 200, '选择鱼种', {
+            fontSize: '18px',
             fontFamily: 'Arial',
             color: '#ffffff'
         }).setOrigin(0.5);
 
         const fishOptions = [
-            { key: 'clownfish', name: '小丑鱼', emoji: '🐠', desc: '平衡型 - 速度与攻击均衡', color: 0xFF6B6B },
-            { key: 'shrimp', name: '小虾', emoji: '🦐', desc: '敏捷型 - 移动速度快，体型小', color: 0xFFB347 },
-            { key: 'shark', name: '鲨鱼', emoji: '🦈', desc: '力量型 - 攻击力强，体型大', color: 0x87CEEB }
+            { key: 'clownfish', name: '小丑鱼', emoji: '🐠', color: 0xFF6B6B },
+            { key: 'shrimp', name: '小虾', emoji: '🦐', color: 0xFFB347 },
+            { key: 'shark', name: '鲨鱼', emoji: '🦈', color: 0x87CEEB }
         ];
 
-        const cardW = 180;
-        const cardH = 120;
-        const spacing = 20;
-        const startX = centerX - (fishOptions.length * cardW + (fishOptions.length - 1) * spacing) / 2;
+        const fishX = centerX + 280;
+        const fishStartY = 240;
+        const fishSpacing = 60;
 
         this.fishCards = {};
         fishOptions.forEach((fish, i) => {
-            const x = startX + i * (cardW + spacing);
-            const card = this.add.graphics();
-            card.fillStyle(fish.color, 0.3);
-            card.fillRoundedRect(x, 330, cardW, cardH, 8);
-            card.lineStyle(2, fish.color, 0.8);
-            card.strokeRoundedRect(x, 330, cardW, cardH, 8);
-            card.setDepth(5);
+            const y = fishStartY + i * fishSpacing;
 
-            const label = this.add.text(x + cardW/2, 355, fish.emoji, { fontSize: '36px' }).setOrigin(0.5).setDepth(6);
-            const name = this.add.text(x + cardW/2, 395, fish.name, { fontSize: '16px', fontFamily: 'Arial', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5).setDepth(6);
-            const desc = this.add.text(x + cardW/2, 420, fish.desc.split(' - ')[1], { fontSize: '11px', fontFamily: 'Arial', color: '#aaaaaa' }).setOrigin(0.5).setDepth(6);
+            // Fish icon (smaller)
+            const icon = this.add.text(fishX, y, fish.emoji, { fontSize: '28px' }).setOrigin(0.5).setDepth(6);
 
-            const hitArea = this.add.rectangle(x + cardW/2, 330 + cardH/2, cardW, cardH, 0x000000, 0);
+            // Fish name
+            const name = this.add.text(fishX + 25, y, fish.name, {
+                fontSize: '14px',
+                fontFamily: 'Arial',
+                color: '#ffffff'
+            }).setOrigin(0, 0.5).setDepth(6);
+
+            // Hit area
+            const hitArea = this.add.rectangle(fishX, y, 120, 40, 0x000000, 0);
             hitArea.setDepth(7);
             hitArea.setInteractive({ useHandCursor: true });
 
             hitArea.on('pointerdown', () => this._selectFish(fish.key));
+            icon.on('pointerdown', () => this._selectFish(fish.key));
+            name.on('pointerdown', () => this._selectFish(fish.key));
 
-            this.fishCards[fish.key] = { card, label, name, desc, hitArea, hitAreaRect: { x, y: 330, w: cardW, h: cardH }, color: fish.color };
+            // Selection indicator
+            const indicator = this.add.graphics();
+            indicator.setDepth(5);
+
+            this.fishCards[fish.key] = { icon, name, indicator, hitArea, y, color: fish.color };
         });
 
         // Select default
@@ -427,11 +433,18 @@ class MenuScene extends Phaser.Scene {
     _updateFishCards() {
         Object.entries(this.fishCards).forEach(([k, v]) => {
             const isSelected = k === this.selectedFish;
-            v.card.clear();
-            v.card.fillStyle(isSelected ? 0x00aa66 : 0x333333, isSelected ? 0.5 : 0.3);
-            v.card.fillRoundedRect(v.hitAreaRect.x, v.hitAreaRect.y, v.hitAreaRect.w, v.hitAreaRect.h, 8);
-            v.card.lineStyle(2, isSelected ? 0xffd700 : v.color || 0x666666, 0.8);
-            v.card.strokeRoundedRect(v.hitAreaRect.x, v.hitAreaRect.y, v.hitAreaRect.w, v.hitAreaRect.h, 8);
+            v.indicator.clear();
+            // Draw selection indicator circle
+            v.indicator.fillStyle(isSelected ? 0x00aa66 : 0x333333, isSelected ? 0.5 : 0.3);
+            v.indicator.fillCircle(v.hitArea.x, v.hitArea.y, 25);
+            v.indicator.lineStyle(2, isSelected ? 0xffd700 : v.color || 0x666666, 0.8);
+            v.indicator.strokeCircle(v.hitArea.x, v.hitArea.y, 25);
+            // Highlight selected
+            if (isSelected) {
+                v.icon.setScale(1.2);
+            } else {
+                v.icon.setScale(1.0);
+            }
         });
     }
 

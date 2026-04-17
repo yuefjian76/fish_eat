@@ -129,6 +129,28 @@ class UIScene extends Phaser.Scene {
         // Draw initial bars
         this._drawHpBar(1.0, 1.0);
         this._drawExpBar(0, 1.0);
+
+        // ─── Boss health bar (hidden initially) ───────────────────────────────
+        this.bossHealthBarBg = this.add.graphics();
+        this.bossHealthBarBg.setDepth(150);
+
+        this.bossHealthBar = this.add.graphics();
+        this.bossHealthBar.setDepth(151);
+
+        this.bossNameText = this.add.text(512, 70, '', {
+            fontSize: '20px',
+            fontFamily: 'Arial Black, Arial',
+            color: '#ff6644',
+            stroke: '#000000',
+            strokeThickness: 3
+        });
+        this.bossNameText.setOrigin(0.5);
+        this.bossNameText.setDepth(152);
+        this.bossNameText.setVisible(false);
+
+        // Boss health bar internal state
+        this._bossMaxHp = 0;
+        this._bossCurrentHp = 0;
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -562,6 +584,73 @@ class UIScene extends Phaser.Scene {
                 }
             });
         }
+    }
+
+    /**
+     * Show boss health bar with entrance animation.
+     * @param {string} bossName - Name of the boss
+     * @param {number} maxHp - Maximum HP of the boss
+     */
+    showBossHealthBar(bossName, maxHp) {
+        this._bossMaxHp = maxHp;
+        this._bossCurrentHp = maxHp;
+        this.bossNameText.setText(bossName);
+        this.bossNameText.setVisible(true);
+        this._updateBossHealthBar();
+        // Entrance animation
+        this.bossNameText.setAlpha(0);
+        this.bossNameText.setScale(2);
+        this.tweens.add({
+            targets: this.bossNameText,
+            alpha: 1,
+            scale: 1,
+            duration: 500,
+            ease: 'Back.easeOut'
+        });
+    }
+
+    /**
+     * Update boss health bar.
+     * @param {number} currentHp - Current HP of the boss
+     * @param {number} maxHp - Maximum HP of the boss
+     */
+    updateBossHealth(currentHp, maxHp) {
+        if (!this.bossNameText.visible) return;
+        this._bossCurrentHp = currentHp;
+        this._bossMaxHp = maxHp;
+        this._updateBossHealthBar();
+    }
+
+    /**
+     * Hide boss health bar.
+     */
+    hideBossHealthBar() {
+        this.bossNameText.setVisible(false);
+        this.bossHealthBar.clear();
+        this.bossHealthBarBg.clear();
+    }
+
+    /**
+     * Internal method to draw the boss health bar.
+     */
+    _updateBossHealthBar() {
+        this.bossHealthBarBg.clear();
+        this.bossHealthBar.clear();
+
+        const barWidth = 500;
+        const barHeight = 16;
+        const barX = 512 - barWidth / 2;
+        const barY = 95;
+
+        // Background
+        this.bossHealthBarBg.fillStyle(0x333333, 0.8);
+        this.bossHealthBarBg.fillRect(barX, barY, barWidth, barHeight);
+
+        // Health fill
+        const hpRatio = this._bossCurrentHp / this._bossMaxHp;
+        const fillColor = hpRatio > 0.5 ? 0xff4444 : (hpRatio > 0.25 ? 0xff8800 : 0xff0000);
+        this.bossHealthBar.fillStyle(fillColor, 1);
+        this.bossHealthBar.fillRect(barX, barY, barWidth * hpRatio, barHeight);
     }
 }
 

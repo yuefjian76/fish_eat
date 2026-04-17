@@ -312,6 +312,16 @@ class GameScene extends Phaser.Scene {
             this.player.play(this.player.animKey);
         }
 
+        // Create player shadow (for depth effect)
+        const shadowScale = (playerConfig.size / 30) * 0.4;
+        this.playerShadow = this.add.graphics();
+        this.playerShadow.fillStyle(0x000000, 0.25);
+        this.playerShadow.fillEllipse(0, 0, 60 * shadowScale, 20 * shadowScale);
+        this.playerShadow.setDepth(99);
+
+        // Player breathing animation state
+        this._playerBreathOffset = 0;
+
         // Enable physics
         this.physics.world.enable(this.player);
         const hitRadius = playerConfig.size * 0.8;
@@ -764,6 +774,18 @@ class GameScene extends Phaser.Scene {
         this.player.x = Phaser.Math.Clamp(this.player.x, 20, 1004);
         this.player.y = Phaser.Math.Clamp(this.player.y, 20, 748);
 
+        // Update player shadow position
+        if (this.playerShadow) {
+            this.playerShadow.x = this.player.x;
+            this.playerShadow.y = this.player.y + (this.player.playerData?.size * 0.3 || 15);
+        }
+
+        // Player breathing animation (gentle up-down float)
+        this._playerBreathOffset += delta * 0.003;
+        const breathY = Math.sin(this._playerBreathOffset) * 2;
+        this._playerBaseY = this.player.y;
+        this.player.y = this._playerBaseY + breathY;
+
         // Update player health bar position
         this.playerHealthBar.x = this.player.x;
         this.playerHealthBar.y = this.player.y;
@@ -1147,6 +1169,14 @@ class GameScene extends Phaser.Scene {
         if (this.player.animKey && this.anims.exists(this.player.animKey)) {
             this.player.play(this.player.animKey);
         }
+
+        // Recreate player shadow with new size
+        if (this.playerShadow) this.playerShadow.destroy();
+        const shadowScale = (oldPlayerData.size / 30) * 0.4;
+        this.playerShadow = this.add.graphics();
+        this.playerShadow.fillStyle(0x000000, 0.25);
+        this.playerShadow.fillEllipse(0, 0, 60 * shadowScale, 20 * shadowScale);
+        this.playerShadow.setDepth(99);
 
         // Enable physics for new graphics
         this.physics.world.enable(this.player);

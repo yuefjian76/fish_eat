@@ -31,6 +31,17 @@ export class Enemy {
             this.graphics.play(this.graphics.animKey);
         }
 
+        // Create shadow underneath fish (for depth effect)
+        const shadowScale = (fishConfig.size / 30) * 0.4;
+        this.shadow = scene.add.graphics();
+        this.shadow.fillStyle(0x000000, 0.2);
+        this.shadow.fillEllipse(0, 0, 60 * shadowScale, 20 * shadowScale);
+        this.shadow.setDepth(this.graphics.depth - 1);
+
+        // Breathing/floating animation state
+        this._breathOffset = Math.random() * Math.PI * 2; // Random start phase
+        this._baseY = y;
+
         // Enable physics - use a circle hitbox for simplicity
         scene.physics.world.enable(this.graphics);
         const hitRadius = fishConfig.size * 0.8;
@@ -866,6 +877,29 @@ export class Enemy {
             if (distToTarget < 20) {
                 this.setRandomWanderDirection();
             }
+        }
+
+        // Update shadow position (always follows fish)
+        if (this.shadow) {
+            this.shadow.x = this.graphics.x;
+            this.shadow.y = this.graphics.y + (this.fishConfig.size * 0.3);
+        }
+
+        // Breathing/floating animation - gentle up-down movement
+        this._breathOffset += delta * 0.003;
+        const breathY = Math.sin(this._breathOffset) * 3;
+        this.graphics.y = this._baseY + breathY;
+
+        // Distance-based transparency (simulate water depth effect)
+        if (player && this.graphics) {
+            const dist = Phaser.Math.Distance.Between(
+                this.graphics.x, this.graphics.y,
+                player.x, player.y
+            );
+            // Further = more transparent (min 0.3, max 1.0)
+            const maxDist = 600;
+            const alpha = Math.max(0.3, Math.min(1.0, 1 - (dist / maxDist) * 0.5));
+            this.graphics.setAlpha(alpha * 0.85); // Also apply base transparency
         }
     }
 }

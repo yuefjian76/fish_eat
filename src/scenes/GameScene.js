@@ -258,13 +258,16 @@ class GameScene extends Phaser.Scene {
             this
         );
 
-        // Spawn timer
-        this.spawnTimer = this.time.addEvent({
-            delay: 2000,
-            callback: this.spawnFish,
-            callbackScope: this,
-            loop: true
-        });
+        // Wave spawn system
+        this._waveState = 'calm'; // 'calm' | 'surge' | 'peak'
+        this._waveTimer = 0;
+        this._baseSpawnInterval = 2000; // Normal spawn interval in calm
+        this._surgeSpawnInterval = 400; // Fast spawn interval during surge
+        this._currentSpawnInterval = this._baseSpawnInterval;
+        this._spawnTimer = 0;
+
+        // Wave indicator graphics
+        this._waveGraphics = this.add.graphics();
 
         logger.info(`Game started - Difficulty: ${this.difficulty}, Enemy count: ${initialSpawnCount}-${this.enemyCountMax}`);
     }
@@ -387,10 +390,6 @@ class GameScene extends Phaser.Scene {
             const hpRegenLevel = levels['hp_regen'] || 0;
             this.healthRegenRate += hpRegenLevel * 0.002;
         } catch (e) { /* ignore */ }
-    }
-        const levelBonus = Math.max(0, this.level - 5) * 0.05; // +5% per level above 5
-        const survivalBonus = Math.min((Date.now() - this.gameStartTime) / 120000, 0.3); // max +30% at 2 min
-        return 1.0 + levelBonus + survivalBonus;
     }
 
     /**
@@ -1110,6 +1109,14 @@ class GameScene extends Phaser.Scene {
             // Check drift bottle achievement
             this.driftBottleCount = (this.driftBottleCount || 0) + 1;
             this.achievementSystem.checkDriftBottles(this.driftBottleCount);
+            // Show drift bottle visual effect
+            if (this.showDriftBottleEffect) {
+                const effectData = driftResult.effect;
+                this.showDriftBottleEffect(
+                    effectData.name || '漂流瓶',
+                    effectData.description || ''
+                );
+            }
         }
 
         // Check for boss spawn
@@ -1206,6 +1213,93 @@ class GameScene extends Phaser.Scene {
                 });
             });
         }
+    }
+
+    /**
+     * Show drift bottle effect with dramatic animation
+     * @param {string} bottleName - Name of the drift bottle effect
+     * @param {string} effectText - Description of the effect
+     */
+    showDriftBottleEffect(bottleName, effectText) {
+        const W = this.scale.width;
+        const H = this.scale.height;
+
+        // Full screen overlay
+        const overlay = this.add.rectangle(W / 2, H / 2, W, H, 0x112244, 0.85);
+        overlay.setDepth(250);
+        overlay.setAlpha(0);
+
+        // Bottle icon (using text emoji)
+        const bottleIcon = this.add.text(W / 2, H / 2 + 80, '\uD83C\uDF76', {
+            fontSize: '64px'
+        });
+        bottleIcon.setOrigin(0.5);
+        bottleIcon.setDepth(251);
+        bottleIcon.setScale(0);
+
+        // Effect name
+        const nameText = this.add.text(W / 2, H / 2 - 60, bottleName, {
+            fontSize: '36px',
+            fontFamily: 'Arial Black, Arial',
+            color: '#FFD700',
+            stroke: '#000000',
+            strokeThickness: 4
+        });
+        nameText.setOrigin(0.5);
+        nameText.setDepth(251);
+        nameText.setAlpha(0);
+
+        // Effect description
+        const descText = this.add.text(W / 2, H / 2 + 20, effectText, {
+            fontSize: '22px',
+            fontFamily: 'Arial',
+            color: '#ffffff',
+            align: 'center'
+        });
+        descText.setOrigin(0.5);
+        descText.setDepth(251);
+        descText.setAlpha(0);
+
+        // Timeline animation
+        const timeline = this.tweens.createTimeline();
+
+        timeline.add({
+            targets: overlay,
+            alpha: 1,
+            duration: 300,
+            ease: 'Quad.easeOut'
+        });
+
+        timeline.add({
+            targets: [nameText, bottleIcon],
+            alpha: 1,
+            scale: 1,
+            duration: 400,
+            ease: 'Back.easeOut'
+        });
+
+        timeline.add({
+            targets: descText,
+            alpha: 1,
+            duration: 300,
+            delay: 200
+        });
+
+        timeline.add({
+            targets: [overlay, nameText, bottleIcon, descText],
+            alpha: 0,
+            duration: 400,
+            delay: 1500,
+            ease: 'Quad.easeIn',
+            onComplete: () => {
+                overlay.destroy();
+                nameText.destroy();
+                bottleIcon.destroy();
+                descText.destroy();
+            }
+        });
+
+        timeline.play();
     }
 
     /**

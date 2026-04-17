@@ -161,26 +161,26 @@ class BootScene extends Phaser.Scene {
             repeat: -1
         });
 
-        // Shark - 4 frames
+        // Shark - 4 transparent PNG frames
         this.anims.create({
             key: 'shark_swim',
-            frames: [1, 2, 3, 4].map(i => ({ key: `shark_anim_${i}_001`, frame: null })),
+            frames: [1, 2, 3, 4].map(i => ({ key: `transparent_shark_00${i}`, frame: null })),
             frameRate: 8,
             repeat: -1
         });
 
-        // Shrimp - 4 frames
+        // Shrimp - 4 transparent PNG frames
         this.anims.create({
             key: 'shrimp_swim',
-            frames: [1, 2, 3, 4].map(i => ({ key: `shrimp_anim_${i}_001`, frame: null })),
+            frames: [1, 2, 3, 4].map(i => ({ key: `transparent_shrimp_00${i}`, frame: null })),
             frameRate: 8,
             repeat: -1
         });
 
-        // Jellyfish - 4 frames
+        // Jellyfish - 4 transparent PNG frames
         this.anims.create({
             key: 'jellyfish_swim',
-            frames: [1, 2, 3, 4].map(i => ({ key: `jellyfish_swim_${i}_001`, frame: null })),
+            frames: [1, 2, 3, 4].map(i => ({ key: `transparent_jellyfish_00${i}`, frame: null })),
             frameRate: 6,
             repeat: -1
         });

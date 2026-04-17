@@ -10,9 +10,9 @@ export class FishFactory {
         // Transparent PNG files
         clownfish: { baseKey: 'transparent_clownfish', totalFrames: 4, isPlayer: true, useTransparent: true },
         small_fish: { baseKey: null, totalFrames: 0, isPlayer: false },
-        shark: { baseKey: 'shark_anim', totalFrames: 4, isPlayer: false },
-        shrimp: { baseKey: 'shrimp_anim', totalFrames: 4, isPlayer: false },
-        jellyfish: { baseKey: 'jellyfish_swim', totalFrames: 4, isPlayer: false },
+        shark: { baseKey: 'transparent_shark', totalFrames: 4, isPlayer: false, useTransparent: true },
+        shrimp: { baseKey: 'transparent_shrimp', totalFrames: 4, isPlayer: false, useTransparent: true },
+        jellyfish: { baseKey: 'transparent_jellyfish', totalFrames: 4, isPlayer: false, useTransparent: true },
         anglerfish: { baseKey: 'anglerfish_swim', totalFrames: 4, isPlayer: false },
         seahorse: { baseKey: 'seahorse_swim', totalFrames: 4, isPlayer: false },
         octopus: { baseKey: 'octopus_swim', totalFrames: 4, isPlayer: false },

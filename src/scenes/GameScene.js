@@ -647,11 +647,11 @@ class GameScene extends Phaser.Scene {
             if (!enemy.graphics || !enemy.graphics.active) return;
             const glow = this._getGlowColor(
                 this.player.playerData.size,
-                enemy.fishData.size,
+                enemy.graphics.fishData.size,
                 enemy.fishConfig.strongAgainst?.includes('clownfish')
             );
             if (!glow) return;
-            const r = enemy.fishData.size + 2;
+            const r = enemy.graphics.fishData.size + 2;
             this._glowLayer.lineStyle(2, glow, 0.7);
             this._glowLayer.strokeCircle(enemy.graphics.x, enemy.graphics.y, r);
         });

@@ -214,7 +214,7 @@ export class FishFactory {
     static createPlayerFish(scene, fishType, size, color) {
         // Try to use AI-generated frames if available for the fish type
         const frameConfig = FishFactory.FISH_FRAME_CONFIG[fishType];
-        const hasFrames = frameConfig && frameConfig.baseKey && scene.textures.exists(`${frameConfig.baseKey}_1`);
+        const hasFrames = frameConfig && frameConfig.baseKey && scene.textures.exists(`${frameConfig.baseKey}_001`);
 
         if (hasFrames) {
             // Use frame-based rendering with Phaser sprite

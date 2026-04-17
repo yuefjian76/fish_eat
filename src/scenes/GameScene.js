@@ -326,20 +326,36 @@ class GameScene extends Phaser.Scene {
     }
 
     /**
-     * Calculate enemy level based on distribution
-     * 70% same level, 20% lower, 10% higher
+     * Calculate enemy level based on distribution and player progress.
+     * Higher player levels → more high-level enemies appear.
+     * Survival time also increases difficulty.
      * @param {number} playerLevel - Current player level
      * @returns {number} Enemy level
      */
     calculateEnemyLevel(playerLevel) {
-        const roll = Math.random();
-        if (roll < 0.80) {
-            return playerLevel;                    // 80% same level
-        } else if (roll < 0.92) {
-            return Math.max(1, playerLevel - 1);  // 12% lower level
+        // Progressive difficulty: higher levels get harder enemy distribution
+        const survivalMinutes = Math.floor((Date.now() - this.gameStartTime) / 60000);
+        const bonusRoll = Math.min(survivalMinutes * 0.05, 0.2); // Up to +20% harder
+
+        const roll = Math.random() - bonusRoll;
+        if (roll < 0.70) {
+            return playerLevel;                     // 70% same level
+        } else if (roll < 0.88) {
+            return Math.max(1, playerLevel - 1);   // 18% lower level
         } else {
-            return playerLevel + 1;               // 8% higher level
+            return playerLevel + 1;                // 12% higher level
         }
+    }
+
+    /**
+     * Get progressive difficulty multiplier based on player level and survival time.
+     * Affects enemy stats and spawn rates.
+     * @returns {number} Difficulty multiplier (1.0 = normal)
+     */
+    _getDifficultyMultiplier() {
+        const levelBonus = Math.max(0, this.level - 5) * 0.05; // +5% per level above 5
+        const survivalBonus = Math.min((Date.now() - this.gameStartTime) / 120000, 0.3); // max +30% at 2 min
+        return 1.0 + levelBonus + survivalBonus;
     }
 
     /**
@@ -387,9 +403,10 @@ class GameScene extends Phaser.Scene {
         // Calculate enemy level based on distribution
         const enemyLevel = this.calculateEnemyLevel(this.level);
 
-        // Scale fish config based on enemy level
+        // Scale fish config based on enemy level + progressive difficulty
         const levelDiff = enemyLevel - this.level;
-        const scaleFactor = 1 + (levelDiff * 0.15); // 15% scaling per level difference
+        const difficultyMult = this._getDifficultyMultiplier();
+        const scaleFactor = (1 + (levelDiff * 0.15)) * difficultyMult; // 15% scaling per level diff + progressive
 
         const fishConfig = {
             ...baseFishConfig,

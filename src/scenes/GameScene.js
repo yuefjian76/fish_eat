@@ -695,6 +695,23 @@ class GameScene extends Phaser.Scene {
             }
         }
 
+        // Player animation frame cycling (if using sprite frames)
+        if (this.player && this.player.totalFrames) {
+            this._playerFrameTimer = (this._playerFrameTimer || 0) + delta;
+            if (this._playerFrameTimer >= 150) { // ~6-7 fps
+                this._playerFrameTimer = 0;
+                this.player.currentFrame = (this.player.currentFrame + 1) % this.player.totalFrames;
+                const frameNum = this.player.currentFrame + 1;
+                const usesClownfishPattern = this.player.baseKey.includes('clownfish');
+                const newKey = usesClownfishPattern
+                    ? `${this.player.baseKey}_${frameNum}`
+                    : `${this.player.baseKey}_${frameNum}_001`;
+                if (this.textures.exists(newKey)) {
+                    this.player.setTexture(newKey);
+                }
+            }
+        }
+
         // Current speed (base + acceleration if shift pressed, or speed_up buff)
         let currentSpeed = this.shiftKey.isDown ? this.speed * 1.8 : this.speed;
         if (this.skillSystem && this.skillSystem.isActive('speed_up')) {
@@ -1129,8 +1146,8 @@ class GameScene extends Phaser.Scene {
 
         // Health bar width stays at 80, just update it
 
-        // Recreate player fish graphics with new size
-        this.player = FishFactory.createFish(this, 'clownfish', oldPlayerData.size, oldPlayerData.color);
+        // Recreate player fish graphics with new size (use sprite if available)
+        this.player = FishFactory.createPlayerFish(this, this.fishType, oldPlayerData.size, oldPlayerData.color);
         this.player.x = oldX;
         this.player.y = oldY;
         this.player.playerData = oldPlayerData;

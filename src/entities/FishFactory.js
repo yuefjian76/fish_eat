@@ -122,8 +122,8 @@ export class FishFactory {
      * @returns {Phaser.GameObjects.Image}
      */
     static createPlayerFishFromSprite(scene, scale = 1.0, frame = 0) {
-        // Try AI-generated clownfish frames first
-        if (scene.textures.exists('clownfish_swim_0')) {
+        // Try AI-generated clownfish frames first (check frame 1, not 0)
+        if (scene.textures.exists('clownfish_swim_1')) {
             return FishFactory.createFishFromFrames(scene, 'clownfish', scale, frame);
         }
 
@@ -200,7 +200,6 @@ export class FishFactory {
         if (hasFrames) {
             // Use frame-based rendering
             const sprite = FishFactory.createFishFromFrames(scene, fishType, size / 30, 0);
-            sprite.setSize(size * 2, size * 1.5);
             // Add player glow
             const glowGraphics = scene.add.graphics();
             glowGraphics.fillStyle(0xFFFF88, 0.25);

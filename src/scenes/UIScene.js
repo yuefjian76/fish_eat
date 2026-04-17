@@ -330,6 +330,88 @@ class UIScene extends Phaser.Scene {
             });
         });
     }
+
+    /**
+     * Show achievement notification popup.
+     * @param {string} name - Achievement name
+     * @param {string} description - Achievement description
+     */
+    showAchievementNotification(name, description) {
+        const W = this.scale.width;
+        const x = W / 2;
+        const y = 80;
+
+        // Background panel
+        const bg = this.add.graphics();
+        bg.fillStyle(0x000000, 0.85);
+        bg.fillRoundedRect(x - 180, y - 25, 360, 60, 8);
+        bg.setDepth(100);
+
+        // Gold border
+        bg.lineStyle(2, 0xffd700, 1);
+        bg.strokeRoundedRect(x - 180, y - 25, 360, 60, 8);
+
+        // Achievement label
+        const label = this.add.text(x - 160, y - 15, '🏆 成就解锁', {
+            fontSize: '14px',
+            fontFamily: 'Arial',
+            color: '#ffd700',
+            stroke: '#000',
+            strokeThickness: 1
+        });
+        label.setDepth(101);
+
+        // Achievement name
+        const achText = this.add.text(x - 160, y + 5, name, {
+            fontSize: '18px',
+            fontFamily: 'Arial',
+            color: '#ffffff',
+            stroke: '#000',
+            strokeThickness: 1
+        });
+        achText.setDepth(101);
+
+        // Description
+        const descText = this.add.text(x + 20, y + 5, description, {
+            fontSize: '14px',
+            fontFamily: 'Arial',
+            color: '#aaaaaa',
+            stroke: '#000',
+            strokeThickness: 1
+        });
+        descText.setDepth(101);
+
+        // Fade in and slide down
+        const container = this.add.container(x, y - 30, [bg, label, achText, descText]);
+        container.setDepth(100);
+        container.setAlpha(0);
+
+        this.tweens.add({
+            targets: container,
+            alpha: 1,
+            y: y,
+            duration: 300,
+            ease: 'Power2'
+        });
+
+        // Fade out and slide up after delay
+        this.time.delayedCall(2500, () => {
+            this.tweens.add({
+                targets: container,
+                alpha: 0,
+                y: y - 20,
+                duration: 400,
+                ease: 'Power2',
+                onComplete: () => {
+                    bg.destroy();
+                    label.destroy();
+                    achText.destroy();
+                    descText.destroy();
+                    container.destroy();
+                }
+            });
+        });
+    }
 }
 
 export default UIScene;

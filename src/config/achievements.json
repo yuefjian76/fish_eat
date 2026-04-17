@@ -1,0 +1,86 @@
+{
+  "first_bite": {
+    "name": "初试锋芒",
+    "description": "吃掉第一条鱼",
+    "icon": "fish",
+    "condition": { "type": "fish_eaten", "count": 1 }
+  },
+  "ten_bites": {
+    "name": "小有所成",
+    "description": "吃掉10条鱼",
+    "icon": "fish",
+    "condition": { "type": "fish_eaten", "count": 10 }
+  },
+  "fifty_bites": {
+    "name": "鱼类猎手",
+    "description": "吃掉50条鱼",
+    "icon": "fish",
+    "condition": { "type": "fish_eaten", "count": 50 }
+  },
+  "first_level": {
+    "name": "初露头角",
+    "description": "升至2级",
+    "icon": "star",
+    "condition": { "type": "level", "level": 2 }
+  },
+  "level_5": {
+    "name": "成长蜕变",
+    "description": "升至5级",
+    "icon": "star",
+    "condition": { "type": "level", "level": 5 }
+  },
+  "level_10": {
+    "name": "海中霸主",
+    "description": "升至10级",
+    "icon": "star",
+    "condition": { "type": "level", "level": 10 }
+  },
+  "score_1000": {
+    "name": "千分里程碑",
+    "description": "获得1000分",
+    "icon": "trophy",
+    "condition": { "type": "score", "score": 1000 }
+  },
+  "score_10000": {
+    "name": "万分荣耀",
+    "description": "获得10000分",
+    "icon": "trophy",
+    "condition": { "type": "score", "score": 10000 }
+  },
+  "combo_5": {
+    "name": "连击初现",
+    "description": "达成5连击",
+    "icon": "lightning",
+    "condition": { "type": "max_combo", "combo": 5 }
+  },
+  "combo_20": {
+    "name": "连击达人",
+    "description": "达成20连击",
+    "icon": "lightning",
+    "condition": { "type": "max_combo", "combo": 20 }
+  },
+  "survive_60": {
+    "name": "生存挑战",
+    "description": "存活60秒",
+    "icon": "clock",
+    "condition": { "type": "survival_time", "seconds": 60 }
+  },
+  "survive_180": {
+    "name": "持久生存",
+    "description": "存活180秒",
+    "icon": "clock",
+    "condition": { "type": "survival_time", "seconds": 180 }
+  },
+  "treasure_hunter": {
+    "name": "寻宝猎人",
+    "description": "开启5个宝箱",
+    "icon": "chest",
+    "condition": { "type": "treasure_opened", "count": 5 }
+  },
+  "drift_bottle_5": {
+    "name": "漂流瓶收藏家",
+    "description": "收集10个漂流瓶",
+    "icon": "bottle",
+    "condition": { "type": "drift_bottles", "count": 10 }
+  }
+}

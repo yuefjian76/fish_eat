@@ -13,6 +13,7 @@ import { BossAnimation } from '../systems/BossAnimation.js';
 import { SkillBar } from '../ui/SkillBar.js';
 import { ComboSystem } from '../systems/ComboSystem.js';
 import { AudioSystem } from '../systems/AudioSystem.js';
+import { AchievementSystem } from '../systems/AchievementSystem.js';
 import { logger } from '../systems/DebugLogger.js';
 
 /** @param {'player_damage'|'enemy_damage'|'heal'|'exp'|string} type */
@@ -138,10 +139,14 @@ class GameScene extends Phaser.Scene {
         // Initialize audio system (Web Audio, no files needed)
         this.audioSystem = new AudioSystem();
 
+        // Initialize achievement system
+        this.achievementSystem = new AchievementSystem(this);
+
         // Initialize combo system
         this.comboSystem = new ComboSystem(this.levelsData.combo || {});
         this.comboSystem.setOnComboChange((count) => {
             this.scene.get('UIScene').updateCombo(count);
+            this.achievementSystem.checkCombo(count);
         });
 
         // Initialize growth system
@@ -502,6 +507,7 @@ class GameScene extends Phaser.Scene {
             this.exp = this.growthSystem.getExp();
             this.level = this.growthSystem.getLevel();
             this.score += Math.floor(expResult.expGained * 10 * comboMultiplier);
+            this.achievementSystem.checkScore(this.score);
             this.uiDirty = true;
 
             // Show floating EXP text
@@ -509,6 +515,7 @@ class GameScene extends Phaser.Scene {
 
             // Track kill count
             this.killCount++;
+            this.achievementSystem.checkFishEaten(this.killCount);
 
             // Remove fish from enemies array if it's an enemy
             const enemyIndex = this.enemies.findIndex(e => e.graphics === fish);
@@ -703,6 +710,10 @@ class GameScene extends Phaser.Scene {
         if (this.backgroundSystem) {
             this.backgroundSystem.update(delta);
         }
+
+        // Check survival time achievements
+        const survivalSeconds = Math.floor((Date.now() - this.gameStartTime) / 1000);
+        this.achievementSystem.checkSurvivalTime(survivalSeconds);
 
         // Update boss health bar position
         if (this.bossSystem.isInBossFight()) {
@@ -968,10 +979,16 @@ class GameScene extends Phaser.Scene {
             this.skillBar.setPlayerLevel(this.level);
         }
 
+        // Check achievements for level up
+        this.achievementSystem.checkLevelUp(this.level);
+
         // Trigger drift bottle effect
         if (this.driftBottleSystem) {
             const driftResult = this.driftBottleSystem.trigger();
             logger.info(`Level up - Drift bottle triggered: ${driftResult.message}`);
+            // Check drift bottle achievement
+            this.driftBottleCount = (this.driftBottleCount || 0) + 1;
+            this.achievementSystem.checkDriftBottles(this.driftBottleCount);
         }
 
         // Check for boss spawn
@@ -1313,6 +1330,11 @@ class GameScene extends Phaser.Scene {
                 logger.info('Treasure collected: DOUBLE REWARDS 15s');
                 break;
         }
+
+        // Check achievements for treasure opened
+        this.treasureOpenedCount = (this.treasureOpenedCount || 0) + 1;
+        this.achievementSystem.checkTreasureOpened(this.treasureOpenedCount);
+        this.achievementSystem.checkScore(this.score);
 
         // Mark UI dirty - update will be called in next update loop
         this.uiDirty = true;

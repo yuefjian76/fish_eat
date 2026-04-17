@@ -311,10 +311,35 @@ class GameScene extends Phaser.Scene {
         }
     }
 
+    /**
+     * Get spawn weights for a given player level.
+     * Early levels: mostly clownfish/shrimp; later levels unlock tougher fish.
+     */
+    _getSpawnWeights(level) {
+        if (level <= 3) return { clownfish: 0.4, shrimp: 0.35, shark: 0.15, jellyfish: 0.1 };
+        if (level <= 6) return { clownfish: 0.2, shrimp: 0.2, shark: 0.2, jellyfish: 0.15, seahorse: 0.15, octopus: 0.1 };
+        if (level <= 10) return { clownfish: 0.1, shrimp: 0.1, shark: 0.15, anglerfish: 0.15, jellyfish: 0.1, seahorse: 0.15, octopus: 0.15, eel: 0.1 };
+        return { shark: 0.2, anglerfish: 0.2, jellyfish: 0.15, seahorse: 0.1, octopus: 0.15, eel: 0.2 };
+    }
+
+    /**
+     * Select a fish type using weighted random.
+     */
+    _selectFishByWeight(weights) {
+        const valid = Object.entries(weights).filter(([, w]) => w > 0);
+        const r = Math.random();
+        let cumulative = 0;
+        for (const [type, weight] of valid) {
+            cumulative += weight;
+            if (r <= cumulative) return type;
+        }
+        return valid[0][0];
+    }
+
     spawnFish() {
-        // Expanded fish types for more variety (excluding bosses and elite types)
-        const fishTypes = ['clownfish', 'shrimp', 'shark', 'anglerfish', 'jellyfish', 'seahorse', 'octopus', 'eel'];
-        const type = Phaser.Utils.Array.GetRandom(fishTypes);
+        // Weighted spawn based on player level (prevents early-game difficulty spikes)
+        const weights = this._getSpawnWeights(this.level);
+        const type = this._selectFishByWeight(weights);
         const baseFishConfig = this.fishData[type];
 
         // Calculate enemy level based on distribution

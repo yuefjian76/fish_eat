@@ -412,6 +412,73 @@ class UIScene extends Phaser.Scene {
             });
         });
     }
+
+    /**
+     * Show pause menu overlay.
+     */
+    showPauseMenu() {
+        const W = this.scale.width;
+        const H = this.scale.height;
+        const cx = W / 2;
+        const cy = H / 2;
+
+        // Darken background
+        this._pauseOverlay = this.add.graphics();
+        this._pauseOverlay.fillStyle(0x000000, 0.7);
+        this._pauseOverlay.fillRect(0, 0, W, H);
+        this._pauseOverlay.setDepth(200);
+
+        // Pause text
+        this._pauseText = this.add.text(cx, cy - 40, '游戏暂停', {
+            fontSize: '48px',
+            fontFamily: 'Arial',
+            color: '#ffffff',
+            stroke: '#000',
+            strokeThickness: 4
+        });
+        this._pauseText.setOrigin(0.5);
+        this._pauseText.setDepth(201);
+
+        // Resume hint
+        this._pauseHint = this.add.text(cx, cy + 20, '按 ESC 继续', {
+            fontSize: '20px',
+            fontFamily: 'Arial',
+            color: '#aaaaaa'
+        });
+        this._pauseHint.setOrigin(0.5);
+        this._pauseHint.setDepth(201);
+
+        // Fade in
+        this._pauseOverlay.setAlpha(0);
+        this._pauseText.setAlpha(0);
+        this._pauseHint.setAlpha(0);
+        this.tweens.add({
+            targets: [this._pauseOverlay, this._pauseText, this._pauseHint],
+            alpha: 1,
+            duration: 200
+        });
+    }
+
+    /**
+     * Hide pause menu overlay.
+     */
+    hidePauseMenu() {
+        if (this._pauseOverlay) {
+            this.tweens.add({
+                targets: [this._pauseOverlay, this._pauseText, this._pauseHint],
+                alpha: 0,
+                duration: 150,
+                onComplete: () => {
+                    if (this._pauseOverlay) this._pauseOverlay.destroy();
+                    if (this._pauseText) this._pauseText.destroy();
+                    if (this._pauseHint) this._pauseHint.destroy();
+                    this._pauseOverlay = null;
+                    this._pauseText = null;
+                    this._pauseHint = null;
+                }
+            });
+        }
+    }
 }
 
 export default UIScene;

@@ -205,6 +205,12 @@ class GameScene extends Phaser.Scene {
         // Setup skill key listeners
         this.setupSkillKeys();
 
+        // Setup ESC key for pause
+        this.isPaused = false;
+        this.input.keyboard.on('keydown-ESC', () => {
+            this._togglePause();
+        });
+
         // Spawn initial fish based on difficulty
         const initialSpawnCount = Phaser.Math.Between(this.enemyCountMin, this.enemyCountMax);
         for (let i = 0; i < initialSpawnCount; i++) {
@@ -825,6 +831,20 @@ class GameScene extends Phaser.Scene {
             (dx / dist) * magnitude,
             (dy / dist) * magnitude
         );
+    }
+
+    /**
+     * Toggle pause state.
+     */
+    _togglePause() {
+        this.isPaused = !this.isPaused;
+        if (this.isPaused) {
+            this.scene.pause();
+            this.scene.get('UIScene').showPauseMenu();
+        } else {
+            this.scene.resume();
+            this.scene.get('UIScene').hidePauseMenu();
+        }
     }
 
     /**

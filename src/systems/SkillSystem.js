@@ -155,8 +155,21 @@ export class SkillSystem {
         }
 
         if (hitEnemy) {
+            // Apply type advantage: player (clownfish) vs enemy
+            const playerType = 'clownfish';
+            const enemyConfig = hitEnemy.fishConfig;
+            let typeMultiplier = 1.0;
+            if (enemyConfig) {
+                if (enemyConfig.weakTo?.includes(playerType)) {
+                    typeMultiplier = 1.5; // 50% bonus damage
+                } else if (enemyConfig.strongAgainst?.includes(playerType)) {
+                    typeMultiplier = 0.6; // 40% reduced damage
+                }
+            }
+            const finalDamage = Math.floor(skill.damage * typeMultiplier);
+
             // Deal damage to enemy
-            const died = hitEnemy.takeDamage(skill.damage);
+            const died = hitEnemy.takeDamage(finalDamage);
 
             // If enemy died from the damage
             if (died) {
@@ -186,7 +199,7 @@ export class SkillSystem {
                 this.scene.scene.get('UIScene').updateUI(this.scene.score, this.scene.exp, this.scene.level, this.scene.hp, this.scene.maxHp, expForNextLevel);
             }
 
-            return { success: true, skillId, type: skill.type, damage: skill.damage, target: hitEnemy, killed: died };
+            return { success: true, skillId, type: skill.type, damage: finalDamage, target: hitEnemy, killed: died };
         }
 
         return { success: false, reason: 'no_target' };

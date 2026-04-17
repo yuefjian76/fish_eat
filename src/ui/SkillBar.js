@@ -151,9 +151,10 @@ export class SkillBar {
                 slot.bg.lineStyle(2, 0x555555, 0.5);
                 slot.bg.strokeCircle(0, 0, 25);
 
-                // Show lock icon
-                slot.icon.setText('🔒');
-                slot.icon.setAlpha(0.5);
+                // Show unlock level instead of lock icon
+                const unlockLevel = this.skillsData[skillId]?.unlockLevel || 1;
+                slot.icon.setText(`${unlockLevel}`);
+                slot.icon.setAlpha(0.6);
 
                 // Hide cooldown overlay for locked skills
                 slot.cooldownOverlay.setAlpha(0);

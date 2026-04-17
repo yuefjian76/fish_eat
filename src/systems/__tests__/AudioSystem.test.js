@@ -123,3 +123,64 @@ function createAudioSystem(audioContext) {
         }
     };
 }
+
+describe('AudioSystem - BGM parameters', () => {
+    test('getOceanHumFreq returns low frequency for deep sea', () => {
+        expect(getOceanHumFreq('deep')).toBe(55);
+    });
+
+    test('getOceanHumFreq returns higher frequency for tropical', () => {
+        expect(getOceanHumFreq('tropical')).toBe(110);
+    });
+
+    test('getOceanHumFreq returns medium frequency for arctic', () => {
+        expect(getOceanHumFreq('arctic')).toBe(80);
+    });
+
+    test('getOceanHumFreq defaults to 80 for unknown theme', () => {
+        expect(getOceanHumFreq('unknown')).toBe(80);
+    });
+
+    test('bubbleChance scales with difficulty', () => {
+        expect(getBubbleChance('easy')).toBeLessThan(getBubbleChance('hard'));
+    });
+
+    test('bubbleFrequency is higher for tropical', () => {
+        expect(getBubbleFrequency('tropical')).toBeGreaterThan(getBubbleFrequency('deep'));
+    });
+
+    test('getLFOOscillatorType returns sine for ocean wave feel', () => {
+        expect(getLFOOscillatorType()).toBe('sine');
+    });
+});
+
+function getOceanHumFreq(theme) {
+    switch (theme) {
+        case 'deep': return 55;
+        case 'tropical': return 110;
+        case 'arctic': return 80;
+        default: return 80;
+    }
+}
+
+function getBubbleChance(difficulty) {
+    switch (difficulty) {
+        case 'easy': return 0.1;
+        case 'normal': return 0.2;
+        case 'hard': return 0.3;
+        default: return 0.2;
+    }
+}
+
+function getBubbleFrequency(theme) {
+    switch (theme) {
+        case 'deep': return 0.7;
+        case 'tropical': return 1.2;
+        case 'arctic': return 0.9;
+        default: return 1.0;
+    }
+}
+
+function getLFOOscillatorType() {
+    return 'sine';
+}

@@ -165,6 +165,10 @@ class GameScene extends Phaser.Scene {
         // Update UI with theme name
         this.scene.get('UIScene').updateTheme(this.backgroundSystem.themeConfig.name);
 
+        // Start background music (map theme name: undersea→deep, polar→arctic)
+        const bgmTheme = this.backgroundSystem.theme === 'polar' ? 'arctic' : this.backgroundSystem.theme;
+        if (this.audioSystem) this.audioSystem.startBGM(bgmTheme, this.difficulty);
+
         // Create fish group
         this.fishes = this.physics.add.group();
 
@@ -1326,6 +1330,7 @@ class GameScene extends Phaser.Scene {
             });
             this.anglerProjectiles = [];
         }
+        if (this.audioSystem) this.audioSystem.stopBGM();
     }
 }
 

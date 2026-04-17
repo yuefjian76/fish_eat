@@ -1,5 +1,5 @@
 /**
- * AudioSystem - Web Audio API synthesized sound effects
+ * AudioSystem - Web Audio API synthesized sound effects and BGM
  * No audio files required — all sounds are generated programmatically.
  */
 export class AudioSystem {
@@ -7,6 +7,9 @@ export class AudioSystem {
         this.ctx = null;
         this.volume = 0.4;
         this.enabled = false;
+        this.bgmVolume = 0.15;
+        this._bgmNodes = null;
+        this._bubbleTimeout = null;
         this._init();
     }
 
@@ -46,6 +49,140 @@ export class AudioSystem {
             case 'skill':     return this._playSkill();
             case 'collect':   return this._playCollect();
         }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Background Music (BGM)
+    // ─────────────────────────────────────────────────────────────────────
+
+    /**
+     * Start background music with ocean hum and bubbles.
+     * @param {string} theme - 'deep'|'tropical'|'arctic'
+     * @param {string} difficulty - 'easy'|'normal'|'hard'
+     */
+    startBGM(theme = 'deep', difficulty = 'normal') {
+        if (!this.enabled || !this.ctx) return;
+        this.stopBGM();
+
+        const now = this.ctx.currentTime;
+        const masterGain = this.ctx.createGain();
+        masterGain.gain.setValueAtTime(this.bgmVolume, now);
+        masterGain.connect(this.ctx.destination);
+
+        // Ocean hum - low frequency drone with LFO modulation
+        const humFreq = this._getOceanHumFreq(theme);
+        const hum = this.ctx.createOscillator();
+        const humGain = this.ctx.createGain();
+        hum.type = 'sine';
+        hum.frequency.setValueAtTime(humFreq, now);
+
+        // Add slight detuned harmonic for richness
+        const hum2 = this.ctx.createOscillator();
+        const hum2Gain = this.ctx.createGain();
+        hum2.type = 'sine';
+        hum2.frequency.setValueAtTime(humFreq * 1.5, now);
+        hum2Gain.gain.setValueAtTime(0.3, now);
+
+        // LFO for wave-like amplitude modulation
+        const lfo = this.ctx.createOscillator();
+        const lfoGain = this.ctx.createGain();
+        lfo.type = 'sine';
+        lfo.frequency.setValueAtTime(0.2, now); // Slow wave rhythm
+        lfoGain.gain.setValueAtTime(0.3, now);
+
+        lfo.connect(lfoGain);
+        lfoGain.connect(humGain.gain);
+
+        hum.connect(humGain);
+        hum2.connect(hum2Gain);
+        humGain.connect(masterGain);
+        hum2Gain.connect(masterGain);
+
+        hum.start(now);
+        hum2.start(now);
+        lfo.start(now);
+
+        this._bgmNodes = { hum, hum2, lfo, masterGain };
+
+        // Start bubble scheduler
+        this._scheduleBubble(theme, difficulty);
+    }
+
+    /** Stop background music */
+    stopBGM() {
+        if (this._bubbleTimeout) {
+            clearTimeout(this._bubbleTimeout);
+            this._bubbleTimeout = null;
+        }
+        if (this._bgmNodes) {
+            try {
+                this._bgmNodes.hum.stop();
+                this._bgmNodes.hum2.stop();
+                this._bgmNodes.lfo.stop();
+            } catch (e) { /* already stopped */ }
+            this._bgmNodes = null;
+        }
+    }
+
+    _getOceanHumFreq(theme) {
+        switch (theme) {
+            case 'deep': return 55;
+            case 'tropical': return 110;
+            case 'arctic': return 80;
+            default: return 80;
+        }
+    }
+
+    _getBubbleChance(difficulty) {
+        switch (difficulty) {
+            case 'easy': return 0.1;
+            case 'normal': return 0.2;
+            case 'hard': return 0.3;
+            default: return 0.2;
+        }
+    }
+
+    _getBubbleFrequency(theme) {
+        switch (theme) {
+            case 'deep': return 0.7;
+            case 'tropical': return 1.2;
+            case 'arctic': return 0.9;
+            default: return 1.0;
+        }
+    }
+
+    _scheduleBubble(theme, difficulty) {
+        if (!this.enabled || !this.ctx || !this._bgmNodes) return;
+
+        const chance = this._getBubbleChance(difficulty);
+        if (Math.random() < chance) {
+            this._playBubble();
+        }
+
+        const freq = this._getBubbleFrequency(theme);
+        const delay = (3000 + Math.random() * 4000) / freq;
+        this._bubbleTimeout = setTimeout(() => this._scheduleBubble(theme, difficulty), delay);
+    }
+
+    _playBubble() {
+        if (!this.enabled || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.type = 'sine';
+        const baseFreq = 800 + Math.random() * 800;
+        osc.frequency.setValueAtTime(baseFreq, now);
+        osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.5, now + 0.08);
+
+        gain.gain.setValueAtTime(this.bgmVolume * 0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+
+        osc.start(now);
+        osc.stop(now + 0.1);
     }
 
     // ─────────────────────────────────────────────────────────────────────

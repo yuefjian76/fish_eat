@@ -48,9 +48,9 @@ export class FishFactory {
         }
 
         // Get the first frame texture to create the sprite
-        // New naming: transparent_clownfish_1a (variant 1, pose a)
-        // Randomly select variant 1, 2, or 3
-        const variant = Math.floor(Math.random() * 3) + 1; // 1, 2, or 3
+        // Naming: transparent_clownfish_1a (variant 1, pose a)
+        // Randomly select variant 1, 2, 3, or 4
+        const variant = Math.floor(Math.random() * 4) + 1; // 1, 2, 3, or 4
         const firstFrameKey = `${config.baseKey}_${variant}a`;
 
         // Check if texture exists

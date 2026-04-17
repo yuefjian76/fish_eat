@@ -176,8 +176,8 @@ class BootScene extends Phaser.Scene {
 
     /**
      * Create Phaser animations for all fish types.
-     * Each fish has 3 variants, each variant has 4 poses (a,b,c,d).
-     * Creates separate animations per variant (variant_1, variant_2, variant_3).
+     * Each fish has 4 variants, each variant has 4 poses (a,b,c,d).
+     * Creates separate animations per variant (variant_1, variant_2, variant_3, variant_4).
      */
     createFishAnimations() {
         const poses = ['a', 'b', 'c', 'd'];
@@ -193,8 +193,8 @@ class BootScene extends Phaser.Scene {
 
         for (const fishType of fishTypes) {
             const frameRate = frameRates[fishType];
-            // Create 3 animations, one per variant
-            for (let variant = 1; variant <= 3; variant++) {
+            // Create 4 animations, one per variant
+            for (let variant = 1; variant <= 4; variant++) {
                 const frames = poses.map(pose =>
                     ({ key: `transparent_${fishType}_${variant}${pose}`, frame: null })
                 );

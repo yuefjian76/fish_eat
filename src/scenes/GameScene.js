@@ -423,11 +423,14 @@ class GameScene extends Phaser.Scene {
 
         // Boss spawn thresholds from design
         if (level === 5 && !this.bossDefeated.squid) {
-            this.spawnBoss('boss_squid', 400, 700);
+            this.scene.get('UIScene').showBossWarning('squid');
+            this.time.delayedCall(3000, () => this.spawnBoss('boss_squid', 400, 700));
         } else if (level === 10 && !this.bossDefeated.sharkKing) {
-            this.spawnBoss('boss_shark_king', -100, 384);
+            this.scene.get('UIScene').showBossWarning('sharkKing');
+            this.time.delayedCall(3000, () => this.spawnBoss('boss_shark_king', -100, 384));
         } else if (level === 15 && !this.bossDefeated.seaDragon) {
-            this.spawnBoss('boss_sea_dragon', 400, 700);
+            this.scene.get('UIScene').showBossWarning('seaDragon');
+            this.time.delayedCall(3000, () => this.spawnBoss('boss_sea_dragon', 400, 700));
         }
     }
 

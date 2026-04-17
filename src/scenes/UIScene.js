@@ -414,6 +414,90 @@ class UIScene extends Phaser.Scene {
     }
 
     /**
+     * Show boss arrival warning overlay.
+     * @param {string} bossType - 'squid'|'sharkKing'|'seaDragon'
+     */
+    showBossWarning(bossType) {
+        const W = this.scale.width;
+        const cx = W / 2;
+        const cy = W / 4;
+
+        // Boss name map
+        const bossNames = {
+            squid: '大王乌贼',
+            sharkKing: '鲨鱼之王',
+            seaDragon: '海龙'
+        };
+        const name = bossNames[bossType] || 'BOSS';
+
+        // Flashing warning background
+        const warningBg = this.add.graphics();
+        warningBg.fillStyle(0xff0000, 0);
+        warningBg.fillRect(0, 0, W, this.scale.height);
+        warningBg.setDepth(180);
+        warningBg.setAlpha(0);
+
+        // Warning text
+        const warningText = this.add.text(cx, cy, '⚠ BOSS 来袭 ⚠', {
+            fontSize: '52px',
+            fontFamily: 'Arial',
+            color: '#ff0000',
+            stroke: '#000',
+            strokeThickness: 6
+        });
+        warningText.setOrigin(0.5);
+        warningText.setDepth(181);
+        warningText.setAlpha(0);
+        warningText.setScale(0.5);
+
+        // Boss name subtitle
+        const subText = this.add.text(cx, cy + 50, name, {
+            fontSize: '28px',
+            fontFamily: 'Arial',
+            color: '#ffffff',
+            stroke: '#000',
+            strokeThickness: 3
+        });
+        subText.setOrigin(0.5);
+        subText.setDepth(181);
+        subText.setAlpha(0);
+
+        // Flash in
+        this.tweens.add({
+            targets: [warningBg, warningText, subText],
+            alpha: 1,
+            scale: 1,
+            duration: 300,
+            ease: 'Back.easeOut'
+        });
+
+        // Red flash pulse
+        this.tweens.add({
+            targets: warningBg,
+            alpha: 0.3,
+            duration: 200,
+            yoyo: true,
+            repeat: 7,
+            onComplete: () => {
+                warningBg.destroy();
+            }
+        });
+
+        // Fade out after 3 seconds
+        this.time.delayedCall(3000, () => {
+            this.tweens.add({
+                targets: [warningText, subText],
+                alpha: 0,
+                duration: 400,
+                onComplete: () => {
+                    warningText.destroy();
+                    subText.destroy();
+                }
+            });
+        });
+    }
+
+    /**
      * Show pause menu overlay.
      */
     showPauseMenu() {

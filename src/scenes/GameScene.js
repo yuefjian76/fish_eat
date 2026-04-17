@@ -108,6 +108,8 @@ class GameScene extends Phaser.Scene {
         this.load.json('difficultyData', 'src/config/difficulty.json');
         // Load drops data from JSON
         this.load.json('dropsData', 'src/config/drops.json');
+        // Load achievements data from JSON
+        this.load.json('achievementsData', 'src/config/achievements.json');
     }
 
     create() {
@@ -164,7 +166,7 @@ class GameScene extends Phaser.Scene {
         this.audioSystem = new AudioSystem();
 
         // Initialize achievement system
-        this.achievementSystem = new AchievementSystem(this);
+        this.achievementSystem = new AchievementSystem(this, this.cache.json.get('achievementsData'));
 
         // Initialize combo system
         this.comboSystem = new ComboSystem(this.levelsData.combo || {});

@@ -2,12 +2,11 @@
  * AchievementSystem - Tracks and unlocks game achievements
  * Persists unlocked achievements to localStorage.
  */
-import achievementsData from '../config/achievements.json';
 
 const STORAGE_KEY = 'achievements_unlocked';
 
 export class AchievementSystem {
-    constructor(scene) {
+    constructor(scene, achievementsData) {
         this.scene = scene;
         this.achievements = achievementsData;
         this._unlocked = [];

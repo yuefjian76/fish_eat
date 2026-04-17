@@ -767,10 +767,31 @@ class GameScene extends Phaser.Scene {
         // Update player health bar
         this.updatePlayerHealthBar();
 
+        // Apply knockback - push player away from enemy
+        this._applyKnockback(enemy, actualDamage);
+
         // Check game over
         if (this.hp <= 0) {
             this.scene.start('GameOverScene', { score: this.score, level: this.level, difficulty: this.difficulty, kills: this.killCount, survivalTime: Math.floor((Date.now() - this.gameStartTime) / 1000) });
         }
+    }
+
+    /**
+     * Apply knockback to player when hit by enemy.
+     * @param {Enemy} enemy - The enemy that hit the player
+     * @param {number} damage - Damage dealt (scales knockback strength)
+     */
+    _applyKnockback(enemy, damage) {
+        if (!enemy || !enemy.graphics || !this.player || !this.player.body) return;
+        const MAX_KNOCKBACK_VELOCITY = 450;
+        const dx = this.player.x - enemy.graphics.x;
+        const dy = this.player.y - enemy.graphics.y;
+        const dist = Math.hypot(dx, dy) || 1;
+        const magnitude = Math.min(damage * 15, MAX_KNOCKBACK_VELOCITY);
+        this.player.body.setVelocity(
+            (dx / dist) * magnitude,
+            (dy / dist) * magnitude
+        );
     }
 
     /**

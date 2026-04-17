@@ -48,15 +48,10 @@ export class FishFactory {
         }
 
         // Get the first frame texture to create the sprite
-        // Handle different naming conventions:
-        // - transparent_clownfish uses: transparent_clownfish_001, transparent_clownfish_002, etc.
-        // - others use: shark_anim_1_001, shark_anim_2_001, etc.
-        let firstFrameKey;
-        if (config.useTransparent) {
-            firstFrameKey = `${config.baseKey}_001`;
-        } else {
-            firstFrameKey = `${config.baseKey}_1_001`;
-        }
+        // New naming: transparent_clownfish_1a (variant 1, pose a)
+        // Randomly select variant 1, 2, or 3
+        const variant = Math.floor(Math.random() * 3) + 1; // 1, 2, or 3
+        const firstFrameKey = `${config.baseKey}_${variant}a`;
 
         // Check if texture exists
         const textureManager = scene.textures;
@@ -79,8 +74,15 @@ export class FishFactory {
 
         // Store fish type for animation lookup
         sprite.fishType = fishType;
-        sprite.animKey = config.baseKey;
+        sprite.variant = variant; // Store selected variant
+        sprite.animKey = `${config.baseKey}`; // e.g., 'transparent_clownfish'
         sprite.useTransparent = config.useTransparent;
+
+        // Play animation for selected variant (e.g., clownfish_swim_1, clownfish_swim_2, or clownfish_swim_3)
+        const animKey = `${fishType}_swim_${variant}`;
+        if (sprite.anims && sprite.anims.exists(animKey)) {
+            sprite.play(animKey);
+        }
 
         // Add glow for player fish
         if (config.isPlayer) {
@@ -214,7 +216,8 @@ export class FishFactory {
     static createPlayerFish(scene, fishType, size, color) {
         // Try to use AI-generated frames if available for the fish type
         const frameConfig = FishFactory.FISH_FRAME_CONFIG[fishType];
-        const hasFrames = frameConfig && frameConfig.baseKey && scene.textures.exists(`${frameConfig.baseKey}_001`);
+        // Check for first variant's first pose: transparent_clownfish_1a
+        const hasFrames = frameConfig && frameConfig.baseKey && scene.textures.exists(`${frameConfig.baseKey}_1a`);
 
         if (hasFrames) {
             // Use frame-based rendering with Phaser sprite

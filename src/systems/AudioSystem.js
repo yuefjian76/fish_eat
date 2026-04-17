@@ -1,6 +1,6 @@
 /**
  * AudioSystem - Web Audio API synthesized sound effects and BGM
- * No audio files required — all sounds are generated programmatically.
+ * Uses MP3 files for background music, synthesized for sound effects.
  */
 export class AudioSystem {
     constructor() {
@@ -9,7 +9,10 @@ export class AudioSystem {
         this.enabled = false;
         this.bgmVolume = 0.15;
         this._bgmNodes = null;
+        this._bgmBuffer = null;
+        this._bgmSource = null;
         this._bubbleTimeout = null;
+        this._useMP3BGM = true; // Use MP3 files for BGM
         this._init();
     }
 
@@ -27,6 +30,23 @@ export class AudioSystem {
 
     setVolume(v) {
         this.volume = Math.max(0, Math.min(1, v));
+    }
+
+    /**
+     * Load MP3 BGM file
+     * @param {string} url - URL to MP3 file
+     */
+    async loadBGM(url) {
+        if (!this.enabled || !this.ctx) return;
+        try {
+            const response = await fetch(url);
+            const arrayBuffer = await response.arrayBuffer();
+            this._bgmBuffer = await this.ctx.decodeAudioData(arrayBuffer);
+            console.log('BGM loaded:', url);
+        } catch (e) {
+            console.warn('Failed to load BGM:', e);
+            this._bgmBuffer = null;
+        }
     }
 
     /**
@@ -56,14 +76,55 @@ export class AudioSystem {
     // ─────────────────────────────────────────────────────────────────────
 
     /**
-     * Start background music with ocean hum and bubbles.
+     * Start background music - uses MP3 file if available, otherwise synthesized.
      * @param {string} theme - 'deep'|'tropical'|'arctic'
      * @param {string} difficulty - 'easy'|'normal'|'hard'
      */
-    startBGM(theme = 'deep', difficulty = 'normal') {
-        if (!this.enabled || !this.ctx) return;
+    async startBGM(theme = 'deep', difficulty = 'normal') {
+        if (!this.enabled || !this.ctx) return Promise.resolve();
+
         this.stopBGM();
 
+        // Try to load and play MP3 BGM
+        if (this._useMP3BGM && !this._bgmBuffer) {
+            const bgmFile = 'src/assets/audio/bgm_peaceful.mp3';
+            try {
+                await this.loadBGM(bgmFile);
+            } catch (e) {
+                console.warn('BGM load failed, using synthesized:', e);
+            }
+        }
+
+        // Play MP3 BGM if loaded
+        if (this._useMP3BGM && this._bgmBuffer) {
+            this._playBGMLoop();
+            return;
+        }
+
+        // Fallback to synthesized BGM
+        this._startSynthBGM(theme, difficulty);
+        return Promise.resolve();
+    }
+
+    _playBGMLoop() {
+        if (!this.enabled || !this.ctx || !this._bgmBuffer) return;
+
+        const now = this.ctx.currentTime;
+        const masterGain = this.ctx.createGain();
+        masterGain.gain.setValueAtTime(this.bgmVolume, now);
+        masterGain.connect(this.ctx.destination);
+
+        const source = this.ctx.createBufferSource();
+        source.buffer = this._bgmBuffer;
+        source.loop = true;
+        source.connect(masterGain);
+        source.start(now);
+
+        this._bgmSource = source;
+        this._bgmNodes = { masterGain };
+    }
+
+    _startSynthBGM(theme, difficulty) {
         const now = this.ctx.currentTime;
         const masterGain = this.ctx.createGain();
         masterGain.gain.setValueAtTime(this.bgmVolume, now);
@@ -114,11 +175,17 @@ export class AudioSystem {
             clearTimeout(this._bubbleTimeout);
             this._bubbleTimeout = null;
         }
+        if (this._bgmSource) {
+            try {
+                this._bgmSource.stop();
+            } catch (e) { /* already stopped */ }
+            this._bgmSource = null;
+        }
         if (this._bgmNodes) {
             try {
-                this._bgmNodes.hum.stop();
-                this._bgmNodes.hum2.stop();
-                this._bgmNodes.lfo.stop();
+                this._bgmNodes.hum?.stop();
+                this._bgmNodes.hum2?.stop();
+                this._bgmNodes.lfo?.stop();
             } catch (e) { /* already stopped */ }
             this._bgmNodes = null;
         }

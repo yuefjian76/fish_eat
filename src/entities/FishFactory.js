@@ -7,21 +7,21 @@ export class FishFactory {
      */
     static FISH_FRAME_CONFIG = {
         // AI-generated frame animation (game art style)
-        // Transparent PNG files
+        // All use transparent PNG files
         clownfish: { baseKey: 'transparent_clownfish', totalFrames: 4, isPlayer: true, useTransparent: true },
         small_fish: { baseKey: null, totalFrames: 0, isPlayer: false },
         shark: { baseKey: 'transparent_shark', totalFrames: 4, isPlayer: false, useTransparent: true },
         shrimp: { baseKey: 'transparent_shrimp', totalFrames: 4, isPlayer: false, useTransparent: true },
         jellyfish: { baseKey: 'transparent_jellyfish', totalFrames: 4, isPlayer: false, useTransparent: true },
-        anglerfish: { baseKey: 'anglerfish_swim', totalFrames: 4, isPlayer: false },
-        seahorse: { baseKey: 'seahorse_swim', totalFrames: 4, isPlayer: false },
-        octopus: { baseKey: 'octopus_swim', totalFrames: 4, isPlayer: false },
-        eel: { baseKey: 'eel_swim', totalFrames: 4, isPlayer: false },
-        mutant_shark: { baseKey: 'mutant_shark_swim', totalFrames: 4, isPlayer: false },
-        giant_jellyfish: { baseKey: 'giant_jellyfish_swim', totalFrames: 4, isPlayer: false },
-        boss_squid: { baseKey: 'boss_squid_swim', totalFrames: 4, isPlayer: false },
-        boss_shark_king: { baseKey: 'shark_king_swim', totalFrames: 4, isPlayer: false },
-        boss_sea_dragon: { baseKey: 'boss_sea_dragon_swim', totalFrames: 4, isPlayer: false },
+        anglerfish: { baseKey: 'transparent_anglerfish', totalFrames: 4, isPlayer: false, useTransparent: true },
+        seahorse: { baseKey: 'transparent_seahorse', totalFrames: 4, isPlayer: false, useTransparent: true },
+        octopus: { baseKey: 'transparent_octopus', totalFrames: 4, isPlayer: false, useTransparent: true },
+        eel: { baseKey: 'transparent_eel', totalFrames: 4, isPlayer: false, useTransparent: true },
+        mutant_shark: { baseKey: 'transparent_mutant_shark', totalFrames: 4, isPlayer: false, useTransparent: true },
+        giant_jellyfish: { baseKey: 'transparent_giant_jellyfish', totalFrames: 4, isPlayer: false, useTransparent: true },
+        boss_squid: { baseKey: 'transparent_boss_squid', totalFrames: 4, isPlayer: false, useTransparent: true },
+        boss_shark_king: { baseKey: 'transparent_shark_king', totalFrames: 4, isPlayer: false, useTransparent: true },
+        boss_sea_dragon: { baseKey: 'transparent_boss_sea_dragon', totalFrames: 4, isPlayer: false, useTransparent: true },
     };
 
     /**

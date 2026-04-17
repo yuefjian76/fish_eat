@@ -201,7 +201,10 @@ class GameScene extends Phaser.Scene {
 
         // Start background music (map theme name: undersea→deep, polar→arctic)
         const bgmTheme = this.backgroundSystem.theme === 'polar' ? 'arctic' : this.backgroundSystem.theme;
-        if (this.audioSystem) this.audioSystem.startBGM(bgmTheme, this.difficulty);
+        if (this.audioSystem) {
+            // Fire and forget - BGM loading happens async
+            this.audioSystem.startBGM(bgmTheme, this.difficulty).catch(() => {});
+        }
 
         // Create fish group
         this.fishes = this.physics.add.group();

@@ -44,106 +44,106 @@ class BootScene extends Phaser.Scene {
         this.load.image('sand', 'src/assets/images/sand.png');
         this.load.image('bubbles', 'src/assets/images/bubbles_fx.png');
 
-        // Load AI-generated frame animations (3 variants × 4 poses each)
-        // Clownfish (Player) - 3 variants × 4 poses = 12 frames
+        // Load AI-generated frame animations (4 variants × 4 poses each)
+        // Clownfish (Player) - 4 variants × 4 poses = 16 frames
         const clownfishPoses = ['a', 'b', 'c', 'd'];
-        for (let v = 1; v <= 3; v++) {
+        for (let v = 1; v <= 4; v++) {
             for (const pose of clownfishPoses) {
                 this.load.image(`transparent_clownfish_${v}${pose}`,
                     `src/assets/images/frames/clownfish/transparent_clownfish_00${v}${pose}.png`);
             }
         }
 
-        // Shark - 3 variants × 4 poses
-        for (let v = 1; v <= 3; v++) {
+        // Shark - 4 variants × 4 poses
+        for (let v = 1; v <= 4; v++) {
             for (const pose of clownfishPoses) {
                 this.load.image(`transparent_shark_${v}${pose}`,
                     `src/assets/images/frames/shark/transparent_shark_00${v}${pose}.png`);
             }
         }
 
-        // Shrimp - 3 variants × 4 poses
-        for (let v = 1; v <= 3; v++) {
+        // Shrimp - 4 variants × 4 poses
+        for (let v = 1; v <= 4; v++) {
             for (const pose of clownfishPoses) {
                 this.load.image(`transparent_shrimp_${v}${pose}`,
                     `src/assets/images/frames/shrimp/transparent_shrimp_00${v}${pose}.png`);
             }
         }
 
-        // Jellyfish - 3 variants × 4 poses
-        for (let v = 1; v <= 3; v++) {
+        // Jellyfish - 4 variants × 4 poses
+        for (let v = 1; v <= 4; v++) {
             for (const pose of clownfishPoses) {
                 this.load.image(`transparent_jellyfish_${v}${pose}`,
                     `src/assets/images/frames/jellyfish/transparent_jellyfish_00${v}${pose}.png`);
             }
         }
 
-        // Anglerfish - 3 variants × 4 poses
-        for (let v = 1; v <= 3; v++) {
+        // Anglerfish - 4 variants × 4 poses
+        for (let v = 1; v <= 4; v++) {
             for (const pose of clownfishPoses) {
                 this.load.image(`transparent_anglerfish_${v}${pose}`,
                     `src/assets/images/frames/anglerfish/transparent_anglerfish_00${v}${pose}.png`);
             }
         }
 
-        // Seahorse - 3 variants × 4 poses
-        for (let v = 1; v <= 3; v++) {
+        // Seahorse - 4 variants × 4 poses
+        for (let v = 1; v <= 4; v++) {
             for (const pose of clownfishPoses) {
                 this.load.image(`transparent_seahorse_${v}${pose}`,
                     `src/assets/images/frames/seahorse/transparent_seahorse_00${v}${pose}.png`);
             }
         }
 
-        // Octopus - 3 variants × 4 poses
-        for (let v = 1; v <= 3; v++) {
+        // Octopus - 4 variants × 4 poses
+        for (let v = 1; v <= 4; v++) {
             for (const pose of clownfishPoses) {
                 this.load.image(`transparent_octopus_${v}${pose}`,
                     `src/assets/images/frames/octopus/transparent_octopus_00${v}${pose}.png`);
             }
         }
 
-        // Eel - 3 variants × 4 poses
-        for (let v = 1; v <= 3; v++) {
+        // Eel - 4 variants × 4 poses
+        for (let v = 1; v <= 4; v++) {
             for (const pose of clownfishPoses) {
                 this.load.image(`transparent_eel_${v}${pose}`,
                     `src/assets/images/frames/eel/transparent_eel_00${v}${pose}.png`);
             }
         }
 
-        // Mutant Shark - 3 variants × 4 poses
-        for (let v = 1; v <= 3; v++) {
+        // Mutant Shark - 4 variants × 4 poses
+        for (let v = 1; v <= 4; v++) {
             for (const pose of clownfishPoses) {
                 this.load.image(`transparent_mutant_shark_${v}${pose}`,
                     `src/assets/images/frames/mutant_shark/transparent_mutant_shark_00${v}${pose}.png`);
             }
         }
 
-        // Giant Jellyfish - 3 variants × 4 poses
-        for (let v = 1; v <= 3; v++) {
+        // Giant Jellyfish - 4 variants × 4 poses
+        for (let v = 1; v <= 4; v++) {
             for (const pose of clownfishPoses) {
                 this.load.image(`transparent_giant_jellyfish_${v}${pose}`,
                     `src/assets/images/frames/giant_jellyfish/transparent_giant_jellyfish_00${v}${pose}.png`);
             }
         }
 
-        // Shark King - 3 variants × 4 poses
-        for (let v = 1; v <= 3; v++) {
+        // Shark King - 4 variants × 4 poses
+        for (let v = 1; v <= 4; v++) {
             for (const pose of clownfishPoses) {
                 this.load.image(`transparent_shark_king_${v}${pose}`,
                     `src/assets/images/frames/shark_king/transparent_shark_king_00${v}${pose}.png`);
             }
         }
 
-        // Boss Squid - 3 variants × 4 poses
-        for (let v = 1; v <= 3; v++) {
+        // Boss Squid - 4 variants × 4 poses
+        for (let v = 1; v <= 4; v++) {
             for (const pose of clownfishPoses) {
                 this.load.image(`transparent_boss_squid_${v}${pose}`,
                     `src/assets/images/frames/boss_squid/transparent_boss_squid_00${v}${pose}.png`);
             }
         }
 
-        // Boss Sea Dragon - 3 variants × 4 poses
-        for (let v = 1; v <= 3; v++) {
+        // Boss Sea Dragon - 4 variants × 4 poses
+        for (let v = 1; v <= 4; v++) {
             for (const pose of clownfishPoses) {
                 this.load.image(`transparent_boss_sea_dragon_${v}${pose}`,
                     `src/assets/images/frames/boss_sea_dragon/transparent_boss_sea_dragon_00${v}${pose}.png`);

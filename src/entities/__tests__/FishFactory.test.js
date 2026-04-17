@@ -219,8 +219,9 @@ describe('FishFactory', () => {
         test('creates player sprite when texture exists', () => {
             const sprite = FishFactory.createPlayerFishFromSprite(mockScene, 1.5, 3);
             expect(sprite).toBeDefined();
-            // AI frames are scaled: 1.5 * 0.4 = 0.6 (with floating point precision)
-            expect(sprite.setScale).toHaveBeenCalledWith(expect.closeTo(0.6, 5));
+            // AI frames are scaled: (scale * 30) / 512
+            // So: (1.5 * 30) / 512 = 0.08789
+            expect(sprite.setScale).toHaveBeenCalledWith(expect.closeTo(0.08789, 4));
             expect(sprite.setDepth).toHaveBeenCalledWith(100); // Player at top layer
         });
 

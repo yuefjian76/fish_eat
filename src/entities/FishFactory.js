@@ -65,7 +65,9 @@ export class FishFactory {
         }
 
         // Create sprite with first frame
-        const aiScale = scale * 0.4; // Reduce size by 60%
+        // 512x512 sprite should display at `scale * 30` pixels (matching fish size unit)
+        // So: aiScale = (scale * 30) / 512
+        const aiScale = (scale * 30) / 512;
         const sprite = scene.add.sprite(0, 0, firstFrameKey);
         sprite.setScale(aiScale);
         // Transparent PNGs use full opacity; JPG backgrounds use 0.85 for blending
@@ -214,6 +216,9 @@ export class FishFactory {
      * @returns {Phaser.GameObjects.Sprite}
      */
     static createPlayerFish(scene, fishType, size, color) {
+        // Player is 1.1x the size of same-level enemies
+        const playerSize = size * 1.1;
+
         // Try to use AI-generated frames if available for the fish type
         const frameConfig = FishFactory.FISH_FRAME_CONFIG[fishType];
         // Check for first variant's first pose: transparent_clownfish_1a
@@ -221,17 +226,16 @@ export class FishFactory {
 
         if (hasFrames) {
             // Use frame-based rendering with Phaser sprite
-            const sprite = FishFactory.createFishFromFrames(scene, fishType, size / 30, 0);
-            // Add player glow
+            const sprite = FishFactory.createFishFromFrames(scene, fishType, playerSize / 30, 0);
+            // Add player glow (sized relative to player sprite)
             const glowGraphics = scene.add.graphics();
             glowGraphics.fillStyle(0xFFFF88, 0.25);
-            glowGraphics.fillEllipse(0, 0, 60 * (size / 30) * 0.4, 40 * (size / 30) * 0.4);
+            glowGraphics.fillEllipse(0, 0, playerSize * 2, playerSize * 1.5);
             glowGraphics.setDepth(99);
             sprite.glowGraphics = glowGraphics;
             return sprite;
         } else {
             // Fall back to procedural drawing
-            const playerSize = size * 1.1;
             const graphics = FishFactory.createFish(scene, fishType, playerSize, color);
 
             const glowGraphics = scene.add.graphics();

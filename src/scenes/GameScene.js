@@ -861,6 +861,46 @@ class GameScene extends Phaser.Scene {
         } else if (this.outOfCombatTimer < this.outOfCombatThreshold) {
             this.outOfCombatTimer += delta;
         }
+
+        // Wave spawn system
+        this._waveTimer += this.game.loop.delta;
+
+        if (this._waveState === 'calm') {
+            this._currentSpawnInterval = this._baseSpawnInterval;
+            if (this._waveTimer >= 8000) { // 8 seconds calm
+                this._waveState = 'surge';
+                this._waveTimer = 0;
+            }
+        } else if (this._waveState === 'surge') {
+            this._currentSpawnInterval = this._surgeSpawnInterval;
+            if (this._waveTimer >= 4000) { // 4 seconds surge
+                this._waveState = 'peak';
+                this._waveTimer = 0;
+            }
+        } else if (this._waveState === 'peak') {
+            this._currentSpawnInterval = this._baseSpawnInterval;
+            if (this._waveTimer >= 3000) { // 3 seconds peak then back to calm
+                this._waveState = 'calm';
+                this._waveTimer = 0;
+            }
+        }
+
+        // Spawn fish based on wave interval
+        this._spawnTimer += this.game.loop.delta;
+        if (this._spawnTimer >= this._currentSpawnInterval) {
+            this._spawnTimer = 0;
+            this.spawnFish();
+        }
+
+        // Draw wave indicator
+        this._waveGraphics.clear();
+        const waveColors = { calm: 0x00aa00, surge: 0xffaa00, peak: 0xff4400 };
+        const waveAlpha = { calm: 0.3, surge: 0.5, peak: 0.7 };
+        const barWidth = 60;
+        const barHeight = 6;
+        const waveDuration = this._waveState === 'calm' ? 8000 : this._waveState === 'surge' ? 4000 : 3000;
+        this._waveGraphics.fillStyle(waveColors[this._waveState], waveAlpha[this._waveState]);
+        this._waveGraphics.fillRect(900, 150, barWidth * (this._waveTimer / waveDuration), barHeight);
     }
 
     /**

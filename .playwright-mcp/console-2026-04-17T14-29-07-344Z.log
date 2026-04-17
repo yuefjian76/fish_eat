@@ -1,0 +1,12 @@
+[     111ms] [LOG] %c %c %c %c %c Phaser v3.60.0 (WebGL | Web Audio) %c https://phaser.io background: #ff0000 background: #ffff00 background: #00ff00 background: #00ffff color: #ffffff; background: #000000 background: transparent @ https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js:0
+[   24077ms] ReferenceError: data is not defined
+    at GameScene.create (http://localhost:8080/src/scenes/GameScene.js:141:9)
+    at initialize.create (https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js:1:936216)
+    at initialize.loadComplete (https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js:1:935620)
+    at a.emit (https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js:1:1642)
+    at initialize.loadComplete (https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js:1:527981)
+    at initialize.fileProcessComplete (https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js:1:527681)
+    at initialize.onProcessComplete (https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js:1:521475)
+    at initialize.onProcess (https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js:1:553482)
+    at initialize.nextFile (https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js:1:527126)
+    at initialize.onLoad (https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js:1:520973)

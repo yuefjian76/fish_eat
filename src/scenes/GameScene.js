@@ -307,6 +307,11 @@ class GameScene extends Phaser.Scene {
         this.player.y = 384;
         this.player.setDepth(100); // Player at top layer
 
+        // Start player animation if sprite has animKey
+        if (this.player.animKey && this.anims.exists(this.player.animKey)) {
+            this.player.play(this.player.animKey);
+        }
+
         // Enable physics
         this.physics.world.enable(this.player);
         const hitRadius = playerConfig.size * 0.8;
@@ -695,22 +700,7 @@ class GameScene extends Phaser.Scene {
             }
         }
 
-        // Player animation frame cycling (if using sprite frames)
-        if (this.player && this.player.totalFrames) {
-            this._playerFrameTimer = (this._playerFrameTimer || 0) + delta;
-            if (this._playerFrameTimer >= 150) { // ~6-7 fps
-                this._playerFrameTimer = 0;
-                this.player.currentFrame = (this.player.currentFrame + 1) % this.player.totalFrames;
-                const frameNum = this.player.currentFrame + 1;
-                const usesClownfishPattern = this.player.baseKey.includes('clownfish');
-                const newKey = usesClownfishPattern
-                    ? `${this.player.baseKey}_${frameNum}`
-                    : `${this.player.baseKey}_${frameNum}_001`;
-                if (this.textures.exists(newKey)) {
-                    this.player.setTexture(newKey);
-                }
-            }
-        }
+        // Player animation is handled by Phaser (sprite.play called in createPlayer)
 
         // Current speed (base + acceleration if shift pressed, or speed_up buff)
         let currentSpeed = this.shiftKey.isDown ? this.speed * 1.8 : this.speed;
@@ -1152,6 +1142,11 @@ class GameScene extends Phaser.Scene {
         this.player.y = oldY;
         this.player.playerData = oldPlayerData;
         this.player.setDepth(100); // Ensure player stays at top layer
+
+        // Restart player animation
+        if (this.player.animKey && this.anims.exists(this.player.animKey)) {
+            this.player.play(this.player.animKey);
+        }
 
         // Enable physics for new graphics
         this.physics.world.enable(this.player);

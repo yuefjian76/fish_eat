@@ -38,6 +38,14 @@ describe('FishFactory', () => {
                     setTint: jest.fn().mockReturnThis(),
                     setSize: jest.fn().mockReturnThis(),
                     setAlpha: jest.fn().mockReturnThis()
+                })),
+                sprite: jest.fn(() => ({
+                    setScale: jest.fn().mockReturnThis(),
+                    setDepth: jest.fn().mockReturnThis(),
+                    setTint: jest.fn().mockReturnThis(),
+                    setSize: jest.fn().mockReturnThis(),
+                    setAlpha: jest.fn().mockReturnThis(),
+                    play: jest.fn().mockReturnThis()
                 }))
             },
             textures: {

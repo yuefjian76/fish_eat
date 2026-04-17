@@ -145,7 +145,125 @@ class BootScene extends Phaser.Scene {
     }
 
     create() {
+        this.createFishAnimations();
         this.scene.start('MenuScene');
+    }
+
+    /**
+     * Create Phaser animations for all fish types from individual frame images.
+     */
+    createFishAnimations() {
+        // Clownfish (player) - 6 frames
+        this.anims.create({
+            key: 'clownfish_swim',
+            frames: [1, 2, 3, 4, 5, 6].map(i => ({ key: `clownfish_swim_${i}`, frame: null })),
+            frameRate: 8,
+            repeat: -1
+        });
+
+        // Shark - 4 frames
+        this.anims.create({
+            key: 'shark_swim',
+            frames: [1, 2, 3, 4].map(i => ({ key: `shark_anim_${i}_001`, frame: null })),
+            frameRate: 8,
+            repeat: -1
+        });
+
+        // Shrimp - 4 frames
+        this.anims.create({
+            key: 'shrimp_swim',
+            frames: [1, 2, 3, 4].map(i => ({ key: `shrimp_anim_${i}_001`, frame: null })),
+            frameRate: 8,
+            repeat: -1
+        });
+
+        // Jellyfish - 4 frames
+        this.anims.create({
+            key: 'jellyfish_swim',
+            frames: [1, 2, 3, 4].map(i => ({ key: `jellyfish_swim_${i}_001`, frame: null })),
+            frameRate: 6,
+            repeat: -1
+        });
+
+        // Anglerfish - 4 frames
+        this.anims.create({
+            key: 'anglerfish_swim',
+            frames: [1, 2, 3, 4].map(i => ({ key: `anglerfish_swim_${i}_001`, frame: null })),
+            frameRate: 6,
+            repeat: -1
+        });
+
+        // Seahorse - 4 frames
+        this.anims.create({
+            key: 'seahorse_swim',
+            frames: [1, 2, 3, 4].map(i => ({ key: `seahorse_swim_${i}_001`, frame: null })),
+            frameRate: 6,
+            repeat: -1
+        });
+
+        // Octopus - 4 frames
+        this.anims.create({
+            key: 'octopus_swim',
+            frames: [1, 2, 3, 4].map(i => ({ key: `octopus_swim_${i}_001`, frame: null })),
+            frameRate: 8,
+            repeat: -1
+        });
+
+        // Eel - 4 frames
+        this.anims.create({
+            key: 'eel_swim',
+            frames: [1, 2, 3, 4].map(i => ({ key: `eel_swim_${i}_001`, frame: null })),
+            frameRate: 10,
+            repeat: -1
+        });
+
+        // Mutant Shark - 4 frames
+        this.anims.create({
+            key: 'mutant_shark_swim',
+            frames: [1, 2, 3, 4].map(i => ({ key: `mutant_shark_swim_${i}_001`, frame: null })),
+            frameRate: 8,
+            repeat: -1
+        });
+
+        // Giant Jellyfish - 4 frames
+        this.anims.create({
+            key: 'giant_jellyfish_swim',
+            frames: [1, 2, 3, 4].map(i => ({ key: `giant_jellyfish_swim_${i}_001`, frame: null })),
+            frameRate: 6,
+            repeat: -1
+        });
+
+        // Boss Shark King - 4 frames
+        this.anims.create({
+            key: 'shark_king_swim',
+            frames: [1, 2, 3, 4].map(i => ({ key: `shark_king_swim_${i}_001`, frame: null })),
+            frameRate: 8,
+            repeat: -1
+        });
+
+        // Boss Squid - 4 frames
+        this.anims.create({
+            key: 'boss_squid_swim',
+            frames: [1, 2, 3, 4].map(i => ({ key: `boss_squid_swim_${i}_001`, frame: null })),
+            frameRate: 6,
+            repeat: -1
+        });
+
+        // Boss Sea Dragon - 4 frames
+        this.anims.create({
+            key: 'boss_sea_dragon_swim',
+            frames: [1, 2, 3, 4].map(i => ({ key: `boss_sea_dragon_swim_${i}_001`, frame: null })),
+            frameRate: 8,
+            repeat: -1
+        });
+
+        // Legacy player spritesheet
+        this.anims.create({
+            key: 'player_swim',
+            frames: this.anims.generateFrameNumbers('player_swim', { start: 0, end: 6 }),
+            frameRate: 8,
+            repeat: -1
+        });
     }
 }
 

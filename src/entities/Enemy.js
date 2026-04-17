@@ -22,14 +22,14 @@ export class Enemy {
         // Create fish graphics using FishFactory (sprite-based if available)
         const isBigFish = fishType === 'shark' || fishConfig.size > 40;
         this.enemyType = isBigFish ? 'fish_big' : 'fish';
-        const frame = Math.floor(Math.random() * (isBigFish ? 5 : 4));
-        this.graphics = FishFactory.createEnemyFromSprite(scene, this.enemyType, fishConfig.size / 30, frame);
+        this.graphics = FishFactory.createEnemyFromSprite(scene, this.enemyType, fishConfig.size / 30, 0);
         this.graphics.x = x;
         this.graphics.y = y;
 
-        // Animation frame update timer
-        this.frameTimer = 0;
-        this.frameInterval = 200; // ms between frames
+        // Start animation if sprite has animKey
+        if (this.graphics.animKey && scene.anims.exists(this.graphics.animKey)) {
+            this.graphics.play(this.graphics.animKey);
+        }
 
         // Enable physics - use a circle hitbox for simplicity
         scene.physics.world.enable(this.graphics);
@@ -798,18 +798,8 @@ export class Enemy {
             }
         }
 
-        // Update animation frame
-        this.frameTimer += delta;
-        if (this.frameTimer >= this.frameInterval) {
-            this.frameTimer = 0;
-            const totalFrames = this.enemyType === 'fish_big' ? 5 : 4;
-            this.graphics.currentFrame = (this.graphics.currentFrame + 1) % totalFrames;
-            const newKey = `${this.graphics.baseKey}_${this.graphics.currentFrame}`;
-            // Only update texture if it exists
-            if (this.scene.textures.exists(newKey)) {
-                this.graphics.setTexture(newKey);
-            }
-        }
+        // Animation is handled by Phaser (sprite.play calls in constructor)
+        // No manual frame switching needed
 
         // Ranged / evasive fish manage their own movement — skip normal chase/wander AI
         if (this.fishConfig.behavior === 'ranged' || this.fishConfig.range) return;

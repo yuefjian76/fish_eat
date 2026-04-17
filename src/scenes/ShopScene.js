@@ -190,3 +190,5 @@ class ShopScene extends Phaser.Scene {
         return btn;
     }
 }
+
+export default ShopScene;

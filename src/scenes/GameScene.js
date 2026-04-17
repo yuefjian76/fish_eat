@@ -15,6 +15,18 @@ import { ComboSystem } from '../systems/ComboSystem.js';
 import { AudioSystem } from '../systems/AudioSystem.js';
 import { logger } from '../systems/DebugLogger.js';
 
+/** @param {'player_damage'|'enemy_damage'|'heal'|'exp'|string} type */
+function getFloatingTextColor(type) {
+    switch (type) {
+        case 'player_damage': return 0xff3333;
+        case 'enemy_damage': return 0x00ff44;
+        case 'critical': return 0xffd700;
+        case 'heal': return 0x44aaff;
+        case 'exp': return 0x00ff44;
+        default: return 0xffffff;
+    }
+}
+
 class GameScene extends Phaser.Scene {
     constructor() {
         super({ key: 'GameScene' });
@@ -488,6 +500,9 @@ class GameScene extends Phaser.Scene {
             this.score += Math.floor(expResult.expGained * 10 * comboMultiplier);
             this.uiDirty = true;
 
+            // Show floating EXP text
+            this._showFloatingText(fish.x, fish.y, expResult.expGained, 'exp');
+
             // Track kill count
             this.killCount++;
 
@@ -770,6 +785,9 @@ class GameScene extends Phaser.Scene {
         // Apply knockback - push player away from enemy
         this._applyKnockback(enemy, actualDamage);
 
+        // Show floating damage text
+        this._showFloatingText(this.player.x, this.player.y - 20, actualDamage, 'player_damage');
+
         // Check game over
         if (this.hp <= 0) {
             this.scene.start('GameOverScene', { score: this.score, level: this.level, difficulty: this.difficulty, kills: this.killCount, survivalTime: Math.floor((Date.now() - this.gameStartTime) / 1000) });
@@ -792,6 +810,37 @@ class GameScene extends Phaser.Scene {
             (dx / dist) * magnitude,
             (dy / dist) * magnitude
         );
+    }
+
+    /**
+     * Show floating damage/heal text at a position.
+     * @param {number} x - X position
+     * @param {number} y - Y position
+     * @param {string|number} value - Numeric value to display
+     * @param {string} type - 'player_damage'|'enemy_damage'|'heal'|'exp'
+     */
+    _showFloatingText(x, y, value, type = 'enemy_damage') {
+        const color = getFloatingTextColor(type);
+        const text = type === 'exp' ? `+${value}` : `-${value}`;
+        const floatText = this.add.text(x, y, text, {
+            fontSize: '18px',
+            fontFamily: 'Arial',
+            color: `#${color.toString(16).padStart(6, '0')}`,
+            stroke: '#000000',
+            strokeThickness: 3
+        });
+        floatText.setOrigin(0.5);
+        floatText.setDepth(50);
+
+        // Tween: rise upward and fade out
+        this.tweens.add({
+            targets: floatText,
+            y: y - 40,
+            alpha: 0,
+            duration: 800,
+            ease: 'Power2',
+            onComplete: () => floatText.destroy()
+        });
     }
 
     /**

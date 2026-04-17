@@ -263,6 +263,10 @@ class GameScene extends Phaser.Scene {
         this.playerHealthBar = this.add.graphics();
         this.playerHealthBar.setDepth(20);
         this.updatePlayerHealthBar();
+
+        // Glow layer for size-hint circles (green=edible, red=danger)
+        this._glowLayer = this.add.graphics();
+        this._glowLayer.setDepth(9);
     }
 
     /**
@@ -334,6 +338,17 @@ class GameScene extends Phaser.Scene {
             if (r <= cumulative) return type;
         }
         return valid[0][0];
+    }
+
+    /**
+     * Get glow color hint for a fish relative to player.
+     * Green = edible (player significantly larger), Red = dangerous (fish larger), null = similar size.
+     */
+    _getGlowColor(playerSize, fishSize, fishIsStrongAgainstPlayer = false) {
+        if (fishIsStrongAgainstPlayer) return null;
+        if (playerSize > fishSize * 1.2) return 0x00ff44;
+        if (fishSize > playerSize * 1.2) return 0xff3333;
+        return null;
     }
 
     spawnFish() {
@@ -625,6 +640,21 @@ class GameScene extends Phaser.Scene {
 
         // Remove dead enemies from the array
         this.enemies = this.enemies.filter(enemy => enemy.graphics.active);
+
+        // Draw size-hint glow around each enemy (green=edible, red=danger)
+        this._glowLayer.clear();
+        this.enemies.forEach(enemy => {
+            if (!enemy.graphics || !enemy.graphics.active) return;
+            const glow = this._getGlowColor(
+                this.player.playerData.size,
+                enemy.fishData.size,
+                enemy.fishConfig.strongAgainst?.includes('clownfish')
+            );
+            if (!glow) return;
+            const r = enemy.fishData.size + 2;
+            this._glowLayer.lineStyle(2, glow, 0.7);
+            this._glowLayer.strokeCircle(enemy.graphics.x, enemy.graphics.y, r);
+        });
 
         // Process anglerfish projectile hits
         if (this.anglerProjectiles && this.anglerProjectiles.length > 0) {

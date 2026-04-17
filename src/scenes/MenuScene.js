@@ -46,6 +46,16 @@ class MenuScene extends Phaser.Scene {
             fontStyle: 'bold'
         }).setOrigin(0.5);
 
+        // Title float animation
+        this.tweens.add({
+            targets: titleText,
+            y: 112,
+            duration: 2000,
+            ease: 'Sine.easeInOut',
+            yoyo: true,
+            repeat: -1
+        });
+
         this.add.text(centerX, 200, 'Fish Eat Fish', {
             fontSize: '32px',
             fontFamily: 'Arial',
@@ -134,7 +144,7 @@ class MenuScene extends Phaser.Scene {
         this._updateFishCards();
 
         // Start button
-        const startBtn = this.add.text(centerX, 520, '开始游戏', {
+        this.startBtn = this.add.text(centerX, 520, '开始游戏', {
             fontSize: '36px',
             fontFamily: 'Arial',
             color: '#ffffff',
@@ -142,16 +152,16 @@ class MenuScene extends Phaser.Scene {
             padding: { x: 40, y: 16 }
         }).setOrigin(0.5).setInteractive();
 
-        startBtn.on('pointerover', () => startBtn.setStyle({ color: '#ffff00' }));
-        startBtn.on('pointerout', () => startBtn.setStyle({ color: '#ffffff' }));
-        startBtn.on('pointerdown', () => {
+        this.startBtn.on('pointerover', () => this.startBtn.setStyle({ color: '#ffff00' }));
+        this.startBtn.on('pointerout', () => this.startBtn.setStyle({ color: '#ffffff' }));
+        this.startBtn.on('pointerdown', () => {
             this.scene.start('GameScene', { difficulty: this.selectedDifficulty, fishType: this.selectedFish });
             this.scene.launch('UIScene');
         });
 
         // ─── Shop button ───────────────────────────────────────────────
         const currency = this._getCurrency();
-        const shopBtn = this.add.text(centerX, 580, `🏪 商店  💰 ${currency}`, {
+        this.shopBtn = this.add.text(centerX, 580, `🏪 商店  💰 ${currency}`, {
             fontSize: '22px',
             fontFamily: 'Arial',
             color: '#ffd700',
@@ -159,10 +169,30 @@ class MenuScene extends Phaser.Scene {
             padding: { x: 24, y: 10 }
         }).setOrigin(0.5).setInteractive();
 
-        shopBtn.on('pointerover', () => shopBtn.setStyle({ color: '#ffcc00' }));
-        shopBtn.on('pointerout', () => shopBtn.setStyle({ color: '#ffd700' }));
-        shopBtn.on('pointerdown', () => {
+        this.shopBtn.on('pointerover', () => this.shopBtn.setStyle({ color: '#ffcc00' }));
+        this.shopBtn.on('pointerout', () => this.shopBtn.setStyle({ color: '#ffd700' }));
+        this.shopBtn.on('pointerdown', () => {
             this.scene.start('ShopScene');
+        });
+
+        // Button breathing animations
+        this.tweens.add({
+            targets: this.startBtn,
+            scaleX: 1.05,
+            scaleY: 1.05,
+            duration: 1200,
+            ease: 'Sine.easeInOut',
+            yoyo: true,
+            repeat: -1
+        });
+        this.tweens.add({
+            targets: this.shopBtn,
+            scaleX: 1.03,
+            scaleY: 1.03,
+            duration: 1400,
+            ease: 'Sine.easeInOut',
+            yoyo: true,
+            repeat: -1
         });
 
         // Instructions
@@ -403,6 +433,22 @@ class MenuScene extends Phaser.Scene {
             v.card.lineStyle(2, isSelected ? 0xffd700 : v.color || 0x666666, 0.8);
             v.card.strokeRoundedRect(v.hitAreaRect.x, v.hitAreaRect.y, v.hitAreaRect.w, v.hitAreaRect.h, 8);
         });
+    }
+
+    update() {
+        // Animate background fish
+        if (this._bgFishGroup) {
+            this._bgFishGroup.forEach(fish => {
+                fish.x += fish._speed * this.game.loop.delta / 1000;
+                if (fish._speed > 0 && fish.x > 1100) {
+                    fish.x = -50;
+                    fish.y = 100 + Math.random() * 600;
+                } else if (fish._speed < 0 && fish.x < -50) {
+                    fish.x = 1100;
+                    fish.y = 100 + Math.random() * 600;
+                }
+            });
+        }
     }
 }
 

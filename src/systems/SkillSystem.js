@@ -171,6 +171,24 @@ export class SkillSystem {
             // Deal damage to enemy
             const died = hitEnemy.takeDamage(finalDamage);
 
+            // Freeze frame: 50ms pause + enemy flash white
+            if (hitEnemy && scene && scene.time && typeof scene.time.pause === 'function') {
+                scene.time.pause();
+                setTimeout(() => {
+                    if (scene && scene.time && typeof scene.time.resume === 'function') scene.time.resume();
+                }, 50);
+
+                // Flash enemy white
+                if (hitEnemy.graphics && hitEnemy.graphics.list && hitEnemy.graphics.list[0]) {
+                    hitEnemy.graphics.list[0].setTint(0xffffff);
+                    setTimeout(() => {
+                        if (hitEnemy.graphics && hitEnemy.graphics.list && hitEnemy.graphics.list[0]) {
+                            hitEnemy.graphics.list[0].clearTint();
+                        }
+                    }, 80);
+                }
+            }
+
             // If enemy died from the damage
             if (died) {
                 // Add experience using GrowthSystem

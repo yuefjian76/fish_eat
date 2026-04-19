@@ -182,10 +182,10 @@ class BootScene extends Phaser.Scene {
     createFishAnimations() {
         const poses = ['a', 'b', 'c', 'd'];
         const frameRates = {
-            clownfish: 8, shark: 8, shrimp: 8, jellyfish: 6,
-            anglerfish: 6, seahorse: 6, octopus: 8, eel: 10,
-            mutant_shark: 8, giant_jellyfish: 6, shark_king: 8,
-            boss_squid: 6, boss_sea_dragon: 8
+            clownfish: 4, shark: 4, shrimp: 4, jellyfish: 3,
+            anglerfish: 3, seahorse: 3, octopus: 4, eel: 5,
+            mutant_shark: 4, giant_jellyfish: 3, shark_king: 4,
+            boss_squid: 3, boss_sea_dragon: 4
         };
         // Variants per fish type (most have 4, some have 6)
         const variantCounts = {

@@ -194,7 +194,7 @@ export class FishFactory {
                 const variant = Math.floor(Math.random() * maxVariants) + 1;
                 const selectedFrameKey = `${frameConfig.baseKey}_${variant}a`;
 
-                const aiScale = scale * 0.4;
+                const aiScale = scale * 0.2; // 1/2 of original size
                 const sprite = scene.add.sprite(0, 0, selectedFrameKey);
                 sprite.setScale(aiScale);
                 sprite.setDepth(30);

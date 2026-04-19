@@ -99,7 +99,7 @@ class MenuScene extends Phaser.Scene {
         }).setOrigin(0.5);
 
         // Fish species selection (right side, vertical)
-        this.add.text(centerX + 350, 200, '选择鱼种', {
+        this.add.text(centerX + 350, 240, '选择鱼种', {
             fontSize: '18px',
             fontFamily: 'Arial',
             color: '#ffffff'
@@ -112,7 +112,7 @@ class MenuScene extends Phaser.Scene {
         ];
 
         const fishX = centerX + 350;
-        const fishStartY = 240;
+        const fishStartY = 280;
         const fishSpacing = 60;
 
         this.fishCards = {};

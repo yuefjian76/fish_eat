@@ -12,9 +12,9 @@ export class FishFactory {
         small_fish: { baseKey: null, totalFrames: 0, isPlayer: false },
         shark: { baseKey: 'transparent_shark', totalFrames: 4, isPlayer: false, useTransparent: true },
         shrimp: { baseKey: 'transparent_shrimp', totalFrames: 4, isPlayer: false, useTransparent: true },
-        jellyfish: { baseKey: 'transparent_jellyfish', totalFrames: 4, isPlayer: false, useTransparent: true },
-        anglerfish: { baseKey: 'transparent_anglerfish', totalFrames: 4, isPlayer: false, useTransparent: true },
-        seahorse: { baseKey: 'transparent_seahorse', totalFrames: 4, isPlayer: false, useTransparent: true },
+        jellyfish: { baseKey: 'transparent_jellyfish', totalFrames: 6, isPlayer: false, useTransparent: true },
+        anglerfish: { baseKey: 'transparent_anglerfish', totalFrames: 6, isPlayer: false, useTransparent: true },
+        seahorse: { baseKey: 'transparent_seahorse', totalFrames: 6, isPlayer: false, useTransparent: true },
         octopus: { baseKey: 'transparent_octopus', totalFrames: 4, isPlayer: false, useTransparent: true },
         eel: { baseKey: 'transparent_eel', totalFrames: 4, isPlayer: false, useTransparent: true },
         mutant_shark: { baseKey: 'transparent_mutant_shark', totalFrames: 4, isPlayer: false, useTransparent: true },
@@ -49,8 +49,9 @@ export class FishFactory {
 
         // Get the first frame texture to create the sprite
         // Naming: transparent_clownfish_1a (variant 1, pose a)
-        // Randomly select variant 1, 2, 3, or 4
-        const variant = Math.floor(Math.random() * 4) + 1; // 1, 2, 3, or 4
+        // Randomly select variant based on available frames
+        const maxVariants = config.totalFrames || 4;
+        const variant = Math.floor(Math.random() * maxVariants) + 1; // 1 to maxVariants
         const firstFrameKey = `${config.baseKey}_${variant}a`;
 
         // Check if texture exists

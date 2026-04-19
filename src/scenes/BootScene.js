@@ -70,24 +70,24 @@ class BootScene extends Phaser.Scene {
             }
         }
 
-        // Jellyfish - 4 variants × 4 poses
-        for (let v = 1; v <= 4; v++) {
+        // Jellyfish - 6 variants × 4 poses
+        for (let v = 1; v <= 6; v++) {
             for (const pose of clownfishPoses) {
                 this.load.image(`transparent_jellyfish_${v}${pose}`,
                     `src/assets/images/frames/jellyfish/transparent_jellyfish_00${v}${pose}.png`);
             }
         }
 
-        // Anglerfish - 4 variants × 4 poses
-        for (let v = 1; v <= 4; v++) {
+        // Anglerfish - 6 variants × 4 poses
+        for (let v = 1; v <= 6; v++) {
             for (const pose of clownfishPoses) {
                 this.load.image(`transparent_anglerfish_${v}${pose}`,
                     `src/assets/images/frames/anglerfish/transparent_anglerfish_00${v}${pose}.png`);
             }
         }
 
-        // Seahorse - 4 variants × 4 poses
-        for (let v = 1; v <= 4; v++) {
+        // Seahorse - 6 variants × 4 poses
+        for (let v = 1; v <= 6; v++) {
             for (const pose of clownfishPoses) {
                 this.load.image(`transparent_seahorse_${v}${pose}`,
                     `src/assets/images/frames/seahorse/transparent_seahorse_00${v}${pose}.png`);
@@ -187,14 +187,22 @@ class BootScene extends Phaser.Scene {
             mutant_shark: 8, giant_jellyfish: 6, shark_king: 8,
             boss_squid: 6, boss_sea_dragon: 8
         };
+        // Variants per fish type (most have 4, some have 6)
+        const variantCounts = {
+            clownfish: 4, shark: 4, shrimp: 4, jellyfish: 6,
+            anglerfish: 6, seahorse: 6, octopus: 4, eel: 4,
+            mutant_shark: 4, giant_jellyfish: 4, shark_king: 4,
+            boss_squid: 4, boss_sea_dragon: 4
+        };
 
         // Create animations for each fish type
         const fishTypes = Object.keys(frameRates);
 
         for (const fishType of fishTypes) {
             const frameRate = frameRates[fishType];
-            // Create 4 animations, one per variant
-            for (let variant = 1; variant <= 4; variant++) {
+            const variantCount = variantCounts[fishType];
+            // Create animations, one per variant
+            for (let variant = 1; variant <= variantCount; variant++) {
                 const frames = poses.map(pose =>
                     ({ key: `transparent_${fishType}_${variant}${pose}`, frame: null })
                 );

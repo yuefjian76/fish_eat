@@ -200,7 +200,8 @@ export class FishFactory {
                 sprite.setDepth(30);
                 sprite.fishType = fishType;
                 sprite.variant = variant;
-                sprite.animKey = frameConfig.baseKey;
+                // Animation key is fishType_swim_variant (e.g., 'shrimp_swim_1')
+                sprite.animKey = `${fishType}_swim_${variant}`;
                 return sprite;
             }
         }

@@ -20,9 +20,8 @@ export class Enemy {
         this.aiLevel = aiLevel;
 
         // Create fish graphics using FishFactory (sprite-based if available)
-        const isBigFish = fishType === 'shark' || fishConfig.size > 40;
-        this.enemyType = isBigFish ? 'fish_big' : 'fish';
-        this.graphics = FishFactory.createEnemyFromSprite(scene, this.enemyType, fishConfig.size / 30, 0);
+        // Use actual fishType for sprite selection, not mapped 'fish'/'fish_big'
+        this.graphics = FishFactory.createEnemyFromSprite(scene, fishType, fishConfig.size / 30, 0);
         this.graphics.x = x;
         this.graphics.y = y;
 

@@ -176,8 +176,8 @@ export class FishFactory {
     static createEnemyFromSprite(scene, type = 'fish', scale = 1.0, frame = 0) {
         // Map legacy types to fish types
         const typeMapping = {
-            'fish': 'small_fish',
-            'fish_big': 'shark',
+            'fish': 'shrimp',     // small fish uses shrimp sprites
+            'fish_big': 'shark',  // big fish uses shark sprites
         };
 
         const fishType = typeMapping[type] || type;
@@ -185,17 +185,21 @@ export class FishFactory {
 
         // Try AI-generated frames first
         if (frameConfig && frameConfig.baseKey) {
-            const usesClownfishPattern = frameConfig.baseKey.includes('clownfish');
-            const firstFrameKey = usesClownfishPattern
-                ? `${frameConfig.baseKey}_1`
-                : `${frameConfig.baseKey}_1_001`;
+            // Check for frame with variant 1, pose 'a': transparent_shrimp_1a
+            const firstFrameKey = `${frameConfig.baseKey}_1a`;
 
             if (scene.textures.exists(firstFrameKey)) {
+                // Select random variant for variety
+                const maxVariants = frameConfig.totalFrames || 4;
+                const variant = Math.floor(Math.random() * maxVariants) + 1;
+                const selectedFrameKey = `${frameConfig.baseKey}_${variant}a`;
+
                 const aiScale = scale * 0.4;
-                const sprite = scene.add.sprite(0, 0, firstFrameKey);
+                const sprite = scene.add.sprite(0, 0, selectedFrameKey);
                 sprite.setScale(aiScale);
                 sprite.setDepth(30);
                 sprite.fishType = fishType;
+                sprite.variant = variant;
                 sprite.animKey = frameConfig.baseKey;
                 return sprite;
             }

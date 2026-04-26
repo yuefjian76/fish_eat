@@ -86,7 +86,8 @@ export class LuckSystem {
      */
     calculateGoodChance(baseChance, luckInfluence) {
         // Luck increases chance of good effects
-        const luckBonus = this.luck * 2;
+        // Use goodBonusPerLuck from config, fallback to 2 for backward compatibility
+        const luckBonus = this.luck * (luckInfluence.goodBonusPerLuck ?? 2);
         return Math.min(95, Math.max(5, baseChance + luckBonus));
     }
 }

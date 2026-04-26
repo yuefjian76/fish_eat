@@ -60,21 +60,27 @@ describe('LuckSystem', () => {
             expect(chance).toBe(50);
         });
 
-        test('increases chance with positive luck', () => {
+        test('increases chance with positive luck using goodBonusPerLuck', () => {
+            luckSystem.luck = 10;
+            const chance = luckSystem.calculateGoodChance(50, { goodBonusPerLuck: 0.5 });
+            expect(chance).toBe(55);
+        });
+
+        test('uses fallback 2 when luckInfluence is empty (backward compatible)', () => {
             luckSystem.luck = 10;
             const chance = luckSystem.calculateGoodChance(50, {});
             expect(chance).toBe(70);
         });
 
         test('caps at 95', () => {
-            luckSystem.luck = 50;
-            const chance = luckSystem.calculateGoodChance(50, {});
+            luckSystem.luck = 100;
+            const chance = luckSystem.calculateGoodChance(50, { goodBonusPerLuck: 0.5 });
             expect(chance).toBe(95);
         });
 
         test('floors at 5', () => {
-            luckSystem.luck = -30;
-            const chance = luckSystem.calculateGoodChance(50, {});
+            luckSystem.luck = -90;
+            const chance = luckSystem.calculateGoodChance(50, { goodBonusPerLuck: 0.5 });
             expect(chance).toBe(5);
         });
     });

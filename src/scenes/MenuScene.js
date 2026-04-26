@@ -1,5 +1,7 @@
 // MenuScene - Start menu with title and difficulty selection
 import { DailyChallengeSystem } from '../systems/DailyChallengeSystem.js';
+import AuthSystem from '../systems/AuthSystem.js';
+import UserDataSystem from '../systems/UserDataSystem.js';
 
 class MenuScene extends Phaser.Scene {
     constructor() {
@@ -7,6 +9,11 @@ class MenuScene extends Phaser.Scene {
         this.difficultyData = null;
         this.unlockedDifficulties = ['easy'];
         this.selectedDifficulty = 'easy';
+        this.authSystem = null;
+        this.userDataSystem = null;
+        this.loginContainer = null;
+        this.usernameInput = null;
+        this.passwordInput = null;
     }
 
     preload() {
@@ -23,6 +30,23 @@ class MenuScene extends Phaser.Scene {
 
         // Load unlocked difficulties from localStorage
         this.loadUnlockedDifficulties();
+
+        // Initialize Auth and UserData systems
+        this.authSystem = new AuthSystem();
+        this.userDataSystem = new UserDataSystem();
+
+        // Listen for auth state changes
+        this.authSystem.onAuthStateChanged((user) => {
+            this._onAuthStateChanged(user);
+        });
+
+        // Check if already logged in
+        const currentUser = this.authSystem.getCurrentUser();
+        if (currentUser) {
+            this._showLoggedInUI(currentUser);
+        } else {
+            this._showLoginUI();
+        }
 
         // ─── Background swimming fish ───────────────────────────────────
         this._bgFishGroup = [];
@@ -211,6 +235,169 @@ class MenuScene extends Phaser.Scene {
 
         // Show selected difficulty
         this.updateDifficultyInfo(centerX, 470);
+    }
+
+    // Show logged in state
+    _showLoggedInUI(user) {
+        if (this.loginContainer) {
+            this.loginContainer.destroy();
+        }
+        this.loggedInContainer = this.add.container(512, 200);
+
+        const username = user.email ? user.email.split('@')[0] : 'Player';
+        this.add.text(0, -30, `欢迎, ${username}`, {
+            fontSize: '24px',
+            fontFamily: 'Arial',
+            color: '#00ff88'
+        }).setOrigin(0.5);
+
+        const logoutBtn = this.add.text(0, 20, '登出', {
+            fontSize: '18px',
+            fontFamily: 'Arial',
+            color: '#ff6666',
+            backgroundColor: '#333333',
+            padding: { x: 15, y: 8 }
+        }).setOrigin(0.5).setInteractive();
+
+        logoutBtn.on('pointerdown', () => this._handleLogout());
+        this.loggedInContainer.add([this.add.text(0, -30, `欢迎, ${username}`, {
+            fontSize: '24px',
+            fontFamily: 'Arial',
+            color: '#00ff88'
+        }).setOrigin(0.5), logoutBtn]);
+    }
+
+    // Show login/register form
+    _showLoginUI() {
+        if (this.loggedInContainer) {
+            this.loggedInContainer.destroy();
+        }
+        this.loginContainer = this.add.container(512, 200);
+
+        // Username input
+        const usernameBg = this.add.rectangle(0, -50, 200, 40, 0x333333).setOrigin(0.5);
+        this.usernameInput = this.add.text(0, -50, '', {
+            fontSize: '20px',
+            fontFamily: 'Arial',
+            color: '#ffffff'
+        }).setOrigin(0.5).setInteractive();
+
+        this.add.text(-80, -50, '', { fontSize: '16px', fontFamily: 'Arial', color: '#888888' });
+
+        // Password input
+        const passwordBg = this.add.rectangle(0, 0, 200, 40, 0x333333).setOrigin(0.5);
+        this.passwordInput = this.add.text(0, 0, '', {
+            fontSize: '20px',
+            fontFamily: 'Arial',
+            color: '#ffffff'
+        }).setOrigin(0.5).setInteractive();
+
+        // Login/Signup buttons
+        const loginBtn = this.add.text(-70, 60, '登录', {
+            fontSize: '18px',
+            fontFamily: 'Arial',
+            color: '#00ff88',
+            backgroundColor: '#222222',
+            padding: { x: 15, y: 8 }
+        }).setOrigin(0.5).setInteractive();
+
+        const signupBtn = this.add.text(70, 60, '注册', {
+            fontSize: '18px',
+            fontFamily: 'Arial',
+            color: '#ffffff',
+            backgroundColor: '#222222',
+            padding: { x: 15, y: 8 }
+        }).setOrigin(0.5).setInteractive();
+
+        const guestBtn = this.add.text(0, 110, '游客模式 →', {
+            fontSize: '16px',
+            fontFamily: 'Arial',
+            color: '#888888'
+        }).setOrigin(0.5).setInteractive();
+
+        this.loginContainer.add([usernameBg, this.usernameInput, passwordBg, this.passwordInput, loginBtn, signupBtn, guestBtn]);
+
+        // Button handlers
+        loginBtn.on('pointerdown', () => this._handleLogin());
+        signupBtn.on('pointerdown', () => this._handleSignup());
+        guestBtn.on('pointerdown', () => this._handleGuestMode());
+
+        // Labels
+        this.add.text(-60, -50, '用户名:', { fontSize: '14px', fontFamily: 'Arial', color: '#aaaaaa' }).setOrigin(0.5);
+        this.add.text(-60, 0, '密码:', { fontSize: '14px', fontFamily: 'Arial', color: '#aaaaaa' }).setOrigin(0.5);
+    }
+
+    async _handleLogin() {
+        const username = this.usernameInput.text;
+        const password = this.passwordInput.text;
+
+        if (!username || !password) {
+            this._showError('请输入用户名和密码');
+            return;
+        }
+
+        try {
+            await this.authSystem.login(username, password);
+        } catch (error) {
+            this._showError('登录失败：' + error.message);
+        }
+    }
+
+    async _handleSignup() {
+        const username = this.usernameInput.text;
+        const password = this.passwordInput.text;
+
+        if (!username || !password) {
+            this._showError('请输入用户名和密码');
+            return;
+        }
+
+        try {
+            await this.authSystem.register(username, password);
+        } catch (error) {
+            this._showError('注册失败：' + error.message);
+        }
+    }
+
+    _handleGuestMode() {
+        // Continue without login
+        this.scene.start('GameScene', { difficulty: this.selectedDifficulty, fishType: this.selectedFish });
+        this.scene.launch('UIScene');
+    }
+
+    async _handleLogout() {
+        await this.authSystem.logout();
+        this._showLoginUI();
+    }
+
+    async _onAuthStateChanged(user) {
+        if (user) {
+            // Load user data from Firestore
+            try {
+                const userData = await this.userDataSystem.loadUserData(user.uid);
+                if (userData) {
+                    this.userDataSystem.syncToLocal(userData);
+                }
+            } catch (e) {
+                console.warn('Failed to load user data:', e);
+            }
+            this._showLoggedInUI(user);
+        }
+    }
+
+    _showError(message) {
+        if (this.errorText) this.errorText.destroy();
+        this.errorText = this.add.text(512, 280, message, {
+            fontSize: '16px',
+            fontFamily: 'Arial',
+            color: '#ff4444'
+        }).setOrigin(0.5);
+        this.time.delayedCall(3000, () => {
+            if (this.errorText) {
+                this.errorText.destroy();
+                this.errorText = null;
+            }
+        });
     }
 
     /**

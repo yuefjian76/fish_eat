@@ -414,17 +414,22 @@ class GameScene extends Phaser.Scene {
      * @returns {number} Enemy level
      */
     calculateEnemyLevel(playerLevel) {
-        // Progressive difficulty: higher levels get harder enemy distribution
+        // 使用区域等级范围（如果可用）
+        const [zoneMin, zoneMax] = this._currentEnemyLevelRange || [1, 3];
+
         const survivalMinutes = Math.floor((Date.now() - this.gameStartTime) / 60000);
-        const bonusRoll = Math.min(survivalMinutes * 0.05, 0.2); // Up to +20% harder
+        const bonusRoll = Math.min(survivalMinutes * 0.05, 0.2);
 
         const roll = Math.random() - bonusRoll;
         if (roll < 0.70) {
-            return playerLevel;                     // 70% same level
+            // 70% same level (within zone range)
+            return Phaser.Math.Between(zoneMin, Math.min(zoneMax, playerLevel));
         } else if (roll < 0.88) {
-            return Math.max(1, playerLevel - 1);   // 18% lower level
+            // 18% slightly higher
+            return Phaser.Math.Between(Math.max(zoneMin, playerLevel - 1), zoneMax);
         } else {
-            return playerLevel + 1;                // 12% higher level
+            // 12% boss-tier (only in deep/abyss)
+            return Phaser.Math.Between(playerLevel + 2, zoneMax);
         }
     }
 
@@ -558,7 +563,9 @@ class GameScene extends Phaser.Scene {
         // Only scale UP from baseline (player level) - never make enemies weaker
         const levelDiff = enemyLevel - this.level;
         const difficultyMult = this._getDifficultyMultiplier();
-        const scaleFactor = (1 + Math.max(0, levelDiff) * 0.15) * difficultyMult; // Only scale up, not down
+        const inAbyss = this.mapExpansion?.getCurrentZone()?.id === 'abyss';
+        const abyssBonus = inAbyss ? 1.1 : 1.0;
+        const scaleFactor = (1 + Math.max(0, levelDiff) * 0.15) * difficultyMult * abyssBonus; // Only scale up, not down
 
         const fishConfig = {
             ...baseFishConfig,

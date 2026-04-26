@@ -8,4 +8,8 @@ export default {
     coverageDirectory: 'coverage',
     coverageReporters: ['text', 'lcov'],
     setupFiles: ['<rootDir>/tests/setup.js'],
+    moduleNameMapper: {
+        '^firebase/app$': '<rootDir>/__mocks__/firebase/app.js',
+        '^firebase/auth$': '<rootDir>/__mocks__/firebase/auth.js'
+    }
 };

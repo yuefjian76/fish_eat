@@ -22,13 +22,9 @@ export class BackgroundExpansion extends BackgroundSystem {
         this.loadedChunks = new Map();
         this.activeChunks = new Set();
 
-        // Zone system for world division
-        this.currentZone = 'undersea';
-        this.zoneBounds = {
-            undersea: { startX: 0, endX: 3000 },
-            tropical: { startX: 3000, endX: 6000 },
-            polar: { startX: 6000, endX: 9000 }
-        };
+        // Zone system - use MapExpansionSystem's zones, not internal bounds
+        this.currentZone = null;
+        this.zoneBounds = null; // Will be set from zones.json via zone config
 
         // Decorative elements
         this.seaweeds = [];
@@ -107,12 +103,13 @@ export class BackgroundExpansion extends BackgroundSystem {
         );
         chunkContainer.setDepth(0);
 
-        // Determine zone for this chunk
-        const zone = this._getZoneForChunk(chunkX);
+        // Determine zone for this chunk - use current zone
+        const zone = this._getZoneForChunk(chunkX, chunkY);
 
-        // Get theme config for this zone
-        const themeConfig = BackgroundSystem.THEME_CONFIG[zone];
-        const themeTint = themeConfig.tint;
+        // Get theme config from zone object (from zones.json via MapExpansionSystem)
+        const themeTint = zone.tint || 0xFFFFFF;
+        const bgKey = zone.backgrounds?.[0] || 'bg_undersea_theme';
+        const farKey = zone.backgrounds?.[1] || 'background_undersea_theme2';
 
         // Create tiled background for this chunk
         // We tile the background image across the chunk
@@ -128,7 +125,7 @@ export class BackgroundExpansion extends BackgroundSystem {
                 const bg = this.scene.add.image(
                     tileX + this.tileSize / 2,
                     tileY + this.tileSize / 2,
-                    themeConfig.images.background
+                    bgKey
                 );
                 bg.setDisplaySize(this.tileSize, this.tileSize);
                 bg.setTint(themeTint);
@@ -139,7 +136,7 @@ export class BackgroundExpansion extends BackgroundSystem {
                 const far = this.scene.add.image(
                     tileX + this.tileSize / 2,
                     tileY + this.tileSize / 2,
-                    themeConfig.images.far
+                    farKey
                 );
                 far.setDisplaySize(this.tileSize, this.tileSize);
                 far.setAlpha(0.6);
@@ -153,25 +150,23 @@ export class BackgroundExpansion extends BackgroundSystem {
     }
 
     /**
-     * Determine zone based on chunk X coordinate
+     * Determine zone based on chunk position - uses current zone from MapExpansionSystem
      * @param {number} chunkX - Chunk X coordinate
-     * @returns {string} Zone name
+     * @param {number} chunkY - Chunk Y coordinate
+     * @returns {object} Zone object
      */
-    _getZoneForChunk(chunkX) {
-        const worldX = chunkX * this.tileSize;
-        for (const [zone, bounds] of Object.entries(this.zoneBounds)) {
-            if (worldX >= bounds.startX && worldX < bounds.endX) {
-                return zone;
-            }
-        }
-        return 'undersea'; // Default zone
+    _getZoneForChunk(chunkX, chunkY) {
+        // For simplicity, use the current zone from MapExpansionSystem
+        // All visible chunks use the same zone theme
+        // When zone transitions, _reloadChunksForZone will reload with new theme
+        return this.currentZone || { id: 'undersea', tint: 0xFFFFFF, bubbleColor: 0xAAFFDD };
     }
 
     /**
      * Update background based on player position in world coordinates
      * @param {number} worldX - Player world X coordinate
      * @param {number} worldY - Player world Y coordinate
-     * @param {string} zone - Current zone name
+     * @param {object} zone - Current zone object from MapExpansionSystem
      */
     updateBackground(worldX, worldY, zone) {
         // Update parallax offset based on world position
@@ -188,25 +183,10 @@ export class BackgroundExpansion extends BackgroundSystem {
         // Update decorative elements
         this._updateDecorations(worldX, worldY);
 
-        // Check for zone change
-        const newZone = this._getZoneFromWorldX(worldX);
-        if (newZone !== zone && newZone !== this.currentZone) {
-            this.transitionToZone(newZone, 1500);
+        // Check for zone change - use the zone passed from MapExpansionSystem
+        if (zone && zone.id !== this.currentZone?.id) {
+            this.transitionToZone(zone, 1500);
         }
-    }
-
-    /**
-     * Get zone from world X coordinate
-     * @param {number} worldX - World X coordinate
-     * @returns {string} Zone name
-     */
-    _getZoneFromWorldX(worldX) {
-        for (const [zone, bounds] of Object.entries(this.zoneBounds)) {
-            if (worldX >= bounds.startX && worldX < bounds.endX) {
-                return zone;
-            }
-        }
-        return this.currentZone;
     }
 
     /**
@@ -388,20 +368,29 @@ export class BackgroundExpansion extends BackgroundSystem {
 
     /**
      * Execute zone transition animation
-     * @param {string} newZone - Zone to transition to
+     * @param {object} newZone - Zone object from MapExpansionSystem
      * @param {number} duration - Transition duration in ms (default 1500)
      */
     transitionToZone(newZone, duration = 1500) {
         if (this.isTransitioning) return;
-        if (!BackgroundSystem.THEME_CONFIG[newZone]) {
-            console.warn(`Unknown zone: ${newZone}`);
+        if (!newZone || !newZone.id) {
+            console.warn('Invalid zone object');
             return;
         }
 
         this.isTransitioning = true;
         this.currentZone = newZone;
 
-        const newThemeConfig = BackgroundSystem.THEME_CONFIG[newZone];
+        // Use zone.tint and zone.bubbleColor from zones.json config
+        const newThemeConfig = {
+            tint: newZone.tint || 0xFFFFFF,
+            bubbleColor: newZone.bubbleColor || 0xAAFFDD,
+            images: {
+                background: newZone.backgrounds?.[0] || 'bg_undersea_theme',
+                far: newZone.backgrounds?.[1] || 'background_undersea_theme2',
+                midground: newZone.midgrounds?.[0] || 'midground_undersea_theme'
+            }
+        };
 
         // Create transition overlay
         this.transitionOverlay = this.scene.add.graphics();
@@ -420,7 +409,7 @@ export class BackgroundExpansion extends BackgroundSystem {
             ease: 'Sine.easeIn',
             onComplete: () => {
                 // At peak darkness, update zone and tint
-                this.theme = newZone;
+                this.theme = newZone.id;
                 this.themeConfig = newThemeConfig;
                 this._applyThemeTint(newThemeConfig.tint, newThemeConfig.bubbleColor);
 
@@ -447,7 +436,7 @@ export class BackgroundExpansion extends BackgroundSystem {
 
     /**
      * Reload all chunks when transitioning to a new zone
-     * @param {string} zone - New zone name
+     * @param {object} zone - New zone object
      * @private
      */
     _reloadChunksForZone(zone) {

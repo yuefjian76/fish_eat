@@ -267,64 +267,78 @@ class MenuScene extends Phaser.Scene {
         if (this.loggedInContainer) {
             this.loggedInContainer.destroy();
         }
+        if (this.loginContainer) {
+            this.loginContainer.destroy();
+        }
         this.loginContainer = this.add.container(512, 200);
 
-        // Username input
-        const usernameBg = this.add.rectangle(0, -50, 200, 40, 0x333333).setOrigin(0.5);
-        this.usernameInput = this.add.text(0, -50, '', {
-            fontSize: '20px',
-            fontFamily: 'Arial',
-            color: '#ffffff'
-        }).setOrigin(0.5).setInteractive();
+        // Create DOM element for input fields using Phaser DOM
+        const loginDiv = document.createElement('div');
+        loginDiv.style.cssText = 'text-align: center; font-family: Arial, sans-serif;';
 
-        this.add.text(-80, -50, '', { fontSize: '16px', fontFamily: 'Arial', color: '#888888' });
+        const userInput = document.createElement('input');
+        userInput.type = 'text';
+        userInput.id = 'usernameInput';
+        userInput.placeholder = '用户名';
+        userInput.style.cssText = 'width: 180px; padding: 8px; font-size: 16px; border: 1px solid #333; border-radius: 4px; background: #333; color: #fff; text-align: center; margin-bottom: 10px; display: block;';
 
-        // Password input
-        const passwordBg = this.add.rectangle(0, 0, 200, 40, 0x333333).setOrigin(0.5);
-        this.passwordInput = this.add.text(0, 0, '', {
-            fontSize: '20px',
-            fontFamily: 'Arial',
-            color: '#ffffff'
-        }).setOrigin(0.5).setInteractive();
+        const passInput = document.createElement('input');
+        passInput.type = 'password';
+        passInput.id = 'passwordInput';
+        passInput.placeholder = '密码';
+        passInput.style.cssText = 'width: 180px; padding: 8px; font-size: 16px; border: 1px solid #333; border-radius: 4px; background: #333; color: #fff; text-align: center; margin-bottom: 15px; display: block;';
 
-        // Login/Signup buttons
-        const loginBtn = this.add.text(-70, 60, '登录', {
-            fontSize: '18px',
-            fontFamily: 'Arial',
-            color: '#00ff88',
-            backgroundColor: '#222222',
-            padding: { x: 15, y: 8 }
-        }).setOrigin(0.5).setInteractive();
+        const btnDiv = document.createElement('div');
+        btnDiv.style.cssText = 'margin-bottom: 10px;';
 
-        const signupBtn = this.add.text(70, 60, '注册', {
-            fontSize: '18px',
-            fontFamily: 'Arial',
-            color: '#ffffff',
-            backgroundColor: '#222222',
-            padding: { x: 15, y: 8 }
-        }).setOrigin(0.5).setInteractive();
+        const loginBtn = document.createElement('button');
+        loginBtn.textContent = '登录';
+        loginBtn.style.cssText = 'padding: 8px 20px; font-size: 16px; background: #00aa66; color: #fff; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px;';
 
-        const guestBtn = this.add.text(0, 110, '游客模式 →', {
-            fontSize: '16px',
-            fontFamily: 'Arial',
-            color: '#888888'
-        }).setOrigin(0.5).setInteractive();
+        const signupBtn = document.createElement('button');
+        signupBtn.textContent = '注册';
+        signupBtn.style.cssText = 'padding: 8px 20px; font-size: 16px; background: #444; color: #fff; border: none; border-radius: 4px; cursor: pointer;';
 
-        this.loginContainer.add([usernameBg, this.usernameInput, passwordBg, this.passwordInput, loginBtn, signupBtn, guestBtn]);
+        const guestBtn = document.createElement('button');
+        guestBtn.textContent = '游客模式 →';
+        guestBtn.style.cssText = 'padding: 6px 15px; font-size: 14px; background: transparent; color: #888; border: none; cursor: pointer;';
+
+        btnDiv.appendChild(loginBtn);
+        btnDiv.appendChild(signupBtn);
+        loginDiv.appendChild(userInput);
+        loginDiv.appendChild(passInput);
+        loginDiv.appendChild(btnDiv);
+        loginDiv.appendChild(guestBtn);
+
+        const domElement = this.add.dom(0, 0, loginDiv);
+        domElement.setOrigin(0.5);
+        this.loginContainer.add(domElement);
 
         // Button handlers
-        loginBtn.on('pointerdown', () => this._handleLogin());
-        signupBtn.on('pointerdown', () => this._handleSignup());
-        guestBtn.on('pointerdown', () => this._handleGuestMode());
+        loginBtn.onclick = () => this._handleLogin.domClick();
+        signupBtn.onclick = () => this._handleSignup.domClick();
+        guestBtn.onclick = () => this._handleGuestMode();
 
-        // Labels
-        this.add.text(-60, -50, '用户名:', { fontSize: '14px', fontFamily: 'Arial', color: '#aaaaaa' }).setOrigin(0.5);
-        this.add.text(-60, 0, '密码:', { fontSize: '14px', fontFamily: 'Arial', color: '#aaaaaa' }).setOrigin(0.5);
+        // Store reference for input values
+        this._loginDiv = loginDiv;
+    }
+
+    _getLoginInputs() {
+        if (!this._loginDiv) return { username: '', password: '' };
+        const username = this._loginDiv.querySelector('#usernameInput').value;
+        const password = this._loginDiv.querySelector('#passwordInput').value;
+        return { username, password };
+    }
+
+    _clearLoginInputs() {
+        if (this._loginDiv) {
+            this._loginDiv.querySelector('#usernameInput').value = '';
+            this._loginDiv.querySelector('#passwordInput').value = '';
+        }
     }
 
     async _handleLogin() {
-        const username = this.usernameInput.text;
-        const password = this.passwordInput.text;
+        const { username, password } = this._getLoginInputs();
 
         if (!username || !password) {
             this._showError('请输入用户名和密码');
@@ -339,8 +353,7 @@ class MenuScene extends Phaser.Scene {
     }
 
     async _handleSignup() {
-        const username = this.usernameInput.text;
-        const password = this.passwordInput.text;
+        const { username, password } = this._getLoginInputs();
 
         if (!username || !password) {
             this._showError('请输入用户名和密码');

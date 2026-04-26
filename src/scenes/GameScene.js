@@ -670,12 +670,11 @@ class GameScene extends Phaser.Scene {
             // Check strong against / weak to
             const playerType = 'clownfish'; // Player is always clownfish for now
 
-            const fishWeakness = this.fishData[fishType].weakTo;
             const fishStrength = this.fishData[fishType].strongAgainst;
 
             logger.debug(`Eat check: playerSize=${playerSize}, fishSize=${fishSize}, fishType=${fishType}`);
 
-            // Can eat if not strong against player
+            // Cannot eat if fish is strong against player (player is fish's prey)
             if (fishStrength && fishStrength.includes(playerType)) {
                 logger.debug(`Eat check result: cannot eat ${fishType} (strong against player)`);
                 return; // Cannot eat

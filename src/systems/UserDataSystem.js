@@ -3,7 +3,6 @@
  * 处理用户数据保存、加载、同步
  */
 import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
 
 let db = null;
 

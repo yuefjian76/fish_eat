@@ -245,11 +245,6 @@ class MenuScene extends Phaser.Scene {
         this.loggedInContainer = this.add.container(512, 200);
 
         const username = user.email ? user.email.split('@')[0] : 'Player';
-        this.add.text(0, -30, `欢迎, ${username}`, {
-            fontSize: '24px',
-            fontFamily: 'Arial',
-            color: '#00ff88'
-        }).setOrigin(0.5);
 
         const logoutBtn = this.add.text(0, 20, '登出', {
             fontSize: '18px',

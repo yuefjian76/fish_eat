@@ -1,7 +1,12 @@
 // GameOverScene - Rich stats game over screen
+import AuthSystem from '../systems/AuthSystem.js';
+import UserDataSystem from '../systems/UserDataSystem.js';
+
 class GameOverScene extends Phaser.Scene {
     constructor() {
         super({ key: 'GameOverScene' });
+        this.authSystem = null;
+        this.userDataSystem = null;
     }
 
     create(data) {
@@ -12,9 +17,19 @@ class GameOverScene extends Phaser.Scene {
         const prevBestScore = this._getStat('fishEat_highScore', -1);
         const prevBestLevel = this._getStat('fishEat_maxLevel', 0);
 
+        // Initialize Auth and UserData systems
+        this.authSystem = new AuthSystem();
+        this.userDataSystem = new UserDataSystem();
+
         // Handle difficulty unlocks + save stats (writes new records to localStorage)
         this.handleUnlocks(data);
         this.saveStats(data);
+
+        // Sync game data to Firestore if logged in
+        const user = this.authSystem.getCurrentUser();
+        if (user) {
+            this._syncGameDataToFirestore(user.uid);
+        }
 
         // Load updated best stats for display
         const bestScore = this._getStat('fishEat_highScore', 0);
@@ -112,12 +127,12 @@ class GameOverScene extends Phaser.Scene {
             this.scene.launch('UIScene');
         });
 
-        const shopBtn = this._makeButton(cx + 120, btnY + 50, '商店', 0x886600);
+        const shopBtn = this._makeButton(cx + 140, btnY + 50, '商店', 0x886600);
         shopBtn.on('pointerdown', () => {
             this.scene.start('ShopScene');
         });
 
-        const menuBtn = this._makeButton(cx + 120, btnY + 50, '返回菜单', 0x444466);
+        const menuBtn = this._makeButton(cx - 140, btnY + 50, '返回菜单', 0x444466);
         menuBtn.on('pointerdown', () => {
             this.scene.start('MenuScene');
         });
@@ -167,7 +182,7 @@ class GameOverScene extends Phaser.Scene {
             const currencyEarned = Math.floor(score / 10);
             const prevCurrency = parseInt(localStorage.getItem('fishEat_currency') || '0');
             localStorage.setItem('fishEat_currency', (prevCurrency + currencyEarned).toString());
-        } catch (e) {}
+        } catch (e) { console.warn('saveStats failed:', e); }
     }
 
     handleUnlocks(data) {
@@ -178,7 +193,7 @@ class GameOverScene extends Phaser.Scene {
         try {
             const saved = localStorage.getItem('fishEat_unlockedDifficulties');
             if (saved) unlockedDifficulties = JSON.parse(saved);
-        } catch (e) {}
+        } catch (e) { console.warn('saveStats failed:', e); }
 
         const newlyUnlocked = [];
         if (difficulty === 'easy' && !unlockedDifficulties.includes('normal')) {
@@ -195,7 +210,22 @@ class GameOverScene extends Phaser.Scene {
             if (newlyUnlocked.length > 0) {
                 data.unlocked = newlyUnlocked.join(', ');
             }
-        } catch (e) {}
+        } catch (e) { console.warn('saveStats failed:', e); }
+    }
+
+    async _syncGameDataToFirestore(uid) {
+        try {
+            const localData = {
+                currency: parseInt(localStorage.getItem('fishEat_currency') || '0'),
+                highScore: parseInt(localStorage.getItem('fishEat_highScore') || '0'),
+                maxLevel: parseInt(localStorage.getItem('fishEat_maxLevel') || '1'),
+                unlockedDifficulties: JSON.parse(localStorage.getItem('fishEat_unlockedDifficulties') || '["easy"]'),
+                upgrades: JSON.parse(localStorage.getItem('fishEat_upgrades') || '{}')
+            };
+            await this.userDataSystem.saveUserData(uid, localData);
+        } catch (e) {
+            console.warn('Failed to sync to Firestore:', e);
+        }
     }
 }
 

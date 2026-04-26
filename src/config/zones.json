@@ -1,0 +1,52 @@
+{
+  "zones": [
+    {
+      "id": "shallow",
+      "name": "浅海",
+      "minDistance": 0,
+      "maxDistance": 1000,
+      "tint": 16777215,
+      "bubbleColor": 11445693,
+      "enemyLevelRange": [1, 3],
+      "bossType": null,
+      "backgrounds": ["bg_tropical_theme", "background_tropical_theme", "background_tropical_theme3"],
+      "midgrounds": ["midground_tropical_theme"]
+    },
+    {
+      "id": "coral",
+      "name": "珊瑚礁",
+      "minDistance": 1000,
+      "maxDistance": 2500,
+      "tint": 16769373,
+      "bubbleColor": 16761065,
+      "enemyLevelRange": [3, 6],
+      "bossType": null,
+      "backgrounds": ["bg_undersea_theme", "background_undersea_theme2", "background_undersea_theme3"],
+      "midgrounds": ["midground_undersea_theme"]
+    },
+    {
+      "id": "deep",
+      "name": "深海",
+      "minDistance": 2500,
+      "maxDistance": 4500,
+      "tint": 8519815,
+      "bubbleColor": 6299568,
+      "enemyLevelRange": [6, 9],
+      "bossType": null,
+      "backgrounds": ["bg_undersea_theme", "background_undersea_theme2"],
+      "midgrounds": ["midground_undersea_theme"]
+    },
+    {
+      "id": "abyss",
+      "name": "深渊",
+      "minDistance": 4500,
+      "maxDistance": 999999,
+      "tint": 2031613,
+      "bubbleColor": 328704,
+      "enemyLevelRange": [9, 12],
+      "bossType": "boss_sea_dragon",
+      "backgrounds": ["bg_undersea_theme"],
+      "midgrounds": ["midground_undersea_theme"]
+    }
+  ]
+}

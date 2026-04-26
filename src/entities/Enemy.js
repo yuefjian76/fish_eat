@@ -25,10 +25,8 @@ export class Enemy {
         this.graphics.x = x;
         this.graphics.y = y;
 
-        // Start animation if sprite has animKey
-        if (this.graphics.animKey && scene.anims.exists(this.graphics.animKey)) {
-            this.graphics.play(this.graphics.animKey);
-        }
+        // Animation is already started in FishFactory.createFishFromFrames()
+        // No need to replay here - sprite.animKey is the texture base key, not the anim key
 
         // Create shadow underneath fish (for depth effect)
         const shadowScale = (fishConfig.size / 30) * 0.4;
@@ -90,6 +88,12 @@ export class Enemy {
         this.fleeTimer = 0;
         this.fleeDuration = 3000; // 3 seconds
         this.attacker = null;
+
+        // ── Hate / Aggro system ──────────────────────────────────────────
+        this.hateTarget = null;       // Who this enemy hates (player who attacked it)
+        this.hateTimer = 0;            // Time since hate was set
+        this.hateDuration = 8000;      // Hate lasts 8 seconds
+        this.hateRange = 400;          // Chase target up to this distance when hating
 
         // Fishing state
         this.fishingTarget = null;
@@ -298,6 +302,14 @@ export class Enemy {
             this.hp = 0;
             return true; // Enemy died
         }
+
+        // Set hate target when attacked — enemy will chase attacker
+        if (attacker && attacker.active) {
+            this.hateTarget = attacker;
+            this.hateTimer = 0;
+            logger.debug(`${this.fishType} gained hate on attacker`);
+        }
+
         // Check for flee (HP < 30% with 50% chance)
         if (attacker && this.hp < this.maxHp * 0.3 && Math.random() < 0.5) {
             this.setState(Enemy.STATE.FLEEING, attacker);
@@ -323,6 +335,8 @@ export class Enemy {
             if (this.stealthActive) this.graphics.setAlpha(1.0);
             if (this.isDashing || this.isEvading) this.graphics.setTint(0xFFFFFF);
         }
+        // Clear hate target to avoid memory leaks
+        this.hateTarget = null;
         this.graphics.destroy();
         this.healthBar.destroy();
     }
@@ -815,6 +829,49 @@ export class Enemy {
         if (this.fishConfig.behavior === 'ranged' || this.fishConfig.range) return;
         if (this.isEvading) return;
 
+        // ── Hate / Aggro system ───────────────────────────────────────
+        // If we have a hate target, always prioritize it over normal AI
+        if (this.hateTarget && this.hateTarget.active) {
+            const hateDistance = Phaser.Math.Distance.Between(
+                this.graphics.x, this.graphics.y,
+                this.hateTarget.x, this.hateTarget.y
+            );
+
+            // Check if hate expired (timeout or out of range)
+            this.hateTimer = Math.min(this.hateTimer + delta, this.hateDuration); // Clamp to prevent overflow
+            if (this.hateTimer >= this.hateDuration || hateDistance > this.hateRange) {
+                logger.debug(`${this.fishType} lost hate on target`);
+                this.hateTarget = null;
+                this.hateTimer = 0;
+                this.state = Enemy.STATE.WANDERING; // Reset state when hate expires
+            } else {
+                // Chase and attack the hate target even beyond vision range
+                const hateInAttackRange = hateDistance <= this.attackRange;
+
+                if (hateInAttackRange) {
+                    // Attack hate target
+                    if (this.state !== Enemy.STATE.ATTACKING) {
+                        logger.debug(`AI state change: ${this.fishType} ${this.state} -> ATTACKING (hate)`);
+                        this.state = Enemy.STATE.ATTACKING;
+                    }
+                    const damage = this.attackPlayer(this.hateTarget);
+                    if (damage > 0) {
+                        this.scene.onEnemyAttack(this, damage);
+                        this.hateTimer = 0; // Reset hate timer on successful attack
+                    }
+                } else {
+                    // Chase hate target at increased speed
+                    if (this.state !== Enemy.STATE.CHASING) {
+                        logger.debug(`AI state change: ${this.fishType} ${this.state} -> CHASING (hate)`);
+                        this.state = Enemy.STATE.CHASING;
+                    }
+                    this.chasePlayer(this.hateTarget);
+                }
+                return; // Skip normal AI when have hate
+            }
+        }
+
+        // ── Normal AI behavior ─────────────────────────────────────────
         // ALWAYS prioritize attacking player if in range
         const playerInVision = this.isPlayerInVision(player);
         const playerInAttackRange = this.isPlayerInAttackRange(player);

@@ -115,6 +115,10 @@ export class GrowthSystem {
      * @returns {boolean} True if player leveled up
      */
     checkLevelUp() {
+        // Prevent leveling beyond max level
+        if (this.currentLevel >= this.experienceTable.length) {
+            return false;
+        }
         const expForNextLevel = this.getExpForLevel(this.currentLevel + 1);
 
         if (this.currentExp >= expForNextLevel) {

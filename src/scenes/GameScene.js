@@ -485,9 +485,10 @@ class GameScene extends Phaser.Scene {
         const enemyLevel = this.calculateEnemyLevel(this.level);
 
         // Scale fish config based on enemy level + progressive difficulty
+        // Only scale UP from baseline (player level) - never make enemies weaker
         const levelDiff = enemyLevel - this.level;
         const difficultyMult = this._getDifficultyMultiplier();
-        const scaleFactor = (1 + (levelDiff * 0.15)) * difficultyMult; // 15% scaling per level diff + progressive
+        const scaleFactor = (1 + Math.max(0, levelDiff) * 0.15) * difficultyMult; // Only scale up, not down
 
         const fishConfig = {
             ...baseFishConfig,
@@ -1391,46 +1392,45 @@ class GameScene extends Phaser.Scene {
         descText.setDepth(251);
         descText.setAlpha(0);
 
-        // Timeline animation
-        const timeline = this.tweens.createTimeline();
-
-        timeline.add({
+        // Sequence animation using chained tweens
+        this.tweens.add({
             targets: overlay,
             alpha: 1,
             duration: 300,
-            ease: 'Quad.easeOut'
-        });
-
-        timeline.add({
-            targets: [nameText, bottleIcon],
-            alpha: 1,
-            scale: 1,
-            duration: 400,
-            ease: 'Back.easeOut'
-        });
-
-        timeline.add({
-            targets: descText,
-            alpha: 1,
-            duration: 300,
-            delay: 200
-        });
-
-        timeline.add({
-            targets: [overlay, nameText, bottleIcon, descText],
-            alpha: 0,
-            duration: 400,
-            delay: 1500,
-            ease: 'Quad.easeIn',
+            ease: 'Quad.easeOut',
             onComplete: () => {
-                overlay.destroy();
-                nameText.destroy();
-                bottleIcon.destroy();
-                descText.destroy();
+                this.tweens.add({
+                    targets: [nameText, bottleIcon],
+                    alpha: 1,
+                    scale: 1,
+                    duration: 400,
+                    ease: 'Back.easeOut',
+                    onComplete: () => {
+                        this.tweens.add({
+                            targets: descText,
+                            alpha: 1,
+                            duration: 300,
+                            delay: 200,
+                            onComplete: () => {
+                                this.tweens.add({
+                                    targets: [overlay, nameText, bottleIcon, descText],
+                                    alpha: 0,
+                                    duration: 400,
+                                    delay: 1500,
+                                    ease: 'Quad.easeIn',
+                                    onComplete: () => {
+                                        overlay.destroy();
+                                        nameText.destroy();
+                                        bottleIcon.destroy();
+                                        descText.destroy();
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
             }
         });
-
-        timeline.play();
     }
 
     /**

@@ -1,12 +1,14 @@
 import { jest } from '@jest/globals';
 import AuthSystem from '../AuthSystem.js';
-import { mockAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 
 describe('AuthSystem', () => {
     let authSystem;
+    let mockAuth;
 
     beforeEach(() => {
         jest.clearAllMocks();
+        // Get the mock auth from global.firebase
+        mockAuth = firebase.auth();
         authSystem = new AuthSystem();
     });
 
@@ -20,7 +22,7 @@ describe('AuthSystem', () => {
 
             expect(result.user.uid).toBe('test-uid');
             expect(mockAuth.createUserWithEmailAndPassword)
-                .toHaveBeenCalledWith(mockAuth, 'testuser@fisheatuser.com', 'password123');
+                .toHaveBeenCalledWith('testuser@fisheatuser.com', 'password123');
         });
     });
 

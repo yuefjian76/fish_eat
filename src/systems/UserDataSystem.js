@@ -2,15 +2,9 @@
  * UserDataSystem - Firestore 用户数据读写
  * 处理用户数据保存、加载、同步
  */
-import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
-
-let db = null;
-
 export class UserDataSystem {
     constructor() {
-        if (!db) {
-            db = getFirestore();
-        }
+        this.db = firebase.firestore();
     }
 
     /**
@@ -19,8 +13,8 @@ export class UserDataSystem {
      * @param {object} data - 用户数据
      */
     async saveUserData(uid, data) {
-        const userRef = doc(db, 'users', uid);
-        await setDoc(userRef, {
+        const userRef = this.db.collection('users').doc(uid);
+        await userRef.set({
             ...data,
             updatedAt: Date.now()
         }, { merge: true });
@@ -32,10 +26,10 @@ export class UserDataSystem {
      * @returns {object|null} 用户数据或 null
      */
     async loadUserData(uid) {
-        const userRef = doc(db, 'users', uid);
-        const snapshot = await getDoc(userRef);
+        const userRef = this.db.collection('users').doc(uid);
+        const snapshot = await userRef.get();
 
-        if (snapshot.exists()) {
+        if (snapshot.exists) {
             return snapshot.data();
         }
         return null;
@@ -54,8 +48,13 @@ export class UserDataSystem {
      * @returns {object|null}
      */
     loadFromLocal() {
-        const stored = localStorage.getItem('fishEat_userData');
-        return stored ? JSON.parse(stored) : null;
+        try {
+            const stored = localStorage.getItem('fishEat_userData');
+            return stored ? JSON.parse(stored) : null;
+        } catch (e) {
+            console.warn('Failed to parse local user data:', e);
+            return null;
+        }
     }
 
     /**

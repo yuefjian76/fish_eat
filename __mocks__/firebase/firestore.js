@@ -1,31 +1,30 @@
 import { jest } from '@jest/globals';
 
-const mockDoc = jest.fn();
-const mockSetDoc = jest.fn();
-const mockGetDoc = jest.fn();
-const mockUpdateDoc = jest.fn();
-const mockDeleteDoc = jest.fn();
-
-export const getFirestore = () => ({});
-export const doc = (...args) => mockDoc(...args);
-export const setDoc = (...args) => mockSetDoc(...args);
-export const getDoc = (...args) => mockGetDoc(...args);
-export const updateDoc = (...args) => mockUpdateDoc(...args);
-export const deleteDoc = (...args) => mockDeleteDoc(...args);
-
-export {
-    mockDoc,
-    mockSetDoc,
-    mockGetDoc,
-    mockUpdateDoc,
-    mockDeleteDoc
+const mockDocRef = {
+    set: jest.fn(),
+    get: jest.fn()
 };
 
-export default {
-    getFirestore,
-    doc,
-    setDoc,
-    getDoc,
-    updateDoc,
-    deleteDoc
+const mockCollectionRef = {
+    doc: jest.fn(() => mockDocRef)
 };
+
+const mockFirestore = {
+    collection: jest.fn(() => mockCollectionRef)
+};
+
+const mockAuth = {
+    createUserWithEmailAndPassword: jest.fn(),
+    signInWithEmailAndPassword: jest.fn(),
+    signOut: jest.fn(),
+    onAuthStateChanged: jest.fn(),
+    currentUser: null
+};
+
+global.firebase = {
+    auth: () => mockAuth,
+    firestore: () => mockFirestore,
+    initializeApp: jest.fn()
+};
+
+export default { mockFirestore, mockAuth };

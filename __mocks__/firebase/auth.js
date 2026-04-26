@@ -4,14 +4,14 @@ const mockAuth = {
     createUserWithEmailAndPassword: jest.fn(),
     signInWithEmailAndPassword: jest.fn(),
     signOut: jest.fn(),
-    onAuthStateChanged: jest.fn()
+    onAuthStateChanged: jest.fn(),
+    currentUser: null
 };
 
-export const getAuth = () => mockAuth;
-export const createUserWithEmailAndPassword = mockAuth.createUserWithEmailAndPassword;
-export const signInWithEmailAndPassword = mockAuth.signInWithEmailAndPassword;
-export const signOut = mockAuth.signOut;
-export const onAuthStateChanged = mockAuth.onAuthStateChanged;
+global.firebase = {
+    auth: () => mockAuth,
+    firestore: () => ({}),
+    initializeApp: jest.fn()
+};
 
-export { mockAuth };
 export default mockAuth;

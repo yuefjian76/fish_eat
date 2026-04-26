@@ -2,23 +2,9 @@
  * AuthSystem - Firebase Auth 封装
  * 处理用户注册、登录、登出
  */
-import { initializeApp } from 'firebase/app';
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
-import firebaseConfig from '../config/firebase.json';
-
-let app = null;
-let auth = null;
-
 export class AuthSystem {
     constructor() {
-        this._initFirebase();
-    }
-
-    _initFirebase() {
-        if (!app) {
-            app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-        }
+        this.auth = firebase.auth();
     }
 
     /**
@@ -29,7 +15,7 @@ export class AuthSystem {
      */
     async register(username, password) {
         const email = `${username}@fisheatuser.com`;
-        const credential = await createUserWithEmailAndPassword(auth, email, password);
+        const credential = await this.auth.createUserWithEmailAndPassword(email, password);
         return credential;
     }
 
@@ -41,7 +27,7 @@ export class AuthSystem {
      */
     async login(username, password) {
         const email = `${username}@fisheatuser.com`;
-        const credential = await signInWithEmailAndPassword(auth, email, password);
+        const credential = await this.auth.signInWithEmailAndPassword(email, password);
         return credential;
     }
 
@@ -50,7 +36,7 @@ export class AuthSystem {
      */
     async logout() {
         try {
-            await signOut(auth);
+            await this.auth.signOut();
         } catch (error) {
             console.error('Logout failed:', error);
         }
@@ -61,7 +47,7 @@ export class AuthSystem {
      * @returns {object|null} user or null
      */
     getCurrentUser() {
-        return auth?.currentUser || null;
+        return this.auth.currentUser;
     }
 
     /**
@@ -69,7 +55,7 @@ export class AuthSystem {
      * @param {function} callback - 状态变化回调
      */
     onAuthStateChanged(callback) {
-        onAuthStateChanged(auth, callback);
+        this.auth.onAuthStateChanged(callback);
     }
 }
 

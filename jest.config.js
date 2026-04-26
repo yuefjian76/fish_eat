@@ -9,8 +9,6 @@ export default {
     coverageReporters: ['text', 'lcov'],
     setupFiles: ['<rootDir>/tests/setup.js'],
     moduleNameMapper: {
-        '^firebase/app$': '<rootDir>/__mocks__/firebase/app.js',
-        '^firebase/auth$': '<rootDir>/__mocks__/firebase/auth.js',
-        '^firebase/firestore$': '<rootDir>/__mocks__/firebase/firestore.js'
+        // Firebase uses global.firebase directly in compat mode, no module mapping needed
     }
 };

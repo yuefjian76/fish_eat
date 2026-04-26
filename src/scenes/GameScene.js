@@ -8,6 +8,8 @@ import { GrowthSystem } from '../systems/GrowthSystem.js';
 import { DriftBottleSystem } from '../systems/DriftBottleSystem.js';
 import { LuckSystem } from '../systems/LuckSystem.js';
 import { BackgroundSystem } from '../systems/BackgroundSystem.js';
+import { BackgroundExpansion } from '../systems/BackgroundExpansion.js';
+import { MapExpansionSystem } from '../systems/MapExpansionSystem.js';
 import { BossSystem } from '../systems/BossSystem.js';
 import { BossAnimation } from '../systems/BossAnimation.js';
 import { SkillBar } from '../ui/SkillBar.js';
@@ -92,6 +94,9 @@ class GameScene extends Phaser.Scene {
 
         // Store daily challenge flag for use in create()
         this.dailyChallenge = data?.dailyChallenge || false;
+
+        // MapExpansionSystem for infinite map (zone tracking)
+        this.mapExpansion = null; // Will be initialized in create() when zonesData is available
     }
 
     preload() {
@@ -109,6 +114,8 @@ class GameScene extends Phaser.Scene {
         this.load.json('difficultyData', 'src/config/difficulty.json');
         // Load drops data from JSON
         this.load.json('dropsData', 'src/config/drops.json');
+        // Load zones data from JSON
+        this.load.json('zonesData', 'src/config/zones.json');
         // Load achievements data from JSON
         this.load.json('achievementsData', 'src/config/achievements.json');
     }
@@ -190,9 +197,16 @@ class GameScene extends Phaser.Scene {
         // Initialize skill system
         this.skillSystem = new SkillSystem(this.skillsData);
 
-        // Initialize BackgroundSystem and create full underwater background
-        this.backgroundSystem = new BackgroundSystem(this, 1024, 768);
-        this.backgroundSystem.createBackground(); // Creates gradient + light rays + particles + bubbles + corals + seaweed
+        // Initialize BackgroundExpansion (infinite background system) and create background
+        this.backgroundSystem = new BackgroundExpansion(this, this.screenWidth || 1024, this.screenHeight || 768);
+        this.backgroundSystem.createBackground();
+
+        // Initialize MapExpansionSystem for zone tracking
+        const zonesData = this.cache.json.get('zonesData');
+        this.mapExpansion = new MapExpansionSystem(zonesData);
+        this.mapExpansion.onZoneTransition = (newZone, oldZone) => {
+            this._onZoneChange(newZone, oldZone);
+        };
 
         // Update UI with theme name
         this.scene.get('UIScene').updateTheme(this.backgroundSystem.themeConfig.name);
@@ -445,6 +459,54 @@ class GameScene extends Phaser.Scene {
             const hpRegenLevel = levels['hp_regen'] || 0;
             this.healthRegenRate += hpRegenLevel * 0.002;
         } catch (e) { /* ignore */ }
+    }
+
+    /**
+     * Zone change callback
+     * @param {object} newZone - New zone
+     * @param {object} oldZone - Old zone
+     */
+    _onZoneChange(newZone, oldZone) {
+        // Update background system
+        if (this.backgroundSystem?.transitionToZone) {
+            this.backgroundSystem.transitionToZone(newZone);
+        }
+
+        // Show zone indicator
+        this._showZoneIndicator(newZone);
+
+        logger.info(`Entering ${newZone.name}`);
+    }
+
+    /**
+     * Show zone entry indicator
+     * @param {object} zone - Zone to display
+     */
+    _showZoneIndicator(zone) {
+        if (this.zoneText) {
+            this.zoneText.destroy();
+        }
+
+        this.zoneText = this.add.text(this.player.x, this.player.y - 100,
+            `>> ${zone.name} <<`, {
+            fontSize: '24px',
+            fontFamily: 'Arial',
+            color: '#00ff88',
+            stroke: '#000000',
+            strokeThickness: 4
+        });
+        this.zoneText.setDepth(50);
+        this.zoneText.setOrigin(0.5);
+
+        // Float upward and fade out
+        this.tweens.add({
+            targets: this.zoneText,
+            y: this.player.y - 200,
+            alpha: 0,
+            duration: 2000,
+            ease: 'Sine.easeOut',
+            onComplete: () => this.zoneText?.destroy()
+        });
     }
 
     /**
@@ -866,6 +928,20 @@ class GameScene extends Phaser.Scene {
         // Update background decorations (bubbles animation)
         if (this.backgroundSystem) {
             this.backgroundSystem.update(delta);
+        }
+
+        // Update map expansion system for infinite map / zone tracking
+        if (this.mapExpansion) {
+            this.mapExpansion.updatePlayerPosition(this.player.x, this.player.y);
+
+            if (this.backgroundSystem?.updateBackground) {
+                const zone = this.mapExpansion.getCurrentZone();
+                this.backgroundSystem.updateBackground(this.player.x, this.player.y, zone);
+            }
+
+            // Adjust enemy level range based on zone
+            const [minLevel, maxLevel] = this.mapExpansion.getEnemyLevelRange();
+            this._currentEnemyLevelRange = [minLevel, maxLevel];
         }
 
         // Check survival time achievements

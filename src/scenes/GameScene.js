@@ -575,7 +575,7 @@ class GameScene extends Phaser.Scene {
         const fishConfig = {
             ...baseFishConfig,
             hp: Math.floor(baseFishConfig.hp * scaleFactor),
-            size: Math.floor(baseFishConfig.size * scaleFactor * (this._challengeEnemySizeMultiplier || 1)),
+            size: Math.floor(baseFishConfig.size * scaleFactor * (this._challengeEnemySizeMultiplier || 1) * 0.8),
             speed: Math.floor(baseFishConfig.speed * scaleFactor * (this._challengeEnemySpeedMultiplier || 1)),
             exp: Math.floor(baseFishConfig.exp * scaleFactor)
         };
@@ -1254,7 +1254,7 @@ class GameScene extends Phaser.Scene {
         const oldX = oldPlayer.x;
         const oldY = oldPlayer.y;
         const oldPlayerData = { ...oldPlayer.playerData };
-        oldPlayerData.size += 2;
+        oldPlayerData.size = Math.floor(oldPlayerData.size * 1.5);
 
         // Increase max HP per level (+20 HP per level)
         const hpPerLevel = 20;

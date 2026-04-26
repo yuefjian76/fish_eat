@@ -944,10 +944,13 @@ export class Enemy {
 
         // Breathing/floating animation - gentle up-down movement
         // Skip when evading: evasion uses velocity-based physics and must not be overridden
+        // Use delta-based approach to smoothly add breathing without overriding physics Y movement
         if (!this.isEvading) {
             this._breathOffset += delta * 0.003;
             const breathY = Math.sin(this._breathOffset) * 3;
-            this.graphics.y = this._baseY + breathY;
+            // Apply breathing as an offset from current position, not override
+            // This allows physics-based movement in all directions while adding visual float
+            this.graphics.y += breathY * 0.1;
         }
 
         // Distance-based transparency (simulate water depth effect)

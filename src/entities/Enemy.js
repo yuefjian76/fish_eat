@@ -651,7 +651,7 @@ export class Enemy {
     }
 
     /**
-     * Jellyfish: AOE sting every 4 s — damages anything (including player) within radius.
+     * Jellyfish: AOE sting every 4 s — damages ALL entities (player + enemies) within radius.
      */
     updateAoe(player) {
         if (!this.fishConfig.aoe || !this.graphics.active) return;
@@ -661,19 +661,30 @@ export class Enemy {
         const player2 = this.scene.player || player;
         if (!player2) return;
 
-        const dist = Phaser.Math.Distance.Between(
+        // Check if player is in range first to gate the cooldown
+        const distToPlayer = Phaser.Math.Distance.Between(
             this.graphics.x, this.graphics.y,
             player2.x, player2.y
         );
-        if (dist > this.aoeRadius) return; // Player not in range
+        if (distToPlayer > this.aoeRadius) return;
 
         this.lastAoeTime = now;
         // Visual pulse ring
         this._spawnAoePulse();
-        // Damage the player via scene callback
-        if (this.scene.onEnemyAttack) {
-            this.scene.onEnemyAttack(this, this.aoeDamage);
-        }
+
+        // Get all entities in range and damage each one
+        const enemies = this.scene.fishes.getChildren();
+        const damage = this.aoeDamage;
+        enemies.forEach(enemy => {
+            if (enemy === this.graphics || !enemy.active) return;
+            const dist = Phaser.Math.Distance.Between(
+                this.graphics.x, this.graphics.y,
+                enemy.x, enemy.y
+            );
+            if (dist <= this.aoeRadius && enemy.takeDamage) {
+                enemy.takeDamage(damage);
+            }
+        });
     }
 
     /** Expanding ring visual for AOE attack */

@@ -315,8 +315,8 @@ class MenuScene extends Phaser.Scene {
         this.loginContainer.add(domElement);
 
         // Button handlers
-        loginBtn.onclick = () => this._handleLogin.domClick();
-        signupBtn.onclick = () => this._handleSignup.domClick();
+        loginBtn.onclick = () => this._handleLogin();
+        signupBtn.onclick = () => this._handleSignup();
         guestBtn.onclick = () => this._handleGuestMode();
 
         // Store reference for input values

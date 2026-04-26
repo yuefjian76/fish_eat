@@ -86,8 +86,6 @@ class GameScene extends Phaser.Scene {
         // Stats tracking
         this.killCount = 0;
         this.gameStartTime = Date.now();
-        // Anglerfish projectile tracking
-        this.anglerProjectiles = [];
 
         // Apply permanent upgrades
         this._applyUpgrades();
@@ -283,6 +281,16 @@ class GameScene extends Phaser.Scene {
             this.player,
             this.treasureBoxes,
             this.collectTreasureBox,
+            null,
+            this
+        );
+
+        // Anglerfish projectile group + collision
+        this.anglerProjectileGroup = this.physics.add.group();
+        this._anglerOverlap = this.physics.add.overlap(
+            this.player,
+            this.anglerProjectileGroup,
+            this.checkAnglerHit,
             null,
             this
         );
@@ -840,15 +848,6 @@ class GameScene extends Phaser.Scene {
             this._glowLayer.strokeCircle(enemy.graphics.x, enemy.graphics.y, r);
         });
 
-        // Process anglerfish projectile hits
-        if (this.anglerProjectiles && this.anglerProjectiles.length > 0) {
-            this.anglerProjectiles = this.anglerProjectiles.filter(p => {
-                if (!p.proj || !p.proj.active) return false;
-                p.hitCallback();
-                return p.proj.active;
-            });
-        }
-
         // Update combo system (check expiry)
         if (this.comboSystem) {
             this.comboSystem.update(time);
@@ -1032,6 +1031,24 @@ class GameScene extends Phaser.Scene {
         if (this.hp <= 0) {
             this.scene.start('GameOverScene', { score: this.score, level: this.level, difficulty: this.difficulty, kills: this.killCount, survivalTime: Math.floor((Date.now() - this.gameStartTime) / 1000) });
         }
+    }
+
+    /**
+     * Callback when anglerfish projectile hits player.
+     * Uses physics overlap instead of per-frame polling.
+     * @param {Phaser.GameObjects.ArcadeSprite} player - The player
+     * @param {Phaser.GameObjects.ArcadeSprite} proj - The projectile
+     */
+    checkAnglerHit(player, proj) {
+        if (!proj.active) return;
+        // Retrieve stored enemy reference and damage
+        const enemy = proj.enemyRef;
+        const damage = proj.rangedDamage;
+        if (this.onEnemyAttack && enemy) {
+            this.onEnemyAttack(enemy, damage);
+        }
+        // Destroy the projectile (Phaser automatically stops tweens on destroy)
+        proj.destroy();
     }
 
     /**
@@ -1691,12 +1708,8 @@ class GameScene extends Phaser.Scene {
      * Prevents anglerfish projectile timers from firing into a dead scene.
      */
     shutdown() {
-        if (this.anglerProjectiles) {
-            this.anglerProjectiles.forEach(p => {
-                if (p.destroyProj) p.destroyProj();
-                else if (p.proj?.active) p.proj.destroy();
-            });
-            this.anglerProjectiles = [];
+        if (this.anglerProjectileGroup) {
+            this.anglerProjectileGroup.clear(true, true);
         }
         if (this.audioSystem) this.audioSystem.stopBGM();
     }

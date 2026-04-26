@@ -748,6 +748,11 @@ export class Enemy {
         const vx = (dx / len) * this.projectileSpeed;
         const vy = (dy / len) * this.projectileSpeed;
 
+        // Ensure projectile group exists
+        if (!this.scene.anglerProjectileGroup) {
+            this.scene.anglerProjectileGroup = this.scene.physics.add.group();
+        }
+
         // Visual projectile
         const proj = this.scene.add.graphics();
         proj.fillStyle(0x9400D3, 1);
@@ -761,38 +766,23 @@ export class Enemy {
         proj.body.setVelocity(vx, vy);
         proj.body.setAllowGravity(false);
 
+        // Add to physics group for collision detection
+        this.scene.anglerProjectileGroup.add(proj);
+
+        // Store enemy reference and damage for hit callback
+        proj.enemyRef = this;
+        proj.rangedDamage = this.rangedDamage;
+
         // Tween a slight glow/bob so it's clearly identifiable
-        const glowTween = this.scene.tweens.add({
+        this.scene.tweens.add({
             targets: proj, scaleX: 1.3, scaleY: 1.3,
             yoyo: true, duration: 200, repeat: -1
         });
 
-        /** Safe destroy: stop tween, remove physics body, then destroy GameObject */
-        const destroyProj = () => {
-            if (!proj.active) return;
-            glowTween.stop();
-            if (proj.body) this.scene.physics.world.remove(proj.body);
-            proj.destroy();
-        };
-
-        // Check hit each frame via overlap registered by scene
-        const hitCallback = () => {
-            if (!proj.active) return;
-            const pDist = Phaser.Math.Distance.Between(proj.x, proj.y, player.x, player.y);
-            if (pDist < 20) {
-                if (this.scene.onEnemyAttack) {
-                    this.scene.onEnemyAttack(this, this.rangedDamage);
-                }
-                destroyProj();
-            }
-        };
-
-        // Auto-destroy after 2 seconds
-        this.scene.time.delayedCall(2000, destroyProj);
-
-        // Register hit check in scene's update via a tracked list
-        if (!this.scene.anglerProjectiles) this.scene.anglerProjectiles = [];
-        this.scene.anglerProjectiles.push({ proj, hitCallback, damage: this.rangedDamage, destroyProj });
+        // Auto-destroy after 2 seconds (Phaser stops tweens automatically on destroy)
+        this.scene.time.delayedCall(2000, () => {
+            if (proj.active) proj.destroy();
+        });
     }
 
     /**

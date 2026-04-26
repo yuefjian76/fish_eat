@@ -10,6 +10,7 @@ export default {
     setupFiles: ['<rootDir>/tests/setup.js'],
     moduleNameMapper: {
         '^firebase/app$': '<rootDir>/__mocks__/firebase/app.js',
-        '^firebase/auth$': '<rootDir>/__mocks__/firebase/auth.js'
+        '^firebase/auth$': '<rootDir>/__mocks__/firebase/auth.js',
+        '^firebase/firestore$': '<rootDir>/__mocks__/firebase/firestore.js'
     }
 };

@@ -417,21 +417,24 @@ class GameScene extends Phaser.Scene {
         // 使用区域等级范围（如果可用）
         const [zoneMin, zoneMax] = this._currentEnemyLevelRange || [1, 3];
 
+        // Clamp playerLevel to zone bounds to prevent inverted ranges
+        const clampedLevel = Phaser.Math.Clamp(playerLevel, zoneMin, zoneMax);
+
         const survivalMinutes = Math.floor((Date.now() - this.gameStartTime) / 60000);
         const bonusRoll = Math.min(survivalMinutes * 0.05, 0.2);
 
         const roll = Math.random() - bonusRoll;
         if (roll < 0.70) {
             // 70% same level (within zone range, centered on player level)
-            const sameMin = Math.max(zoneMin, playerLevel - 1);
-            const sameMax = Math.min(zoneMax, playerLevel + 1);
+            const sameMin = Math.max(zoneMin, clampedLevel - 1);
+            const sameMax = Math.min(zoneMax, clampedLevel + 1);
             return Phaser.Math.Between(sameMin, sameMax);
         } else if (roll < 0.88) {
-            // 18% slightly higher (playerLevel+1 to zoneMax)
-            return Phaser.Math.Between(Math.min(playerLevel + 1, zoneMax), zoneMax);
+            // 18% slightly higher (clampedLevel+1 to zoneMax)
+            return Phaser.Math.Between(Math.min(clampedLevel + 1, zoneMax), zoneMax);
         } else {
             // 12% boss-tier (only in deep/abyss)
-            return Phaser.Math.Between(playerLevel + 2, zoneMax);
+            return Phaser.Math.Between(clampedLevel + 2, zoneMax);
         }
     }
 

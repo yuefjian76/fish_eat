@@ -5,7 +5,24 @@
 export class LocalAuthSystem {
     constructor() {
         this._users = this._loadUsers();
-        this._currentUser = null;
+        this._currentUser = this._loadSession();
+    }
+
+    _loadSession() {
+        try {
+            const stored = localStorage.getItem('fishEat_session');
+            return stored ? JSON.parse(stored) : null;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    _saveSession() {
+        if (this._currentUser) {
+            localStorage.setItem('fishEat_session', JSON.stringify(this._currentUser));
+        } else {
+            localStorage.removeItem('fishEat_session');
+        }
     }
 
     _loadUsers() {
@@ -62,6 +79,7 @@ export class LocalAuthSystem {
         this._saveUsers();
 
         this._currentUser = { uid: username, email: `${username}@local` };
+        this._saveSession();
         return { user: this._currentUser };
     }
 
@@ -86,6 +104,7 @@ export class LocalAuthSystem {
         }
 
         this._currentUser = { uid: username, email: `${username}@local` };
+        this._saveSession();
         return { user: this._currentUser };
     }
 
@@ -94,6 +113,7 @@ export class LocalAuthSystem {
      */
     async logout() {
         this._currentUser = null;
+        this._saveSession();
     }
 
     /**

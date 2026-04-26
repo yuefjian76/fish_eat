@@ -43,7 +43,7 @@ class MenuScene extends Phaser.Scene {
         // Check if already logged in
         const currentUser = this.authSystem.getCurrentUser();
         if (currentUser) {
-            this._showLoggedInUI(currentUser);
+            this._onAuthStateChanged(currentUser);
         } else {
             this._showLoginUI();
         }
@@ -169,8 +169,8 @@ class MenuScene extends Phaser.Scene {
             this.fishCards[fish.key] = { icon, name, indicator, hitArea, y, color: fish.color };
         });
 
-        // Select default
-        this.selectedFish = 'clownfish';
+        // Select default (load from localStorage or use 'clownfish')
+        this.selectedFish = localStorage.getItem('fishEat_selectedFish') || 'clownfish';
         this._updateFishCards();
 
         // Start button
@@ -346,7 +346,8 @@ class MenuScene extends Phaser.Scene {
         }
 
         try {
-            await this.authSystem.login(username, password);
+            const result = await this.authSystem.login(username, password);
+            this._onAuthStateChanged(result.user);
         } catch (error) {
             this._showError('登录失败：' + error.message);
         }
@@ -361,7 +362,8 @@ class MenuScene extends Phaser.Scene {
         }
 
         try {
-            await this.authSystem.register(username, password);
+            const result = await this.authSystem.register(username, password);
+            this._onAuthStateChanged(result.user);
         } catch (error) {
             this._showError('注册失败：' + error.message);
         }
@@ -380,11 +382,14 @@ class MenuScene extends Phaser.Scene {
 
     async _onAuthStateChanged(user) {
         if (user) {
-            // Load user data from Firestore
+            // Load user data from localStorage
             try {
                 const userData = await this.userDataSystem.loadUserData(user.uid);
                 if (userData) {
                     this.userDataSystem.syncToLocal(userData);
+                    // Update selected fish from loaded data
+                    this.selectedFish = localStorage.getItem('fishEat_selectedFish') || 'clownfish';
+                    this._updateFishCards();
                 }
             } catch (e) {
                 console.warn('Failed to load user data:', e);
@@ -622,6 +627,7 @@ class MenuScene extends Phaser.Scene {
 
     _selectFish(key) {
         this.selectedFish = key;
+        localStorage.setItem('fishEat_selectedFish', key);
         this._updateFishCards();
     }
 

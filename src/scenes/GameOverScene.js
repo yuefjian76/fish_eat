@@ -220,7 +220,8 @@ class GameOverScene extends Phaser.Scene {
                 highScore: parseInt(localStorage.getItem('fishEat_highScore') || '0'),
                 maxLevel: parseInt(localStorage.getItem('fishEat_maxLevel') || '1'),
                 unlockedDifficulties: JSON.parse(localStorage.getItem('fishEat_unlockedDifficulties') || '["easy"]'),
-                upgrades: JSON.parse(localStorage.getItem('fishEat_upgrades') || '{}')
+                upgrades: JSON.parse(localStorage.getItem('fishEat_upgrades') || '{}'),
+                selectedFish: localStorage.getItem('fishEat_selectedFish') || 'clownfish'
             };
             await this.userDataSystem.saveUserData(uid, localData);
         } catch (e) {

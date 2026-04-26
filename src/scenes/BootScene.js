@@ -215,10 +215,14 @@ class BootScene extends Phaser.Scene {
             }
         }
 
-        // Legacy player spritesheet
+        // Legacy player animation (individual frames)
+        const playerFrames = [0, 1, 2, 3, 4, 5, 6].map(i => ({
+            key: `player_swim_${i}`,
+            frame: null
+        }));
         this.anims.create({
             key: 'player_swim',
-            frames: this.anims.generateFrameNumbers('player_swim', { start: 0, end: 6 }),
+            frames: playerFrames,
             frameRate: 8,
             repeat: -1
         });

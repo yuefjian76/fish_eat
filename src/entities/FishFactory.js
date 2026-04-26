@@ -194,19 +194,27 @@ export class FishFactory {
                 const variant = Math.floor(Math.random() * maxVariants) + 1;
                 const selectedFrameKey = `${frameConfig.baseKey}_${variant}a`;
 
-                const aiScale = scale * 0.2; // 1/2 of original size
+                const aiScale = scale * 0.1; // Much smaller for balanced gameplay
                 const sprite = scene.add.sprite(0, 0, selectedFrameKey);
                 sprite.setScale(aiScale);
+                sprite.setAlpha(frameConfig.useTransparent ? 1.0 : 0.85);
                 sprite.setDepth(30);
                 sprite.fishType = fishType;
                 sprite.variant = variant;
                 // Animation key is fishType_swim_variant (e.g., 'shrimp_swim_1')
-                sprite.animKey = `${fishType}_swim_${variant}`;
+                const animKey = `${fishType}_swim_${variant}`;
+                sprite.animKey = animKey;
+                if (sprite.anims && sprite.anims.exists(animKey)) {
+                    sprite.play(animKey);
+                }
                 return sprite;
+            } else {
+                console.warn(`FishFactory: Texture '${firstFrameKey}' not found for '${fishType}', using fallback`);
             }
         }
 
         // Fall back to procedural drawing
+        console.warn(`FishFactory: Falling back to procedural for '${fishType}'`);
         const fishColor = FishFactory.getFishColor(fishType);
         const graphics = FishFactory.createFish(scene, fishType, 30 * scale, fishColor);
         graphics.setDepth(30);
@@ -222,8 +230,9 @@ export class FishFactory {
      * @returns {Phaser.GameObjects.Sprite}
      */
     static createPlayerFish(scene, fishType, size, color) {
-        // Player is 1.1x the size of same-level enemies
-        const playerSize = size * 1.1;
+        // Player is 2x larger than same-level enemies for visibility
+        const playerSize = size * 2;
+        const visualScale = 2; // Extra 2x scale multiplier for visual size
 
         // Try to use AI-generated frames if available for the fish type
         const frameConfig = FishFactory.FISH_FRAME_CONFIG[fishType];
@@ -233,11 +242,14 @@ export class FishFactory {
         if (hasFrames) {
             // Use frame-based rendering with Phaser sprite
             const sprite = FishFactory.createFishFromFrames(scene, fishType, playerSize / 30, 0);
+            // Double the visual size of the sprite
+            sprite.setScale(sprite.scale * visualScale);
             // Add player glow (sized relative to player sprite)
             const glowGraphics = scene.add.graphics();
             glowGraphics.fillStyle(0xFFFF88, 0.25);
             glowGraphics.fillEllipse(0, 0, playerSize * 2, playerSize * 1.5);
             glowGraphics.setDepth(99);
+            glowGraphics.setScale(visualScale);
             sprite.glowGraphics = glowGraphics;
             return sprite;
         } else {

@@ -942,9 +942,12 @@ export class Enemy {
         }
 
         // Breathing/floating animation - gentle up-down movement
-        this._breathOffset += delta * 0.003;
-        const breathY = Math.sin(this._breathOffset) * 3;
-        this.graphics.y = this._baseY + breathY;
+        // Skip when evading: evasion uses velocity-based physics and must not be overridden
+        if (!this.isEvading) {
+            this._breathOffset += delta * 0.003;
+            const breathY = Math.sin(this._breathOffset) * 3;
+            this.graphics.y = this._baseY + breathY;
+        }
 
         // Distance-based transparency (simulate water depth effect)
         if (player && this.graphics) {

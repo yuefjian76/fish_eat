@@ -23,8 +23,18 @@ export class BackgroundExpansion extends BackgroundSystem {
         this.activeChunks = new Set();
 
         // Zone system - use MapExpansionSystem's zones, not internal bounds
-        this.currentZone = null;
-        this.zoneBounds = null; // Will be set from zones.json via zone config
+        // Default to shallow zone (player starts at origin where distance=0 < 1000)
+        this.currentZone = {
+            id: 'shallow',
+            name: '浅海',
+            minDistance: 0,
+            maxDistance: 1000,
+            tint: 16777215,
+            bubbleColor: 11445693,
+            backgrounds: ['bg_tropical_theme', 'background_tropical_theme', 'background_tropical_theme3'],
+            midgrounds: ['midground_tropical_theme']
+        };
+        this.zoneBounds = null;
 
         // Decorative elements
         this.seaweeds = [];
@@ -49,11 +59,16 @@ export class BackgroundExpansion extends BackgroundSystem {
      * @private
      */
     _preloadInitialChunks() {
-        const centerChunk = this._worldToChunk(0, 0);
+        // Use player's current position if available, otherwise origin
+        const worldX = this.playerX || 0;
+        const worldY = this.playerY || 0;
+        const centerChunk = this._worldToChunk(worldX, worldY);
         const chunksToLoad = [
             `${centerChunk.chunkX - 1}_${centerChunk.chunkY}`,
             `${centerChunk.chunkX}_${centerChunk.chunkY}`,
-            `${centerChunk.chunkX + 1}_${centerChunk.chunkY}`
+            `${centerChunk.chunkX + 1}_${centerChunk.chunkY}`,
+            `${centerChunk.chunkX}_${centerChunk.chunkY - 1}`,
+            `${centerChunk.chunkX}_${centerChunk.chunkY + 1}`
         ];
 
         chunksToLoad.forEach(chunkKey => {
@@ -200,7 +215,7 @@ export class BackgroundExpansion extends BackgroundSystem {
 
         // Calculate required chunks
         for (let dx = -chunksInView; dx <= chunksInView; dx++) {
-            for (let dy = -1; dy <= 1; dy++) {
+            for (let dy = -chunksInView; dy <= chunksInView; dy++) {
                 const chunkX = centerChunk.chunkX + dx;
                 const chunkY = centerChunk.chunkY + dy;
                 const chunkKey = this._getChunkKey(chunkX, chunkY);
@@ -448,8 +463,18 @@ export class BackgroundExpansion extends BackgroundSystem {
         }
         this.loadedChunks.clear();
 
-        // Reload visible chunks with new zone theme
-        this._preloadInitialChunks();
+        // Reload visible chunks around player's current position with new zone theme
+        const worldX = this.playerX || 0;
+        const worldY = this.playerY || 0;
+        const centerChunk = this._worldToChunk(worldX, worldY);
+        const chunksToLoad = [
+            `${centerChunk.chunkX - 1}_${centerChunk.chunkY}`,
+            `${centerChunk.chunkX}_${centerChunk.chunkY}`,
+            `${centerChunk.chunkX + 1}_${centerChunk.chunkY}`,
+            `${centerChunk.chunkX}_${centerChunk.chunkY - 1}`,
+            `${centerChunk.chunkX}_${centerChunk.chunkY + 1}`
+        ];
+        chunksToLoad.forEach(chunkKey => this._loadChunk(chunkKey));
     }
 
     /**

@@ -12,11 +12,12 @@ describe('BossEnemy', () => {
                 phase: 1,
                 phases: 2,
                 getPhaseThreshold() {
-                    return Math.floor(this.maxHp * (1 - this.phase / this.phases));
+                    // Phase 1 enters phase 2 at 50% (half of maxHp)
+                    return Math.floor(this.maxHp * (this.phases - this.phase) / this.phases);
                 }
             };
 
-            // Phase 1: threshold = floor(350 * (1 - 1/2)) = floor(350 * 0.5) = 175
+            // Phase 1: threshold = floor(350 * (2 - 1) / 2) = floor(350 * 0.5) = 175
             expect(boss.getPhaseThreshold()).toBe(175);
         });
 
@@ -26,11 +27,11 @@ describe('BossEnemy', () => {
                 phase: 2,
                 phases: 2,
                 getPhaseThreshold() {
-                    return Math.floor(this.maxHp * (1 - this.phase / this.phases));
+                    return Math.floor(this.maxHp * (this.phases - this.phase) / this.phases);
                 }
             };
 
-            // Phase 2: threshold = floor(350 * (1 - 2/2)) = floor(350 * 0) = 0
+            // Phase 2: threshold = floor(350 * (2 - 2) / 2) = floor(350 * 0) = 0
             expect(boss.getPhaseThreshold()).toBe(0);
         });
 
@@ -40,20 +41,57 @@ describe('BossEnemy', () => {
                 phase: 1,
                 phases: 3,
                 getPhaseThreshold() {
-                    return Math.floor(this.maxHp * (1 - this.phase / this.phases));
+                    // Phase 1 enters phase 2 at 66.7%, Phase 2 enters phase 3 at 33.3%
+                    return Math.floor(this.maxHp * (this.phases - this.phase) / this.phases);
                 }
             };
 
-            // Phase 1: floor(600 * (1 - 1/3)) = floor(600 * 0.667) = 400
+            // Phase 1: floor(600 * (3 - 1) / 3) = floor(600 * 0.667) = 400
             expect(boss.getPhaseThreshold()).toBe(400);
 
             boss.phase = 2;
-            // Phase 2: floor(600 * (1 - 2/3)) = floor(600 * 0.333) = 200
+            // Phase 2: floor(600 * (3 - 2) / 3) = floor(600 * 0.333) = 200
             expect(boss.getPhaseThreshold()).toBe(200);
 
             boss.phase = 3;
-            // Phase 3: floor(600 * (1 - 3/3)) = floor(600 * 0) = 0
+            // Phase 3: floor(600 * (3 - 3) / 3) = floor(600 * 0) = 0
             expect(boss.getPhaseThreshold()).toBe(0);
+        });
+    });
+
+    describe('phase transition does not skip phases', () => {
+        test('boss does not skip from phase 1 to phase 3 in single damage event', () => {
+            // For a 3-phase boss with maxHp=600:
+            // - Phase 2 threshold: floor(600 * (3-1)/3) = 400 (66.7%)
+            // - Phase 3 threshold: floor(600 * (3-2)/3) = 200 (33.3%)
+            const boss = {
+                maxHp: 600,
+                hp: 350,  // At 58.3% HP, should be between phase 1 and 2 thresholds
+                phase: 1,
+                phases: 3,
+                getPhaseThreshold() {
+                    return Math.floor(this.maxHp * (this.phases - this.phase) / this.phases);
+                },
+                takeDamage(damage) {
+                    const died = this.hp <= damage;
+                    this.hp -= damage;
+                    if (this.hp < 0) this.hp = 0;
+
+                    // Check for phase transition (after HP update)
+                    if (!died && this.hp <= this.getPhaseThreshold() && this.phase < this.phases) {
+                        this.phase++;
+                    }
+                    return died;
+                }
+            };
+
+            // Boss at 350 HP (58.3%) should transition from phase 1 to phase 2
+            // because 350 <= 400 (phase 1 threshold)
+            boss.takeDamage(1);
+            expect(boss.phase).toBe(2);
+            // After transition to phase 2, HP is still 349
+            // Phase 2 threshold is 200, and 349 > 200, so no immediate transition to phase 3
+            expect(boss.phase).toBe(2);
         });
     });
 
@@ -107,7 +145,7 @@ describe('BossEnemy', () => {
                 phases: 2,
                 onPhaseChange: null,
                 getPhaseThreshold() {
-                    return Math.floor(this.maxHp * (1 - this.phase / this.phases));
+                    return Math.floor(this.maxHp * (this.phases - this.phase) / this.phases);
                 },
                 takeDamage(damage) {
                     const died = this.hp <= damage;
@@ -137,7 +175,7 @@ describe('BossEnemy', () => {
                 phases: 2,
                 onPhaseChange: null,
                 getPhaseThreshold() {
-                    return Math.floor(this.maxHp * (1 - this.phase / this.phases));
+                    return Math.floor(this.maxHp * (this.phases - this.phase) / this.phases);
                 },
                 takeDamage(damage) {
                     const died = this.hp <= damage;
@@ -167,7 +205,7 @@ describe('BossEnemy', () => {
                 phases: 2,
                 onPhaseChange: callback,
                 getPhaseThreshold() {
-                    return Math.floor(this.maxHp * (1 - this.phase / this.phases));
+                    return Math.floor(this.maxHp * (this.phases - this.phase) / this.phases);
                 },
                 takeDamage(damage) {
                     const died = this.hp <= damage;
@@ -197,7 +235,7 @@ describe('BossEnemy', () => {
                 phases: 2,
                 onPhaseChange: null,
                 getPhaseThreshold() {
-                    return Math.floor(this.maxHp * (1 - this.phase / this.phases));
+                    return Math.floor(this.maxHp * (this.phases - this.phase) / this.phases);
                 },
                 takeDamage(damage) {
                     const died = this.hp <= damage;

@@ -70,10 +70,12 @@ export class BossEnemy extends Enemy {
 
     /**
      * Get the HP threshold for current phase
+     * Returns the HP percentage below which the boss enters the next phase
      */
     getPhaseThreshold() {
-        // Phase 1: 100% to 50%, Phase 2: 50% to 0%
-        return Math.floor(this.maxHp * (1 - this.phase / this.phases));
+        // For 3-phase boss: Phase 1 enters phase 2 at 66.7%, Phase 2 enters phase 3 at 33.3%
+        // Formula: (phases - phase) / phases gives the fraction of maxHp for entering next phase
+        return Math.floor(this.maxHp * (this.phases - this.phase) / this.phases);
     }
 
     /**

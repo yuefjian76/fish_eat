@@ -422,11 +422,13 @@ class GameScene extends Phaser.Scene {
 
         const roll = Math.random() - bonusRoll;
         if (roll < 0.70) {
-            // 70% same level (within zone range)
-            return Phaser.Math.Between(zoneMin, Math.min(zoneMax, playerLevel));
+            // 70% same level (within zone range, centered on player level)
+            const sameMin = Math.max(zoneMin, playerLevel - 1);
+            const sameMax = Math.min(zoneMax, playerLevel + 1);
+            return Phaser.Math.Between(sameMin, sameMax);
         } else if (roll < 0.88) {
-            // 18% slightly higher
-            return Phaser.Math.Between(Math.max(zoneMin, playerLevel - 1), zoneMax);
+            // 18% slightly higher (playerLevel+1 to zoneMax)
+            return Phaser.Math.Between(Math.min(playerLevel + 1, zoneMax), zoneMax);
         } else {
             // 12% boss-tier (only in deep/abyss)
             return Phaser.Math.Between(playerLevel + 2, zoneMax);

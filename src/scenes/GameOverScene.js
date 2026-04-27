@@ -25,10 +25,10 @@ class GameOverScene extends Phaser.Scene {
         this.handleUnlocks(data);
         this.saveStats(data);
 
-        // Sync game data to Firestore if logged in
+        // Sync game data to localStorage if logged in
         const user = this.authSystem.getCurrentUser();
         if (user) {
-            this._syncGameDataToFirestore(user.uid);
+            this._syncGameDataToLocal(user.uid);
         }
 
         // Load updated best stats for display
@@ -213,7 +213,7 @@ class GameOverScene extends Phaser.Scene {
         } catch (e) { console.warn('saveStats failed:', e); }
     }
 
-    async _syncGameDataToFirestore(uid) {
+    async _syncGameDataToLocal(uid) {
         try {
             const localData = {
                 currency: parseInt(localStorage.getItem('fishEat_currency') || '0'),
@@ -225,7 +225,7 @@ class GameOverScene extends Phaser.Scene {
             };
             await this.userDataSystem.saveUserData(uid, localData);
         } catch (e) {
-            console.warn('Failed to sync to Firestore:', e);
+            console.warn('Failed to sync user data:', e);
         }
     }
 }

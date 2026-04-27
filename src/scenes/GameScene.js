@@ -575,7 +575,7 @@ class GameScene extends Phaser.Scene {
         const fishConfig = {
             ...baseFishConfig,
             hp: Math.floor(baseFishConfig.hp * scaleFactor),
-            size: Math.floor(baseFishConfig.size * scaleFactor * (this._challengeEnemySizeMultiplier || 1) * 0.8),
+            size: Math.floor(baseFishConfig.size * scaleFactor * (this._challengeEnemySizeMultiplier || 1)),
             speed: Math.floor(baseFishConfig.speed * scaleFactor * (this._challengeEnemySpeedMultiplier || 1)),
             exp: Math.floor(baseFishConfig.exp * scaleFactor)
         };

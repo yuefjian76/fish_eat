@@ -2,7 +2,7 @@
  * LocalAuthSystem - Local storage based authentication
  * No Firebase needed - uses localStorage to store user accounts
  */
-export class LocalAuthSystem {
+export class AuthSystem {
     constructor() {
         this._users = this._loadUsers();
         this._currentUser = this._loadSession();
@@ -136,4 +136,4 @@ export class LocalAuthSystem {
     }
 }
 
-export default LocalAuthSystem;
+export default AuthSystem;

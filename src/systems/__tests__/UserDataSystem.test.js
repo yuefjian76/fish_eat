@@ -3,44 +3,68 @@ import UserDataSystem from '../UserDataSystem.js';
 
 describe('UserDataSystem', () => {
     let userDataSystem;
-    let mockFirestore;
-    let mockDocRef;
+    let localStorageMock;
+    const TEST_KEY = 'fishEat_userData';
 
     beforeEach(() => {
         jest.clearAllMocks();
-        mockFirestore = firebase.firestore();
-        // Get reference to the mock doc
-        mockDocRef = mockFirestore.collection().doc();
+        // Mock localStorage
+        localStorageMock = {
+            data: {},
+            getItem(key) { return this.data[key] || null; },
+            setItem(key, value) { this.data[key] = value; },
+            removeItem(key) { delete this.data[key]; }
+        };
+        global.localStorage = localStorageMock;
         userDataSystem = new UserDataSystem();
     });
 
+    afterEach(() => {
+        delete global.localStorage;
+    });
+
     describe('saveUserData', () => {
-        it('should save user data to Firestore', async () => {
-            mockDocRef.set.mockResolvedValue(true);
-
+        it('should save user data to localStorage', () => {
             const userData = { level: 5, exp: 1000 };
-            await userDataSystem.saveUserData('uid123', userData);
+            userDataSystem.saveUserData('uid123', userData);
 
-            expect(mockDocRef.set).toHaveBeenCalled();
+            const stored = JSON.parse(localStorage.getItem(TEST_KEY));
+            expect(stored.uid123).toBeDefined();
+            expect(stored.uid123.level).toBe(5);
+            expect(stored.uid123.exp).toBe(1000);
         });
     });
 
     describe('loadUserData', () => {
-        it('should load user data from Firestore', async () => {
-            mockDocRef.get.mockResolvedValue({
-                exists: true,
-                data: () => ({ level: 5, exp: 1000 })
-            });
+        it('should load user data from localStorage', () => {
+            const data = { uid123: { level: 5, exp: 1000 } };
+            localStorage.setItem(TEST_KEY, JSON.stringify(data));
 
-            const data = await userDataSystem.loadUserData('uid123');
-            expect(data).toEqual({ level: 5, exp: 1000 });
+            const loaded = userDataSystem.loadUserData('uid123');
+            expect(loaded).toEqual({ level: 5, exp: 1000 });
         });
 
-        it('should return null if user data does not exist', async () => {
-            mockDocRef.get.mockResolvedValue({ exists: false });
+        it('should return null if user data does not exist', () => {
+            const result = userDataSystem.loadUserData('nonexistent');
+            expect(result).toBeNull();
+        });
+    });
 
-            const data = await userDataSystem.loadUserData('uid123');
-            expect(data).toBeNull();
+    describe('syncToLocal', () => {
+        it('should sync currency to localStorage', () => {
+            userDataSystem.syncToLocal({ currency: 500 });
+            expect(localStorage.getItem('fishEat_currency')).toBe('500');
+        });
+
+        it('should sync upgrades to localStorage', () => {
+            const upgrades = { speed: 2, damage: 1 };
+            userDataSystem.syncToLocal({ upgrades });
+            expect(JSON.parse(localStorage.getItem('fishEat_upgrades'))).toEqual(upgrades);
+        });
+
+        it('should sync selectedFish to localStorage', () => {
+            userDataSystem.syncToLocal({ selectedFish: 'shark' });
+            expect(localStorage.getItem('fishEat_selectedFish')).toBe('shark');
         });
     });
 });

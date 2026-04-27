@@ -20,7 +20,8 @@ describe('FishFactory', () => {
             arc: jest.fn().mockReturnThis(),
             strokePath: jest.fn().mockReturnThis(),
             closePath: jest.fn().mockReturnThis(),
-            fillPath: jest.fn().mockReturnThis()
+            fillPath: jest.fn().mockReturnThis(),
+            setScale: jest.fn().mockReturnThis()
         };
     }
 

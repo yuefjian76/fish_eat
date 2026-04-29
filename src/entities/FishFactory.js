@@ -194,7 +194,8 @@ export class FishFactory {
                 const variant = Math.floor(Math.random() * maxVariants) + 1;
                 const selectedFrameKey = `${frameConfig.baseKey}_${variant}a`;
 
-                const aiScale = scale * 0.1; // Much smaller for balanced gameplay
+                // Use same formula as player: (scale * 30) / 512
+                const aiScale = (scale * 30) / 512;
                 const sprite = scene.add.sprite(0, 0, selectedFrameKey);
                 sprite.setScale(aiScale);
                 sprite.setAlpha(frameConfig.useTransparent ? 1.0 : 0.85);

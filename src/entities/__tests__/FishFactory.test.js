@@ -47,6 +47,11 @@ describe('FishFactory', () => {
                     setSize: jest.fn().mockReturnThis(),
                     setAlpha: jest.fn().mockReturnThis(),
                     play: jest.fn().mockReturnThis()
+                })),
+                text: jest.fn(() => ({
+                    setScale: jest.fn().mockReturnThis(),
+                    setDepth: jest.fn().mockReturnThis(),
+                    setOrigin: jest.fn().mockReturnThis()
                 }))
             },
             textures: {

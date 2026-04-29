@@ -33,11 +33,11 @@ export class Enemy {
         this.shadow = scene.add.graphics();
         this.shadow.fillStyle(0x000000, 0.2);
         this.shadow.fillEllipse(0, 0, 60 * shadowScale, 20 * shadowScale);
-        this.shadow.setDepth(this.graphics.depth - 1);
+        this.shadow.setDepth(29); // Fixed depth: always below enemy (depth=30)
 
         // Breathing/floating animation state
         this._breathOffset = Math.random() * Math.PI * 2; // Random start phase
-        this._baseY = y;
+        this._breathBaseY = y; // Visual base Y that follows physics movement
 
         // Enable physics - use a circle hitbox for simplicity
         scene.physics.world.enable(this.graphics);
@@ -337,6 +337,7 @@ export class Enemy {
         }
         // Clear hate target to avoid memory leaks
         this.hateTarget = null;
+        this.fishingTarget = null;
         this.graphics.destroy();
         this.healthBar.destroy();
     }
@@ -954,9 +955,13 @@ export class Enemy {
         if (!this.isEvading) {
             this._breathOffset += delta * 0.003;
             const breathY = Math.sin(this._breathOffset) * 3;
-            // Apply breathing as an offset from current position, not override
-            // This allows physics-based movement in all directions while adding visual float
-            this.graphics.y += breathY * 0.1;
+
+            // Compute physics movement this frame (how much body moved in Y)
+            const physicsDeltaY = this.graphics.body.y - this.graphics.y;
+            // Update visual base to follow physics
+            this._breathBaseY += physicsDeltaY;
+            // Apply breathing as visual offset from the updated base (no accumulation)
+            this.graphics.y = this._breathBaseY + breathY * 0.1;
         }
 
         // Distance-based transparency (simulate water depth effect)

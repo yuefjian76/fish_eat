@@ -975,18 +975,16 @@ class GameScene extends Phaser.Scene {
                     // Resume normal enemy spawning with gradual recovery (5 fish over 3s)
                     if (this.spawnTimer) {
                         this.spawnTimer.paused = false;
-                        // Immediately spawn a few fish, then resume normal rate
-                        let recovered = 0;
-                        const recoverInterval = setInterval(() => {
-                            if (recovered >= 5) {
-                                clearInterval(recoverInterval);
-                                return;
-                            }
-                            if (this.enemies.length < this.enemyCountMax) {
-                                this.spawnFish();
-                                recovered++;
-                            }
-                        }, 600);
+                        // Use Phaser's time.addEvent for proper pause synchronization
+                        this.time.addEvent({
+                            delay: 600,
+                            callback: () => {
+                                if (this.enemies.length < this.enemyCountMax) {
+                                    this.spawnFish();
+                                }
+                            },
+                            repeat: 4  // 5 total callbacks (600ms * 5 = 3s)
+                        });
                     }
 
                     // Clean up boss visuals

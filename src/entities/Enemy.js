@@ -859,7 +859,6 @@ export class Enemy {
                     const damage = this.attackPlayer(this.hateTarget);
                     if (damage > 0) {
                         this.scene.onEnemyAttack(this, damage);
-                        this.hateTimer = 0; // Reset hate timer on successful attack
                     }
                 } else {
                     // Chase hate target at increased speed

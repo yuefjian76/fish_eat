@@ -219,12 +219,16 @@ export class FishFactory {
         const graphics = FishFactory.createFish(scene, fishType, 30 * scale, fishColor);
         graphics.setDepth(30);
 
-        // Mark fallback fish with a small red marker circle for debugging
-        const marker = scene.add.graphics();
-        marker.fillStyle(0xff0000, 0.8);
-        marker.fillCircle(0, 0, 5);
-        marker.setDepth(31);
-        graphics.marker = marker;
+        // Mark fallback fish with a text label for debugging
+        const label = scene.add.text(0, -30, fishType, {
+            fontSize: '10px',
+            color: '#ffffff',
+            backgroundColor: '#ff0000',
+            padding: { x: 4, y: 2 }
+        });
+        label.setOrigin(0.5);
+        label.setDepth(31);
+        graphics.label = label;
 
         return graphics;
     }

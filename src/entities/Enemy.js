@@ -943,9 +943,9 @@ export class Enemy {
         }
 
         // Update marker position (debug marker for procedural fallback fish)
-        if (this.graphics.marker) {
-            this.graphics.marker.x = this.graphics.x;
-            this.graphics.marker.y = this.graphics.y - (this.fishConfig.size * 1.2);
+        if (this.graphics.label) {
+            this.graphics.label.x = this.graphics.x;
+            this.graphics.label.y = this.graphics.y - (this.fishConfig.size * 1.2);
         }
 
         // Breathing/floating animation - gentle up-down movement

@@ -942,6 +942,12 @@ export class Enemy {
             this.shadow.y = this.graphics.y + (this.fishConfig.size * 0.3);
         }
 
+        // Update marker position (debug marker for procedural fallback fish)
+        if (this.graphics.marker) {
+            this.graphics.marker.x = this.graphics.x;
+            this.graphics.marker.y = this.graphics.y - (this.fishConfig.size * 1.2);
+        }
+
         // Breathing/floating animation - gentle up-down movement
         // Skip when evading: evasion uses velocity-based physics and must not be overridden
         // Use delta-based approach to smoothly add breathing without overriding physics Y movement

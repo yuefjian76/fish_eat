@@ -880,16 +880,17 @@ export class Enemy {
         }
 
         // ── Normal AI behavior ─────────────────────────────────────────
-        // ALWAYS prioritize attacking player if in range
+        // Only BOSS enemies can attack/chase player - normal enemies just wander
+        const isBoss = this.fishConfig.boss === true;
         const playerInVision = this.isPlayerInVision(player);
         const playerInAttackRange = this.isPlayerInAttackRange(player);
 
-        // Check if player is in grace period after losing hate
-        const inGracePeriod = this.lastHateTarget === player &&
+        // Check if player is in grace period after losing hate (bosses only)
+        const inGracePeriod = isBoss && this.lastHateTarget === player &&
                               this.hateTimer < this.hateGracePeriod;
 
-        if (playerInAttackRange && !inGracePeriod) {
-            // Attack if in range
+        if (isBoss && playerInAttackRange && !inGracePeriod) {
+            // Boss attacks player if in range
             const prevState = this.state;
             this.state = Enemy.STATE.ATTACKING;
             if (prevState !== this.state) {
@@ -899,8 +900,8 @@ export class Enemy {
             if (damage > 0) {
                 this.scene.onEnemyAttack(this, damage);
             }
-        } else if (playerInVision && !inGracePeriod) {
-            // Chase player
+        } else if (isBoss && playerInVision && !inGracePeriod) {
+            // Boss chases player if in vision
             const prevState = this.state;
             this.state = Enemy.STATE.CHASING;
             if (prevState !== this.state) {

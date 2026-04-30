@@ -219,17 +219,6 @@ export class FishFactory {
         const graphics = FishFactory.createFish(scene, fishType, 30 * scale, fishColor);
         graphics.setDepth(30);
 
-        // Mark fallback fish with a text label for debugging
-        const label = scene.add.text(0, -30, fishType, {
-            fontSize: '10px',
-            color: '#ffffff',
-            backgroundColor: '#ff0000',
-            padding: { x: 4, y: 2 }
-        });
-        label.setOrigin(0.5);
-        label.setDepth(31);
-        graphics.label = label;
-
         return graphics;
     }
 
@@ -244,7 +233,7 @@ export class FishFactory {
     static createPlayerFish(scene, fishType, size, color) {
         // Player is 2x larger than same-level enemies for visibility
         const playerSize = size * 2;
-        const visualScale = 2; // Extra 2x scale multiplier for visual size
+        const visualScale = 1.12; // 0.8x of previous 1.4 scale
 
         // Try to use AI-generated frames if available for the fish type
         const frameConfig = FishFactory.FISH_FRAME_CONFIG[fishType];

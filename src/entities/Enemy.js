@@ -92,7 +92,7 @@ export class Enemy {
         // ── Hate / Aggro system ──────────────────────────────────────────
         this.hateTarget = null;       // Who this enemy hates (player who attacked it)
         this.hateTimer = 0;            // Time since hate was set
-        this.hateDuration = 8000;      // Hate lasts 8 seconds
+        this.hateDuration = 4000;      // Hate lasts 4 seconds (timeout if no attack)
         this.hateRange = 400;          // Chase target up to this distance when hating
 
         // Fishing state

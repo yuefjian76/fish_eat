@@ -305,9 +305,12 @@ export class Enemy {
 
         // Set hate target when attacked — enemy will chase attacker
         if (attacker && attacker.active) {
-            this.hateTarget = attacker;
-            this.hateTimer = 0;
-            logger.debug(`${this.fishType} gained hate on attacker`);
+            // Only reset hate if it's a NEW attacker (prevents timer reset on repeated attacks)
+            if (this.hateTarget !== attacker) {
+                this.hateTarget = attacker;
+                this.hateTimer = 0;
+                logger.debug(`${this.fishType} gained hate on attacker`);
+            }
         }
 
         // Check for flee (HP < 30% with 50% chance)

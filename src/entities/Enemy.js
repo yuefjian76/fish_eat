@@ -94,6 +94,8 @@ export class Enemy {
         this.hateTimer = 0;            // Time since hate was set
         this.hateDuration = 8000;      // Hate lasts 8 seconds
         this.hateRange = 400;          // Chase target up to this distance when hating
+        this.lastHateTarget = null;    // Track who we last hated (for grace period)
+        this.hateGracePeriod = 3000;   // 3 second grace period after hate expires
 
         // Fishing state
         this.fishingTarget = null;
@@ -307,6 +309,7 @@ export class Enemy {
         if (attacker && attacker.active) {
             // Only reset hate if it's a NEW attacker (prevents timer reset on repeated attacks)
             if (this.hateTarget !== attacker) {
+                this.lastHateTarget = null;  // Reset grace period when switching targets
                 this.hateTarget = attacker;
                 this.hateTimer = 0;
                 logger.debug(`${this.fishType} gained hate on attacker`);
@@ -846,6 +849,7 @@ export class Enemy {
             this.hateTimer = Math.min(this.hateTimer + delta, this.hateDuration); // Clamp to prevent overflow
             if (this.hateTimer >= this.hateDuration || hateDistance > this.hateRange) {
                 logger.debug(`${this.fishType} lost hate on target`);
+                this.lastHateTarget = this.hateTarget;  // Remember who we hated
                 this.hateTarget = null;
                 this.hateTimer = 0;
                 this.state = Enemy.STATE.WANDERING; // Reset state when hate expires
@@ -880,7 +884,11 @@ export class Enemy {
         const playerInVision = this.isPlayerInVision(player);
         const playerInAttackRange = this.isPlayerInAttackRange(player);
 
-        if (playerInAttackRange) {
+        // Check if player is in grace period after losing hate
+        const inGracePeriod = this.lastHateTarget === player &&
+                              this.hateTimer < this.hateGracePeriod;
+
+        if (playerInAttackRange && !inGracePeriod) {
             // Attack if in range
             const prevState = this.state;
             this.state = Enemy.STATE.ATTACKING;
@@ -891,7 +899,7 @@ export class Enemy {
             if (damage > 0) {
                 this.scene.onEnemyAttack(this, damage);
             }
-        } else if (playerInVision) {
+        } else if (playerInVision && !inGracePeriod) {
             // Chase player
             const prevState = this.state;
             this.state = Enemy.STATE.CHASING;

@@ -12,7 +12,7 @@ export class FishFactory {
         small_fish: { baseKey: null, totalFrames: 0, isPlayer: false },
         shark: { baseKey: 'transparent_shark', totalFrames: 4, isPlayer: false, useTransparent: true },
         shrimp: { baseKey: 'transparent_shrimp', totalFrames: 4, isPlayer: false, useTransparent: true },
-        jellyfish: { baseKey: 'transparent_jellyfish', totalFrames: 6, isPlayer: false, useTransparent: true },
+        jellyfish: { baseKey: 'transparent_jellyfish', totalFrames: 4, isPlayer: false, useTransparent: true },
         anglerfish: { baseKey: 'transparent_anglerfish', totalFrames: 6, isPlayer: false, useTransparent: true },
         seahorse: { baseKey: 'transparent_seahorse', totalFrames: 6, isPlayer: false, useTransparent: true },
         octopus: { baseKey: 'transparent_octopus', totalFrames: 4, isPlayer: false, useTransparent: true },

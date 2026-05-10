@@ -70,8 +70,8 @@ class BootScene extends Phaser.Scene {
             }
         }
 
-        // Jellyfish - 6 variants × 4 poses
-        for (let v = 1; v <= 6; v++) {
+        // Jellyfish - 4 variants × 4 poses (variants 5-6 have non-transparent backgrounds, excluded)
+        for (let v = 1; v <= 4; v++) {
             for (const pose of clownfishPoses) {
                 this.load.image(`transparent_jellyfish_${v}${pose}`,
                     `src/assets/images/frames/jellyfish/transparent_jellyfish_00${v}${pose}.png`);
@@ -189,7 +189,7 @@ class BootScene extends Phaser.Scene {
         };
         // Variants per fish type (most have 4, some have 6)
         const variantCounts = {
-            clownfish: 4, shark: 4, shrimp: 4, jellyfish: 6,
+            clownfish: 4, shark: 4, shrimp: 4, jellyfish: 4,
             anglerfish: 6, seahorse: 6, octopus: 4, eel: 4,
             mutant_shark: 4, giant_jellyfish: 4, shark_king: 4,
             boss_squid: 4, boss_sea_dragon: 4

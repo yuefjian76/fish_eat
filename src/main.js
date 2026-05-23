@@ -28,3 +28,9 @@ const config = {
 
 // Create the game instance
 const game = new Phaser.Game(config);
+
+// Expose game instance for E2E testing (DEBUG mode only, ?debug=true)
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('debug') === 'true') {
+    window.__PHASER_GAME__ = game;
+}

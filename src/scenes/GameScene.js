@@ -7,6 +7,8 @@ import { SkillSystem } from '../systems/SkillSystem.js';
 import { GrowthSystem } from '../systems/GrowthSystem.js';
 import { DriftBottleSystem } from '../systems/DriftBottleSystem.js';
 import { LuckSystem } from '../systems/LuckSystem.js';
+import { SpawnSystem } from '../systems/SpawnSystem.js';
+import { WaveSystem } from '../systems/WaveSystem.js';
 import { BackgroundSystem } from '../systems/BackgroundSystem.js';
 import { BackgroundExpansion } from '../systems/BackgroundExpansion.js';
 import { MapExpansionSystem } from '../systems/MapExpansionSystem.js';
@@ -92,8 +94,15 @@ class GameScene extends Phaser.Scene {
         // Apply permanent upgrades
         this._applyUpgrades();
 
-        // Store daily challenge flag for use in create()
-        this.dailyChallenge = data?.dailyChallenge || false;
+        // Reset wave system for new game (created in create())
+        this.waveSystem?.reset({
+            calmDuration: 8000,
+            surgeDuration: 4000,
+            peakDuration: 3000,
+            baseInterval: 2000,
+            surgeInterval: 400
+        });
+        this._spawnTimer = 0;
 
         // MapExpansionSystem for infinite map (zone tracking)
         this.mapExpansion = null; // Will be initialized in create() when zonesData is available
@@ -310,15 +319,37 @@ class GameScene extends Phaser.Scene {
         );
 
         // Wave spawn system
-        this._waveState = 'calm'; // 'calm' | 'surge' | 'peak'
-        this._waveTimer = 0;
-        this._baseSpawnInterval = 2000; // Normal spawn interval in calm
-        this._surgeSpawnInterval = 400; // Fast spawn interval during surge
-        this._currentSpawnInterval = this._baseSpawnInterval;
+        this.waveSystem = new WaveSystem({
+            calmDuration: 8000,
+            surgeDuration: 4000,
+            peakDuration: 3000,
+            baseInterval: 2000,
+            surgeInterval: 400,
+            onStateChange: (state) => logger.info(`Wave state: ${state}`),
+            onIntervalChange: (interval) => logger.info(`Spawn interval: ${interval}ms`)
+        });
         this._spawnTimer = 0;
 
         // Wave indicator graphics
         this._waveGraphics = this.add.graphics();
+
+        // Expose GameScene for E2E testing (DEBUG mode only, ?debug=true in URL)
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('debug') === 'true') {
+            window.__GAME_SCENE__ = this;
+
+            // Debug overlay - shows key game state
+            this._debugText = this.add.text(10, 10, '', {
+                fontSize: '12px',
+                fontFamily: 'monospace',
+                fill: '#00ff88',
+                backgroundColor: '#000000aa',
+                padding: { x: 6, y: 4 }
+            });
+            this._debugText.setScrollFactor(0);
+            this._debugText.setDepth(9999);
+            this._prevDebugState = '';
+        }
 
         logger.info(`Game started - Difficulty: ${this.difficulty}, Enemy count: ${initialSpawnCount}-${this.enemyCountMax}`);
     }
@@ -555,8 +586,8 @@ class GameScene extends Phaser.Scene {
         return null;
     }
 
-    spawnFish() {
-        // Weighted spawn based on player level (prevents early-game difficulty spikes)
+    _doSpawnEnemy() {
+        // This is the onEnemyCreated callback for SpawnSystem
         const weights = this._getSpawnWeights(this.level);
         const type = this._selectFishByWeight(weights);
         const baseFishConfig = this.fishData[type];
@@ -565,12 +596,11 @@ class GameScene extends Phaser.Scene {
         const enemyLevel = this.calculateEnemyLevel(this.level);
 
         // Scale fish config based on enemy level + progressive difficulty
-        // Only scale UP from baseline (player level) - never make enemies weaker
         const levelDiff = enemyLevel - this.level;
         const difficultyMult = this._getDifficultyMultiplier();
         const inAbyss = this.mapExpansion?.getCurrentZone()?.id === 'abyss';
         const abyssBonus = inAbyss ? 1.1 : 1.0;
-        const scaleFactor = (1 + Math.max(0, levelDiff) * 0.15) * difficultyMult * abyssBonus; // Only scale up, not down
+        const scaleFactor = (1 + Math.max(0, levelDiff) * 0.15) * difficultyMult * abyssBonus;
 
         const fishConfig = {
             ...baseFishConfig,
@@ -770,6 +800,17 @@ class GameScene extends Phaser.Scene {
     }
 
     update(time, delta) {
+        // Update debug overlay (only when state changes)
+        if (this._debugText) {
+            const waveState = this.waveSystem ? this.waveSystem.getState() : 'calm';
+            const enemyCount = this.enemies ? this.enemies.length : 0;
+            const newState = `Wave: ${waveState} | HP: ${Math.floor(this.hp)}/${this.maxHp} | Score: ${this.score} | Lv: ${this.level} | Enemies: ${enemyCount}`;
+            if (newState !== this._prevDebugState) {
+                this._debugText.setText(newState);
+                this._prevDebugState = newState;
+            }
+        }
+
         // Handle spawn invincibility flashing
         if (this._spawnInvincible) {
             this._spawnFlashTimer += this.game.loop.delta;
@@ -1023,49 +1064,31 @@ class GameScene extends Phaser.Scene {
         }
 
         // Wave spawn system
-        this._waveTimer += this.game.loop.delta;
-
-        if (this._waveState === 'calm') {
-            this._currentSpawnInterval = this._baseSpawnInterval;
-            if (this._waveTimer >= 8000) { // 8 seconds calm
-                this._waveState = 'surge';
-                this._waveTimer = 0;
-            }
-        } else if (this._waveState === 'surge') {
-            this._currentSpawnInterval = this._surgeSpawnInterval;
-            if (this._waveTimer >= 4000) { // 4 seconds surge
-                this._waveState = 'peak';
-                this._waveTimer = 0;
-            }
-        } else if (this._waveState === 'peak') {
-            this._currentSpawnInterval = this._baseSpawnInterval;
-            if (this._waveTimer >= 3000) { // 3 seconds peak then back to calm
-                this._waveState = 'calm';
-                this._waveTimer = 0;
-            }
-        }
+        this.waveSystem.update(delta);
 
         // Spawn fish based on wave interval
-        this._spawnTimer += this.game.loop.delta;
-        if (this._spawnTimer >= this._currentSpawnInterval) {
+        this._spawnTimer += delta;
+        if (this._spawnTimer >= this.waveSystem.getSpawnInterval()) {
             this._spawnTimer = 0;
             // Highlander challenge: only 1 enemy allowed
             if (this.dailyChallenge?.id === 'highlander' && this.enemies.length >= 1) {
                 // Skip spawning
             } else {
-                this.spawnFish();
+                this._doSpawnEnemy();
             }
         }
 
         // Draw wave indicator
         this._waveGraphics.clear();
+        const waveState = this.waveSystem.getState();
         const waveColors = { calm: 0x00aa00, surge: 0xffaa00, peak: 0xff4400 };
         const waveAlpha = { calm: 0.3, surge: 0.5, peak: 0.7 };
         const barWidth = 60;
         const barHeight = 6;
-        const waveDuration = this._waveState === 'calm' ? 8000 : this._waveState === 'surge' ? 4000 : 3000;
-        this._waveGraphics.fillStyle(waveColors[this._waveState], waveAlpha[this._waveState]);
-        this._waveGraphics.fillRect(900, 150, barWidth * (this._waveTimer / waveDuration), barHeight);
+        const waveDuration = this.waveSystem.getCurrentPhaseDuration();
+        const waveTimer = this.waveSystem.getTimer();
+        this._waveGraphics.fillStyle(waveColors[waveState], waveAlpha[waveState]);
+        this._waveGraphics.fillRect(900, 150, barWidth * (waveTimer / waveDuration), barHeight);
     }
 
     /**

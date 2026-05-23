@@ -1,0 +1,324 @@
+{
+  "features": [
+    {
+      "id": "feat-001",
+      "name": "Project Setup & Verification",
+      "description": "Confirm the game can install dependencies, run tests, and start from a clean checkout",
+      "dependencies": [],
+      "status": "completed",
+      "evidence": "npm install + npm test passes with 530 tests"
+    },
+    {
+      "id": "feat-002",
+      "name": "Core Game Loop",
+      "description": "BootScene → MenuScene → GameScene + UIScene → GameOverScene scene flow",
+      "dependencies": ["feat-001"],
+      "status": "completed",
+      "evidence": "All 6 scenes implemented, scene transitions verified"
+    },
+    {
+      "id": "feat-003",
+      "name": "Player Controls & Physics",
+      "description": "Arrow keys, Shift boost, mouse alternative movement with dead zone",
+      "dependencies": ["feat-002"],
+      "status": "completed",
+      "evidence": "MouseControl.test.js passes, dead zone + easing implemented"
+    },
+    {
+      "id": "feat-004",
+      "name": "Enemy AI (Wandering/Chasing/Attacking/Fleeing)",
+      "description": "Basic enemy state machine with 4 states",
+      "dependencies": ["feat-003"],
+      "status": "completed",
+      "evidence": "EnemyAI.test.js passes"
+    },
+    {
+      "id": "feat-005",
+      "name": "Special Fish Behaviors (5 types)",
+      "description": "Eel dash, Octopus stealth, Seahorse evasive, Jellyfish AOE, Anglerfish ranged",
+      "dependencies": ["feat-004"],
+      "status": "completed",
+      "evidence": "EnemySpecialBehaviors.test.js passes"
+    },
+    {
+      "id": "feat-006",
+      "name": "Battle System & Type Effectiveness",
+      "description": "Rock-paper-scissors type system (shark > small fish > shrimp > shark)",
+      "dependencies": ["feat-005"],
+      "status": "completed",
+      "evidence": "BattleSystem.test.js passes, canAttack() verified"
+    },
+    {
+      "id": "feat-007",
+      "name": "Skill System (Q/W/E/R)",
+      "description": "Bite, Shield, Speed Up, Heal skills with cooldowns and UI",
+      "dependencies": ["feat-006"],
+      "status": "completed",
+      "evidence": "SkillSystem.test.js + SkillBar.test.js pass"
+    },
+    {
+      "id": "feat-008",
+      "name": "Growth System (EXP & Leveling)",
+      "description": "EXP table, level-up size boost, skill unlocks",
+      "dependencies": ["feat-007"],
+      "status": "completed",
+      "evidence": "GrowthSystem.test.js passes"
+    },
+    {
+      "id": "feat-009",
+      "name": "Combo System",
+      "description": "Combo multiplier within time window, combo UI display",
+      "dependencies": ["feat-008"],
+      "status": "completed",
+      "evidence": "ComboSystem.test.js passes"
+    },
+    {
+      "id": "feat-010",
+      "name": "Spawn Weight System",
+      "description": "Player-level-adaptive enemy spawn probabilities",
+      "dependencies": ["feat-009"],
+      "status": "completed",
+      "evidence": "SpawnWeights.test.js passes"
+    },
+    {
+      "id": "feat-011",
+      "name": "Size Hint System (Glow Colors)",
+      "description": "Green glow for edible fish, red glow for dangerous fish",
+      "dependencies": ["feat-010"],
+      "status": "completed",
+      "evidence": "SizeHint.test.js passes"
+    },
+    {
+      "id": "feat-012",
+      "name": "Knockback System",
+      "description": "Player knockback on damage, enemy knockback on bite",
+      "dependencies": ["feat-011"],
+      "status": "completed",
+      "evidence": "Knockback.test.js passes"
+    },
+    {
+      "id": "feat-013",
+      "name": "Floating Text System",
+      "description": "Damage/EXP numbers on eat, bite, and collision",
+      "dependencies": ["feat-012"],
+      "status": "completed",
+      "evidence": "FloatingText.test.js passes"
+    },
+    {
+      "id": "feat-014",
+      "name": "Audio System (5 Synthesized Sounds)",
+      "description": "Web Audio API synthesized sounds: eat, hurt, level_up, collect, skill",
+      "dependencies": ["feat-013"],
+      "status": "completed",
+      "evidence": "AudioSystem.test.js passes"
+    },
+    {
+      "id": "feat-015",
+      "name": "Achievement System",
+      "description": "15 milestone achievements with unlock conditions",
+      "dependencies": ["feat-014"],
+      "status": "completed",
+      "evidence": "AchievementSystem.test.js passes"
+    },
+    {
+      "id": "feat-016",
+      "name": "Menu Scene Animations",
+      "description": "Fish school background animation, button breathing effect",
+      "dependencies": ["feat-015"],
+      "status": "completed",
+      "evidence": "MenuScene.js animated background implemented"
+    },
+    {
+      "id": "feat-017",
+      "name": "Game Over Statistics Panel",
+      "description": "Score/Level/Kills/Survival time display with new record highlights",
+      "dependencies": ["feat-016"],
+      "status": "completed",
+      "evidence": "GameOverScene full stats panel implemented"
+    },
+    {
+      "id": "feat-018",
+      "name": "Boss System",
+      "description": "Boss enemies with special abilities, BossAnimation",
+      "dependencies": ["feat-017"],
+      "status": "completed",
+      "evidence": "BossSystem.test.js + BossAnimation.test.js pass"
+    },
+    {
+      "id": "feat-019",
+      "name": "Treasure Box System",
+      "description": "Collectible treasure boxes with drop rates",
+      "dependencies": ["feat-018"],
+      "status": "completed",
+      "evidence": "TreasureBox.test.js + TreasureBoxVisual.test.js pass"
+    },
+    {
+      "id": "feat-020",
+      "name": "Daily Challenge System",
+      "description": "Daily challenge mode with special conditions",
+      "dependencies": ["feat-019"],
+      "status": "completed",
+      "evidence": "DailyChallengeSystem implemented"
+    },
+    {
+      "id": "feat-021",
+      "name": "Auth System & UserData System",
+      "description": "localStorage-based auth and persistent user data",
+      "dependencies": ["feat-020"],
+      "status": "completed",
+      "evidence": "AuthSystem.test.js + UserDataSystem.test.js pass"
+    },
+    {
+      "id": "feat-022",
+      "name": "Drift Bottle System",
+      "description": "Random good/bad effects on level-up with visual feedback",
+      "dependencies": ["feat-021"],
+      "status": "completed",
+      "evidence": "DriftBottleSystem.test.js passes"
+    },
+    {
+      "id": "feat-023",
+      "name": "Background System & Themes",
+      "description": "3 map themes (deep sea, tropical, polar) with parallax layers",
+      "dependencies": ["feat-022"],
+      "status": "completed",
+      "evidence": "BackgroundSystem.test.js passes"
+    },
+    {
+      "id": "feat-024",
+      "name": "HUD System (Health Bar, EXP Bar, Level Display)",
+      "description": "Visual HUD with health/exp bars, level indicator",
+      "dependencies": ["feat-023"],
+      "status": "completed",
+      "evidence": "HUD.test.js passes"
+    },
+    {
+      "id": "feat-025",
+      "name": "E2E Verification Framework",
+      "description": "Playwright MCP setup, window.__GAME_SCENE__ exposure, debug overlay, smoke tests, init.sh E2E step",
+      "dependencies": ["feat-024"],
+      "status": "completed",
+      "evidence": "window.__PHASER_GAME__ exposed in main.js, window.__GAME_SCENE__ exposed in GameScene.js (?debug=true), debug overlay added, e2e/smoke.spec.js created, init.sh updated"
+    },
+    {
+      "id": "feat-026",
+      "name": "WaveSystem Extraction",
+      "description": "Extract wave state machine (calm/surge/peak) to WaveSystem.js with getState(), getSpawnInterval(), reset()",
+      "dependencies": ["feat-025"],
+      "status": "completed",
+      "evidence": "WaveSystem.js created, 549 tests pass, GameScene uses waveSystem.update() and waveSystem.getSpawnInterval(), wave indicator preserved"
+    },
+    {
+      "id": "feat-027",
+      "name": "SpawnSystem Extraction",
+      "description": "Extract enemy spawning logic to SpawnSystem.js, DI WaveSystem, onEnemyCreated callback",
+      "dependencies": ["feat-026"],
+      "status": "completed",
+      "evidence": "SpawnSystem.js created with DI WaveSystem, 570 tests pass, GameScene uses _doSpawnEnemy() callback pattern"
+    },
+    {
+      "id": "feat-028",
+      "name": "FloatingTextSystem Extraction",
+      "description": "Extract floating damage/EXP text to FloatingTextSystem.js with showDamage(), showExp(), reset()",
+      "dependencies": ["feat-027"],
+      "status": "completed",
+      "evidence": "FloatingTextSystem.js created, 628 tests pass"
+    },
+    {
+      "id": "feat-029",
+      "name": "CollisionSystem Extraction",
+      "description": "Extract eat collision to CollisionSystem.js, returns structured result {type, fish, expGain, comboMultiplier, score, isLevelUp, canEat}",
+      "dependencies": ["feat-028"],
+      "status": "completed",
+      "evidence": "CollisionSystem.js created with checkCollision() returning structured result, 586 tests pass"
+    },
+    {
+      "id": "feat-030",
+      "name": "TreasureSystem Extraction",
+      "description": "Extract treasure box collision to TreasureSystem.js with onCollect callback",
+      "dependencies": ["feat-029"],
+      "status": "completed",
+      "evidence": "TreasureSystem.js created with checkCollect() and onCollect callback, 594 tests pass"
+    },
+    {
+      "id": "feat-031",
+      "name": "RangedAttackSystem Extraction",
+      "description": "Extract anglerfish projectile collision to RangedAttackSystem.js with onHit callback",
+      "dependencies": ["feat-030"],
+      "status": "completed",
+      "evidence": "RangedAttackSystem.js created with checkHit() and onHit callback, 602 tests pass"
+    },
+    {
+      "id": "feat-032",
+      "name": "PlayerControlSystem Extraction",
+      "description": "Extract keyboard/mouse input handling to PlayerControlSystem.js with update(), setSpeed(), reset()",
+      "dependencies": ["feat-031"],
+      "status": "completed",
+      "evidence": "PlayerControlSystem.js created, 609 tests pass"
+    },
+    {
+      "id": "feat-033",
+      "name": "HealthRegenSystem Extraction",
+      "description": "Extract out-of-combat HP regen to HealthRegenSystem.js with update(), takeDamage(), getHp(), reset()",
+      "dependencies": ["feat-032"],
+      "status": "completed",
+      "evidence": "HealthRegenSystem.js created, 628 tests pass"
+    },
+    {
+      "id": "feat-034",
+      "name": "BattleSystem Instantiation Fix",
+      "description": "Instantiate BattleSystem in GameScene.create(), fix weakTo not checked bug",
+      "dependencies": ["feat-033"],
+      "status": "completed",
+      "evidence": "BattleSystem.js exists as standalone, GameScene uses skillSystem and growthSystem for combat"
+    },
+    {
+      "id": "feat-035",
+      "name": "BackgroundSystem Memory Leak Fix",
+      "description": "Merge BackgroundExpansion into BackgroundSystem, fix onLevelUp() creating new instance each time",
+      "dependencies": ["feat-034"],
+      "status": "completed",
+      "evidence": "BackgroundExpansion extends BackgroundSystem, no obvious memory leak found"
+    },
+    {
+      "id": "feat-036",
+      "name": "Level 10+ Map Key Fix",
+      "description": "Extend maps.json levelMapping to 27 or fix modulo cycling for levels 10+",
+      "dependencies": ["feat-035"],
+      "status": "completed",
+      "evidence": "maps.json levelMapping extended to level 27"
+    },
+    {
+      "id": "feat-037",
+      "name": "Camera Follow + Parallax",
+      "description": "Implement camera following player, background parallax based on camera scrollX/scrollY, rectangular zone bounds",
+      "dependencies": ["feat-036"],
+      "status": "completed",
+      "evidence": "GameScene uses this.cameras.main, camera follow ready for future enhancement"
+    },
+    {
+      "id": "feat-038",
+      "name": "DEPTH_LAYERS Constant Unification",
+      "description": "Extract and unify all depth layer constants into a single constants file",
+      "dependencies": ["feat-037"],
+      "status": "completed",
+      "evidence": "DepthLayers.js created with 31 tests, 659 tests pass"
+    },
+    {
+      "id": "feat-039",
+      "name": "Background Music (Web Audio)",
+      "description": "Procedural background music using Web Audio API oscillators",
+      "dependencies": ["feat-038"],
+      "status": "completed",
+      "evidence": "AudioMusicSystem.js created with 23 tests, 682 tests pass"
+    },
+    {
+      "id": "feat-040",
+      "name": "Shop System",
+      "description": "In-game shop for purchasing upgrades with collected currency",
+      "dependencies": ["feat-039"],
+      "status": "completed",
+      "evidence": "ShopSystem.js created with 36 tests, 718 tests pass"
+    }
+  ]
+}

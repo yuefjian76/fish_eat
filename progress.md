@@ -1,10 +1,18 @@
 # 进度日志
 
-## 当前阶段：架构重构 Phase 2（系统提取）
+## 当前阶段：架构重构 Phase 2 完成，进入 Phase 3
 
 目标：将 GameScene (70KB/1800+ 行) 拆分为 8 个独立系统。
 
 当前进度：
+- ✅ feat-025 ~ feat-040：全部完成（40 个特性）
+- ✅ 718 个测试全部通过
+
+---
+
+## Phase 2 完成状态（2026-05-24）
+
+### 已完成系统提取
 - ✅ feat-025：E2E 验证框架（完成）
 - ✅ feat-026：WaveSystem 提取（完成）
 - ✅ feat-027：SpawnSystem 提取（完成）
@@ -18,6 +26,15 @@
 - ✅ feat-035：BackgroundExpansion 确认（完成）
 - ✅ feat-036：Level 10+ Map Fix（完成）
 - ✅ feat-037：Camera + Parallax（完成）
+- ✅ feat-038：DEPTH_LAYERS 常量统一（完成）
+- ✅ feat-039：Background Music Web Audio（完成）
+- ✅ feat-040：Shop System（完成）
+
+### Phase 3 预研任务
+- [x] D2: ImpactSystem（打击反馈系统）已完成
+- [ ] Phase 3.1: 无限地图系统完善
+- [ ] Phase 3.2: 敌人 AI 行为树优化
+- [ ] Phase 3.3: 成就系统扩展
 
 ---
 

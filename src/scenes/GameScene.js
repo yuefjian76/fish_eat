@@ -8,6 +8,7 @@ import { GrowthSystem } from '../systems/GrowthSystem.js';
 import { DriftBottleSystem } from '../systems/DriftBottleSystem.js';
 import { LuckSystem } from '../systems/LuckSystem.js';
 import { SpawnSystem } from '../systems/SpawnSystem.js';
+import { FloatingTextSystem } from '../systems/FloatingTextSystem.js';
 import { WaveSystem } from '../systems/WaveSystem.js';
 import { BackgroundSystem } from '../systems/BackgroundSystem.js';
 import { BackgroundExpansion } from '../systems/BackgroundExpansion.js';
@@ -20,18 +21,6 @@ import { AudioSystem } from '../systems/AudioSystem.js';
 import { AchievementSystem } from '../systems/AchievementSystem.js';
 import { DailyChallengeSystem } from '../systems/DailyChallengeSystem.js';
 import { logger } from '../systems/DebugLogger.js';
-
-/** @param {'player_damage'|'enemy_damage'|'heal'|'exp'|string} type */
-function getFloatingTextColor(type) {
-    switch (type) {
-        case 'player_damage': return 0xff3333;
-        case 'enemy_damage': return 0x00ff44;
-        case 'critical': return 0xffd700;
-        case 'heal': return 0x44aaff;
-        case 'exp': return 0x00ff44;
-        default: return 0xffffff;
-    }
-}
 
 class GameScene extends Phaser.Scene {
     constructor() {
@@ -328,6 +317,7 @@ class GameScene extends Phaser.Scene {
             onStateChange: (state) => logger.info(`Wave state: ${state}`),
             onIntervalChange: (interval) => logger.info(`Spawn interval: ${interval}ms`)
         });
+        this.floatingTextSystem = new FloatingTextSystem({ scene: this });
         this._spawnTimer = 0;
 
         // Wave indicator graphics
@@ -736,7 +726,7 @@ class GameScene extends Phaser.Scene {
             this.uiDirty = true;
 
             // Show floating EXP text
-            this._showFloatingText(fish.x, fish.y, expResult.expGained, 'exp');
+            this.floatingTextSystem.showExp(fish.x, fish.y, expResult.expGained);
 
             // Track kill count
             this.killCount++;
@@ -1135,7 +1125,7 @@ class GameScene extends Phaser.Scene {
         this._applyKnockback(enemy, actualDamage);
 
         // Show floating damage text
-        this._showFloatingText(this.player.x, this.player.y - 20, actualDamage, 'player_damage');
+        this.floatingTextSystem.showDamage(this.player.x, this.player.y - 20, actualDamage);
 
         // Check game over
         if (this.hp <= 0) {
@@ -1191,37 +1181,6 @@ class GameScene extends Phaser.Scene {
             this.scene.resume();
             this.scene.get('UIScene').hidePauseMenu();
         }
-    }
-
-    /**
-     * Show floating damage/heal text at a position.
-     * @param {number} x - X position
-     * @param {number} y - Y position
-     * @param {string|number} value - Numeric value to display
-     * @param {string} type - 'player_damage'|'enemy_damage'|'heal'|'exp'
-     */
-    _showFloatingText(x, y, value, type = 'enemy_damage') {
-        const color = getFloatingTextColor(type);
-        const text = type === 'exp' ? `+${value}` : `-${value}`;
-        const floatText = this.add.text(x, y, text, {
-            fontSize: '18px',
-            fontFamily: 'Arial',
-            color: `#${color.toString(16).padStart(6, '0')}`,
-            stroke: '#000000',
-            strokeThickness: 3
-        });
-        floatText.setOrigin(0.5);
-        floatText.setDepth(50);
-
-        // Tween: rise upward and fade out
-        this.tweens.add({
-            targets: floatText,
-            y: y - 40,
-            alpha: 0,
-            duration: 800,
-            ease: 'Power2',
-            onComplete: () => floatText.destroy()
-        });
     }
 
     /**

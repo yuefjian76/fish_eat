@@ -1009,6 +1009,10 @@ class GameScene extends Phaser.Scene {
         // Update background decorations (bubbles animation)
         if (this.backgroundSystem) {
             this.backgroundSystem.update(delta);
+            // Update decoration elements (bubbles, jellyfish) around player
+            if (this.backgroundSystem.updateDecorations) {
+                this.backgroundSystem.updateDecorations(delta, this.player.x, this.player.y);
+            }
         }
 
         // Update map expansion system for infinite map / zone tracking

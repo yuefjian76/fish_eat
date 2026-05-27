@@ -268,7 +268,7 @@ class GameScene extends Phaser.Scene {
         // Spawn initial fish based on difficulty
         const initialSpawnCount = Phaser.Math.Between(this.enemyCountMin, this.enemyCountMax);
         for (let i = 0; i < initialSpawnCount; i++) {
-            this.spawnFish();
+            this._doSpawnEnemy();
         }
 
         // Mouse control (alternative to arrow keys)
@@ -1053,7 +1053,7 @@ class GameScene extends Phaser.Scene {
                                 return;
                             }
                             if (this.enemies.length < this.enemyCountMax) {
-                                this.spawnFish();
+                                this._doSpawnEnemy();
                                 recovered++;
                             }
                         }, 600);

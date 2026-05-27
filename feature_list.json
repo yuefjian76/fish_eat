@@ -319,6 +319,14 @@
       "dependencies": ["feat-039"],
       "status": "completed",
       "evidence": "ShopSystem.js created with 36 tests, 718 tests pass"
+    },
+    {
+      "id": "feat-041",
+      "name": "Infinite Map System",
+      "description": "Enable infinite map with camera follow, 10000x10000 world bounds, world-edge enemy spawning, and proper chunk-based background loading",
+      "dependencies": ["feat-040"],
+      "status": "completed",
+      "evidence": "WorldConfig.js created, camera follow + world bounds in GameScene.js, player clamping removed, enemy spawn uses world coordinates, off-screen removal uses player-relative distance"
     }
   ]
 }

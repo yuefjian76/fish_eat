@@ -20,6 +20,7 @@ import { ComboSystem } from '../systems/ComboSystem.js';
 import { AudioSystem } from '../systems/AudioSystem.js';
 import { AchievementSystem } from '../systems/AchievementSystem.js';
 import { DailyChallengeSystem } from '../systems/DailyChallengeSystem.js';
+import { WORLD_CONFIG } from '../constants/WorldConfig.js';
 import { logger } from '../systems/DebugLogger.js';
 
 class GameScene extends Phaser.Scene {
@@ -221,6 +222,11 @@ class GameScene extends Phaser.Scene {
 
         // Create player fish
         this.createPlayer();
+
+        // Set world bounds and enable camera follow for infinite map
+        this.physics.world.setBounds(0, 0, WORLD_CONFIG.WIDTH, WORLD_CONFIG.HEIGHT);
+        this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
+        this.cameras.main.setBounds(0, 0, WORLD_CONFIG.WIDTH, WORLD_CONFIG.HEIGHT);
 
         // 3-second spawn invincibility
         this._spawnInvincible = true;
@@ -600,14 +606,43 @@ class GameScene extends Phaser.Scene {
             exp: Math.floor(baseFishConfig.exp * scaleFactor)
         };
 
-        // Spawn at edge
+        // Spawn at world edges (beyond visible area)
         let x, y;
         const side = Phaser.Math.Between(0, 3);
+        const spawnMargin = WORLD_CONFIG.SPAWN_MARGIN;
+        const halfW = WORLD_CONFIG.WIDTH / 2;
+        const halfH = WORLD_CONFIG.HEIGHT / 2;
+        const variationRange = 2000;
+
         switch (side) {
-            case 0: x = 0; y = Phaser.Math.Between(0, 768); break;
-            case 1: x = 1024; y = Phaser.Math.Between(0, 768); break;
-            case 2: x = Phaser.Math.Between(0, 1024); y = 0; break;
-            case 3: x = Phaser.Math.Between(0, 1024); y = 768; break;
+            case 0: // Left edge
+                x = this.player.x - halfW - spawnMargin;
+                y = Phaser.Math.Between(
+                    Math.max(0, this.player.y - variationRange),
+                    Math.min(WORLD_CONFIG.HEIGHT, this.player.y + variationRange)
+                );
+                break;
+            case 1: // Right edge
+                x = this.player.x + halfW + spawnMargin;
+                y = Phaser.Math.Between(
+                    Math.max(0, this.player.y - variationRange),
+                    Math.min(WORLD_CONFIG.HEIGHT, this.player.y + variationRange)
+                );
+                break;
+            case 2: // Top edge
+                x = Phaser.Math.Between(
+                    Math.max(0, this.player.x - variationRange),
+                    Math.min(WORLD_CONFIG.WIDTH, this.player.x + variationRange)
+                );
+                y = this.player.y - halfH - spawnMargin;
+                break;
+            case 3: // Bottom edge
+                x = Phaser.Math.Between(
+                    Math.max(0, this.player.x - variationRange),
+                    Math.min(WORLD_CONFIG.WIDTH, this.player.x + variationRange)
+                );
+                y = this.player.y + halfH + spawnMargin;
+                break;
         }
 
         // Create Enemy instance with AI level and scaled fish config
@@ -886,9 +921,10 @@ class GameScene extends Phaser.Scene {
             this.player.rotation = Math.atan2(this.player.body.velocity.y, this.player.body.velocity.x);
         }
 
-        // Keep player in bounds
-        this.player.x = Phaser.Math.Clamp(this.player.x, 20, 1004);
-        this.player.y = Phaser.Math.Clamp(this.player.y, 20, 748);
+        // Update player rotation based on velocity
+        if (this.player.body.velocity.x !== 0 || this.player.body.velocity.y !== 0) {
+            this.player.rotation = Math.atan2(this.player.body.velocity.y, this.player.body.velocity.x);
+        }
 
         // Update player shadow position
         if (this.playerShadow) {
@@ -916,9 +952,12 @@ class GameScene extends Phaser.Scene {
             this.playerHealthBar.alpha = 1;
         }
 
-        // Remove fish that are too far off screen
+        // Remove fish that are too far from player (beyond despawn margin)
+        const despawnMargin = WORLD_CONFIG.DESPAWN_MARGIN;
         this.fishes.getChildren().forEach(fish => {
-            if (fish.x < -100 || fish.x > 1124 || fish.y < -100 || fish.y > 868) {
+            const dx = fish.x - this.player.x;
+            const dy = fish.y - this.player.y;
+            if (Math.abs(dx) > despawnMargin || Math.abs(dy) > despawnMargin) {
                 fish.destroy();
             }
         });

@@ -179,9 +179,12 @@ export class BackgroundExpansion extends BackgroundSystem {
 
     /**
      * Update background based on player position in world coordinates
+     * Note: Theme transitions are ONLY triggered by level-up (level % 2 === 0 in GameScene),
+     * NOT by zone/distance changes. This ensures the same theme expands smoothly
+     * as the player moves in any direction.
      * @param {number} worldX - Player world X coordinate
      * @param {number} worldY - Player world Y coordinate
-     * @param {object} zone - Current zone object from MapExpansionSystem
+     * @param {object} zone - Current zone object from MapExpansionSystem (unused for theme)
      */
     updateBackground(worldX, worldY, zone) {
         // Update parallax offset based on world position
@@ -197,11 +200,6 @@ export class BackgroundExpansion extends BackgroundSystem {
 
         // Update decorative elements
         this._updateDecorations(worldX, worldY);
-
-        // Check for zone change - use the zone passed from MapExpansionSystem
-        if (zone && zone.id !== this.currentZone?.id) {
-            this.transitionToZone(zone, 1500);
-        }
     }
 
     /**

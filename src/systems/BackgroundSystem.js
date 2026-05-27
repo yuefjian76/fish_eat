@@ -72,6 +72,10 @@ export class BackgroundSystem {
         this.currentBubbleFrame = 0;
         this.lastBubbleFrameTime = 0;
 
+        // Theme transition state
+        this.isTransitioning = false;
+        this._transitionOverlay = null;
+
         // Select random theme for this game session
         this.theme = BackgroundSystem.THEMES[Phaser.Math.Between(0, BackgroundSystem.THEMES.length - 1)];
         this.themeConfig = BackgroundSystem.THEME_CONFIG[this.theme];
@@ -170,6 +174,79 @@ export class BackgroundSystem {
         });
         // Update bubble color for new theme
         this.themeConfig.bubbleColor = bubbleColor;
+    }
+
+    /**
+     * Get random next theme (excluding current)
+     * @returns {string} Next theme key
+     */
+    getNextTheme() {
+        const themes = Object.keys(BackgroundSystem.THEME_CONFIG).filter(t => t !== this.theme);
+        return themes[Phaser.Math.Between(0, themes.length - 1)];
+    }
+
+    /**
+     * Transition to new theme with animation (level-based trigger)
+     * @param {string} newTheme - Theme key to transition to
+     * @param {number} duration - Transition duration in ms (default 1500)
+     */
+    transitionToNewTheme(newTheme, duration = 1500) {
+        if (this.isTransitioning) return;
+        if (!newTheme || newTheme === this.theme) return;
+        if (!BackgroundSystem.THEME_CONFIG[newTheme]) {
+            console.warn(`Unknown theme: ${newTheme}`);
+            return;
+        }
+
+        this.isTransitioning = true;
+        const oldTheme = this.theme;
+        const config = BackgroundSystem.THEME_CONFIG[newTheme];
+
+        // Create transition overlay
+        this._transitionOverlay = this.scene.add.graphics();
+        this._transitionOverlay.setDepth(100);
+        this._transitionOverlay.setAlpha(0);
+        this._transitionOverlay.fillStyle(0x000000, 1);
+        this._transitionOverlay.fillRect(0, 0, this.screenWidth, this.screenHeight);
+
+        // Fade to black → change theme → fade back
+        this.scene.tweens.add({
+            targets: this._transitionOverlay,
+            alpha: 1,
+            duration: duration / 2,
+            ease: 'Sine.easeIn',
+            onComplete: () => {
+                this.theme = newTheme;
+                this.themeConfig = config;
+                this._applyThemeTint(config.tint, config.bubbleColor);
+
+                // Update selected background for new theme
+                const backgrounds = config.backgrounds;
+                this.selectedBackground = backgrounds[Phaser.Math.Between(0, backgrounds.length - 1)];
+
+                // Reload background images with new theme
+                if (this.bgImages.background) {
+                    this.bgImages.background.setTexture(this.selectedBackground);
+                }
+
+                this.scene.tweens.add({
+                    targets: this._transitionOverlay,
+                    alpha: 0,
+                    duration: duration / 2,
+                    ease: 'Sine.easeOut',
+                    onComplete: () => {
+                        if (this._transitionOverlay) {
+                            this._transitionOverlay.destroy();
+                            this._transitionOverlay = null;
+                        }
+                        this.isTransitioning = false;
+                        if (typeof logger !== 'undefined') {
+                            logger.info('Theme transition complete', { from: oldTheme, to: newTheme });
+                        }
+                    }
+                });
+            }
+        });
     }
 
     /**

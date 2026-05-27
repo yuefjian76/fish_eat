@@ -1,9 +1,9 @@
 /**
- * BackgroundExpansion - Infinite background system extending BackgroundSystem
- * Supports dynamic chunk loading, world coordinate transformation,
- * procedural decorative elements, and zone transitions
+ * BackgroundExpansion - Player-centric radial background system
+ * Replaces chunk-based background with procedural decorations
  */
 import BackgroundSystem from './BackgroundSystem.js';
+import { THEME_CONFIG, getTheme, getRandomTheme } from '../constants/ThemeConfig.js';
 
 export class BackgroundExpansion extends BackgroundSystem {
     /**
@@ -14,31 +14,23 @@ export class BackgroundExpansion extends BackgroundSystem {
     constructor(scene, screenWidth = 1024, screenHeight = 768) {
         super(scene, screenWidth, screenHeight);
 
-        // Infinite background configuration
-        this.tileSize = 1024;
-        this.renderDistance = 2048;
+        // Theme configuration
+        this.currentThemeId = 'deep_sea';
+        this.themeConfig = THEME_CONFIG.deep_sea;
 
-        // Chunk management for infinite background
-        this.loadedChunks = new Map();
-        this.activeChunks = new Set();
+        // Decoration elements
+        this.bubbles = [];
+        this.jellyfish = [];
+        this.lightSpots = [];
 
-        // Zone system - use MapExpansionSystem's zones, not internal bounds
-        // Default to shallow zone (player starts at origin where distance=0 < 1000)
-        this.currentZone = {
-            id: 'shallow',
-            name: '浅海',
-            minDistance: 0,
-            maxDistance: 1000,
-            tint: 16777215,
-            bubbleColor: 11445693,
-            backgrounds: ['bg_tropical_theme', 'background_tropical_theme', 'background_tropical_theme3'],
-            midgrounds: ['midground_tropical_theme']
-        };
-        this.zoneBounds = null;
+        // Decoration graphics objects
+        this.bubbleGraphics = [];
+        this.jellyfishGraphics = [];
+        this.lightSpotGraphics = [];
 
-        // Decorative elements
-        this.seaweeds = [];
-        this.decorativeBubbles = [];
+        // Spawn timers
+        this.lastBubbleSpawn = 0;
+        this.lastJellyfishSpawn = 0;
 
         // Transition state
         this.isTransitioning = false;
@@ -46,373 +38,170 @@ export class BackgroundExpansion extends BackgroundSystem {
     }
 
     /**
-     * Initialize infinite background with chunk preloading
+     * Create background with gradient and decorations
      */
-    initInfiniteBackground() {
-        this.createBackground();
-        this._initProceduralDecorations();
-        this._preloadInitialChunks();
+    createBackground() {
+        // Create gradient background using graphics
+        this.bgGraphics = this.scene.add.graphics();
+        this.bgGraphics.setDepth(0);
+        this._drawGradientBackground(this.themeConfig.gradientColors);
+
+        // Create decoration container
+        this.decorationContainer = this.scene.add.container(0, 0);
+        this.decorationContainer.setDepth(1);
+
+        // Initialize light spots (static,随视角移动)
+        this._initLightSpots();
     }
 
     /**
-     * Preload initial chunks around origin
-     * @private
+     * Draw gradient background
+     * @param {number[]} colors - [top, mid, bottom] color values
      */
-    _preloadInitialChunks() {
-        // Use player's current position if available, otherwise origin
-        const worldX = this.playerX || 0;
-        const worldY = this.playerY || 0;
-        const centerChunk = this._worldToChunk(worldX, worldY);
-        const chunksToLoad = [
-            `${centerChunk.chunkX - 1}_${centerChunk.chunkY}`,
-            `${centerChunk.chunkX}_${centerChunk.chunkY}`,
-            `${centerChunk.chunkX + 1}_${centerChunk.chunkY}`,
-            `${centerChunk.chunkX}_${centerChunk.chunkY - 1}`,
-            `${centerChunk.chunkX}_${centerChunk.chunkY + 1}`
-        ];
+    _drawGradientBackground(colors) {
+        const w = this.screenWidth;
+        const h = this.screenHeight;
+        const segmentHeight = h / (colors.length - 1);
 
-        chunksToLoad.forEach(chunkKey => {
-            if (!this.loadedChunks.has(chunkKey)) {
-                this._loadChunk(chunkKey);
-            }
-        });
+        for (let i = 0; i < colors.length - 1; i++) {
+            const topColor = colors[i];
+            const bottomColor = colors[i + 1];
+            const y1 = i * segmentHeight;
+            const y2 = (i + 1) * segmentHeight;
+
+            this.bgGraphics.fillStyle(topColor, 1);
+            this.bgGraphics.fillRect(0, y1, w, segmentHeight + 1);
+        }
     }
 
     /**
-     * Convert world coordinates to chunk coordinates
-     * @param {number} worldX - World X coordinate
-     * @param {number} worldY - World Y coordinate
-     * @returns {object} Chunk coordinates {chunkX, chunkY}
+     * Initialize light spots (static decorations)
      */
-    _worldToChunk(worldX, worldY) {
+    _initLightSpots() {
+        const count = this.themeConfig.decoration.lightSpot.count;
+        const flickerSpeed = this.themeConfig.decoration.lightSpot.flickerSpeed;
+
+        for (let i = 0; i < count; i++) {
+            const x = Math.random() * this.screenWidth;
+            const y = Math.random() * this.screenHeight;
+            const size = 5 + Math.random() * 15;
+            const baseAlpha = 0.1 + Math.random() * 0.3;
+
+            const spot = this.scene.add.graphics();
+            spot.fillStyle(this.themeConfig.bubbleColor, baseAlpha);
+            spot.fillCircle(size / 2, size / 2, size / 2);
+            spot.x = x;
+            spot.y = y;
+            spot.setDepth(2);
+            this.lightSpots.push({ graphics: spot, baseX: x, baseY: y, baseAlpha });
+            this.lightSpotGraphics.push(spot);
+
+            // Flicker animation
+            this.scene.tweens.add({
+                targets: spot,
+                alpha: { from: baseAlpha, to: baseAlpha * 0.3 },
+                duration: flickerSpeed + Math.random() * 500,
+                yoyo: true,
+                repeat: -1,
+                ease: 'Sine.easeInOut'
+            });
+        }
+    }
+
+    /**
+     * Generate a bubble at random position around player
+     * @param {number} playerX - Player world X
+     * @param {number} playerY - Player world Y
+     * @returns {object|null} Bubble data or null if at limit
+     */
+    generateBubble(playerX, playerY) {
+        const maxBubbles = this.themeConfig.decoration.bubble.count;
+        if (this.bubbles.length >= maxBubbles) {
+            return null;
+        }
+
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 100 + Math.random() * 300;
+        const x = playerX + Math.cos(angle) * distance;
+        const y = playerY + Math.sin(angle) * distance;
+        const size = this.themeConfig.decoration.bubble.sizeRange[0] +
+            Math.random() * (this.themeConfig.decoration.bubble.sizeRange[1] - this.themeConfig.decoration.bubble.sizeRange[0]);
+
+        return { x, y, size, angle, speed: this.themeConfig.decoration.bubble.speed };
+    }
+
+    /**
+     * Generate a jellyfish at outer ring
+     * @param {number} playerX - Player world X
+     * @param {number} playerY - Player world Y
+     * @returns {object|null} Jellyfish data or null if at limit
+     */
+    generateJellyfish(playerX, playerY) {
+        const maxJellyfish = this.themeConfig.decoration.jellyfish.count;
+        if (this.jellyfish.length >= maxJellyfish) {
+            return null;
+        }
+
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 600 + Math.random() * 400;
+        const x = playerX + Math.cos(angle) * distance;
+        const y = playerY + Math.sin(angle) * distance;
+        const size = this.themeConfig.decoration.jellyfish.sizeRange[0] +
+            Math.random() * (this.themeConfig.decoration.jellyfish.sizeRange[1] - this.themeConfig.decoration.jellyfish.sizeRange[0]);
+
         return {
-            chunkX: Math.floor(worldX / this.tileSize),
-            chunkY: Math.floor(worldY / this.tileSize)
+            x, y, size,
+            vx: (Math.random() - 0.5) * 2,
+            vy: -this.themeConfig.decoration.jellyfish.speed * 0.3,
+            pulsePhase: Math.random() * Math.PI * 2
         };
     }
 
     /**
-     * Get chunk key from chunk coordinates
-     * @param {number} chunkX - Chunk X coordinate
-     * @param {number} chunkY - Chunk Y coordinate
-     * @returns {string} Chunk key
+     * Get next theme excluding current
+     * @returns {string} Next theme id
      */
-    _getChunkKey(chunkX, chunkY) {
-        return `${chunkX}_${chunkY}`;
+    getNextTheme() {
+        return getRandomTheme(this.currentThemeId);
     }
 
     /**
-     * Load a background chunk
-     * @param {string} chunkKey - Chunk identifier
-     * @private
+     * Transition to new theme with animation
+     * @param {string} newThemeId - Theme to transition to
+     * @param {number} duration - Transition duration in ms
      */
-    _loadChunk(chunkKey) {
-        if (this.loadedChunks.has(chunkKey)) return;
-
-        const [chunkX, chunkY] = chunkKey.split('_').map(Number);
-
-        // Create chunk container
-        const chunkContainer = this.scene.add.container(
-            chunkX * this.tileSize,
-            chunkY * this.tileSize
-        );
-        chunkContainer.setDepth(0);
-
-        // Determine zone for this chunk - use current zone
-        const zone = this._getZoneForChunk(chunkX, chunkY);
-
-        // Get theme config from zone object (from zones.json via MapExpansionSystem)
-        const themeTint = zone.tint || 0xFFFFFF;
-        const bgKey = zone.backgrounds?.[0] || 'bg_undersea_theme';
-        const farKey = zone.backgrounds?.[1] || 'background_undersea_theme2';
-
-        // Create tiled background for this chunk
-        // We tile the background image across the chunk
-        const tilesX = 1; // Since tileSize matches our screen width design
-        const tilesY = 1;
-
-        for (let tx = 0; tx < tilesX; tx++) {
-            for (let ty = 0; ty < tilesY; ty++) {
-                const tileX = tx * this.tileSize;
-                const tileY = ty * this.tileSize;
-
-                // Background layer
-                const bg = this.scene.add.image(
-                    tileX + this.tileSize / 2,
-                    tileY + this.tileSize / 2,
-                    bgKey
-                );
-                bg.setDisplaySize(this.tileSize, this.tileSize);
-                bg.setTint(themeTint);
-                bg.setDepth(0);
-                chunkContainer.add(bg);
-
-                // Far parallax layer
-                const far = this.scene.add.image(
-                    tileX + this.tileSize / 2,
-                    tileY + this.tileSize / 2,
-                    farKey
-                );
-                far.setDisplaySize(this.tileSize, this.tileSize);
-                far.setAlpha(0.6);
-                far.setTint(themeTint);
-                far.setDepth(1);
-                chunkContainer.add(far);
-            }
-        }
-
-        this.loadedChunks.set(chunkKey, chunkContainer);
-    }
-
-    /**
-     * Determine zone based on chunk position - uses current zone from MapExpansionSystem
-     * @param {number} chunkX - Chunk X coordinate
-     * @param {number} chunkY - Chunk Y coordinate
-     * @returns {object} Zone object
-     */
-    _getZoneForChunk(chunkX, chunkY) {
-        // For simplicity, use the current zone from MapExpansionSystem
-        // All visible chunks use the same zone theme
-        // When zone transitions, _reloadChunksForZone will reload with new theme
-        return this.currentZone || { id: 'undersea', tint: 0xFFFFFF, bubbleColor: 0xAAFFDD };
-    }
-
-    /**
-     * Update background based on player position in world coordinates
-     * @param {number} worldX - Player world X coordinate
-     * @param {number} worldY - Player world Y coordinate
-     * @param {object} zone - Current zone object from MapExpansionSystem
-     */
-    updateBackground(worldX, worldY, zone) {
-        // Update parallax offset based on world position
-        this.playerX = worldX;
-        this.playerY = worldY;
-
-        // Determine required chunks based on render distance
-        const centerChunk = this._worldToChunk(worldX, worldY);
-        const chunksInView = Math.ceil(this.renderDistance / this.tileSize);
-
-        // Load new chunks and unload distant ones
-        this._updateLoadedChunks(centerChunk, chunksInView);
-
-        // Update decorative elements
-        this._updateDecorations(worldX, worldY);
-
-        // Check for zone change - use the zone passed from MapExpansionSystem
-        if (zone && zone.id !== this.currentZone?.id) {
-            this.transitionToZone(zone, 1500);
-        }
-    }
-
-    /**
-     * Update loaded chunks based on player position
-     * @param {object} centerChunk - Current chunk coordinates
-     * @param {number} chunksInView - Number of chunks visible
-     * @private
-     */
-    _updateLoadedChunks(centerChunk, chunksInView) {
-        const neededChunks = new Set();
-
-        // Calculate required chunks
-        for (let dx = -chunksInView; dx <= chunksInView; dx++) {
-            for (let dy = -chunksInView; dy <= chunksInView; dy++) {
-                const chunkX = centerChunk.chunkX + dx;
-                const chunkY = centerChunk.chunkY + dy;
-                const chunkKey = this._getChunkKey(chunkX, chunkY);
-                neededChunks.add(chunkKey);
-            }
-        }
-
-        // Load missing chunks
-        for (const chunkKey of neededChunks) {
-            if (!this.loadedChunks.has(chunkKey)) {
-                this._loadChunk(chunkKey);
-            }
-        }
-
-        // Track active chunks for cleanup
-        this.activeChunks = neededChunks;
-
-        // Unload distant chunks (outside render distance + buffer)
-        const bufferChunks = chunksInView + 2;
-        for (const [chunkKey, chunkContainer] of this.loadedChunks) {
-            if (!neededChunks.has(chunkKey)) {
-                this._unloadChunk(chunkKey, chunkContainer);
-            }
-        }
-    }
-
-    /**
-     * Unload a chunk to free memory
-     * @param {string} chunkKey - Chunk identifier
-     * @param {object} chunkContainer - Chunk container to destroy
-     * @private
-     */
-    _unloadChunk(chunkKey, chunkContainer) {
-        if (chunkContainer) {
-            chunkContainer.destroy();
-        }
-        this.loadedChunks.delete(chunkKey);
-    }
-
-    /**
-     * Initialize procedural decorations (seaweed, extra bubbles)
-     * @private
-     */
-    _initProceduralDecorations() {
-        // Create seaweed decorations
-        const seaweedCount = 15;
-        for (let i = 0; i < seaweedCount; i++) {
-            this._createSeaweed();
-        }
-
-        // Additional decorative bubbles
-        const bubbleCount = 20;
-        for (let i = 0; i < bubbleCount; i++) {
-            this._createDecorativeBubble();
-        }
-    }
-
-    /**
-     * Create a seaweed decoration
-     * @private
-     */
-    _createSeaweed() {
-        const x = Math.random() * this.screenWidth;
-        const y = this.screenHeight - 50 + Math.random() * 30;
-
-        const seaweed = this.scene.add.graphics();
-        seaweed.x = x;
-        seaweed.y = y;
-        seaweed.setDepth(4);
-
-        // Draw seaweed with curves
-        const segments = 5 + Math.floor(Math.random() * 5);
-        const baseHeight = 50 + Math.random() * 100;
-
-        seaweed.lineStyle(3, 0x228833, 0.7);
-
-        // Simple procedural seaweed
-        let currentY = 0;
-        for (let i = 0; i < segments; i++) {
-            const swayAmount = 20 + Math.random() * 30;
-            const endX = (Math.random() - 0.5) * swayAmount;
-            const endY = currentY - baseHeight / segments;
-            seaweed.lineBetween(0, currentY, endX, endY);
-            currentY = endY;
-        }
-
-        this.seaweeds.push({
-            graphics: seaweed,
-            baseX: x,
-            swaySpeed: 1000 + Math.random() * 2000,
-            swayAmount: 15 + Math.random() * 25
-        });
-
-        // Add sway animation
-        this.scene.tweens.add({
-            targets: seaweed,
-            x: `+=${seaweed.swayAmount}`,
-            duration: seaweed.swaySpeed,
-            yoyo: true,
-            repeat: -1,
-            ease: 'Sine.easeInOut'
-        });
-    }
-
-    /**
-     * Create a decorative bubble that drifts differently
-     * @private
-     */
-    _createDecorativeBubble() {
-        const rand = Math.random();
-        const size = 2 + rand * 15;
-        const x = Math.random() * this.screenWidth;
-        const y = Math.random() * this.screenHeight + 50;
-        const baseAlpha = 0.15 + rand * 0.4;
-
-        const bubble = this.scene.add.graphics();
-        bubble.fillStyle(this.themeConfig.bubbleColor, baseAlpha);
-        bubble.fillCircle(size / 2, size / 2, size / 2);
-        bubble.lineStyle(1, this.themeConfig.bubbleColor, baseAlpha * 0.6);
-        bubble.strokeCircle(size / 2, size / 2, size / 2);
-
-        bubble.x = x;
-        bubble.y = y;
-        bubble.setDepth(5);
-
-        const targetY = -50;
-        const driftSpeed = 3000 + Math.random() * 5000;
-        const horizontalDrift = (20 - size) * 0.8;
-
-        this.scene.tweens.add({
-            targets: bubble,
-            y: targetY,
-            x: x + (Math.random() > 0.5 ? 1 : -1) * horizontalDrift,
-            alpha: { from: baseAlpha, to: 0 },
-            duration: driftSpeed,
-            ease: 'Sine.easeOut',
-            onRepeat: () => {
-                bubble.x = Math.random() * this.screenWidth;
-                bubble.y = this.screenHeight + 20;
-                bubble.alpha = baseAlpha;
-            },
-            repeat: -1
-        });
-
-        this.decorativeBubbles.push(bubble);
-    }
-
-    /**
-     * Update decorations based on world position
-     * @param {number} worldX - Player world X
-     * @param {number} worldY - Player world Y
-     * @private
-     */
-    _updateDecorations(worldX, worldY) {
-        // Parallax effect for seaweed
-        const parallaxFactor = 0.1;
-        this.seaweeds.forEach((seaweed, index) => {
-            if (seaweed.graphics) {
-                // Subtle parallax based on world position
-                const offsetX = (worldX * parallaxFactor) % 50;
-                seaweed.graphics.x = seaweed.baseX - offsetX;
-            }
-        });
-    }
-
-    /**
-     * Execute zone transition animation
-     * @param {object} newZone - Zone object from MapExpansionSystem
-     * @param {number} duration - Transition duration in ms (default 1500)
-     */
-    transitionToZone(newZone, duration = 1500) {
+    transitionToNewTheme(newThemeId, duration = 1500) {
         if (this.isTransitioning) return;
-        if (!newZone || !newZone.id) {
-            console.warn('Invalid zone object');
-            return;
-        }
+        if (newThemeId === this.currentThemeId) return;
 
         this.isTransitioning = true;
-        this.currentZone = newZone;
+        const oldTheme = this.themeConfig;
+        const newTheme = getTheme(newThemeId);
 
-        // Use zone.tint and zone.bubbleColor from zones.json config
-        const newThemeConfig = {
-            tint: newZone.tint || 0xFFFFFF,
-            bubbleColor: newZone.bubbleColor || 0xAAFFDD,
-            images: {
-                background: newZone.backgrounds?.[0] || 'bg_undersea_theme',
-                far: newZone.backgrounds?.[1] || 'background_undersea_theme2',
-                midground: newZone.midgrounds?.[0] || 'midground_undersea_theme'
-            }
-        };
+        // Fade out decorations
+        this.bubbleGraphics.forEach(g => {
+            this.scene.tweens.add({
+                targets: g,
+                alpha: 0,
+                duration: 200,
+                onComplete: () => g.destroy()
+            });
+        });
+        this.jellyfishGraphics.forEach(g => {
+            this.scene.tweens.add({
+                targets: g,
+                alpha: 0,
+                duration: 200,
+                onComplete: () => g.destroy()
+            });
+        });
+        this.bubbleGraphics = [];
+        this.jellyfishGraphics = [];
 
         // Create transition overlay
         this.transitionOverlay = this.scene.add.graphics();
         this.transitionOverlay.setDepth(100);
         this.transitionOverlay.setAlpha(0);
-
-        // Draw overlay
         this.transitionOverlay.fillStyle(0x000000, 1);
         this.transitionOverlay.fillRect(0, 0, this.screenWidth, this.screenHeight);
 
@@ -423,15 +212,12 @@ export class BackgroundExpansion extends BackgroundSystem {
             duration: duration / 2,
             ease: 'Sine.easeIn',
             onComplete: () => {
-                // At peak darkness, update zone and tint
-                this.theme = newZone.id;
-                this.themeConfig = newThemeConfig;
-                this._applyThemeTint(newThemeConfig.tint, newThemeConfig.bubbleColor);
+                // Switch theme
+                this.currentThemeId = newThemeId;
+                this.themeConfig = newTheme;
+                this._drawGradientBackground(newTheme.gradientColors);
 
-                // Reload chunks with new zone theme
-                this._reloadChunksForZone(newZone);
-
-                // Fade back
+                // Fade from black
                 this.scene.tweens.add({
                     targets: this.transitionOverlay,
                     alpha: 0,
@@ -450,76 +236,118 @@ export class BackgroundExpansion extends BackgroundSystem {
     }
 
     /**
-     * Reload all chunks when transitioning to a new zone
-     * @param {object} zone - New zone object
-     * @private
+     * Update decorations - spawn and move
+     * @param {number} delta - Delta time in ms
+     * @param {number} playerX - Player world X
+     * @param {number} playerY - Player world Y
      */
-    _reloadChunksForZone(zone) {
-        // Destroy existing chunks
-        for (const [chunkKey, chunkContainer] of this.loadedChunks) {
-            if (chunkContainer) {
-                chunkContainer.destroy();
+    updateDecorations(delta, playerX, playerY) {
+        const bubbleInterval = this.themeConfig.decoration.bubble.spawnInterval;
+        const jellyfishInterval = this.themeConfig.decoration.jellyfish.spawnInterval;
+
+        // Spawn bubbles
+        this.lastBubbleSpawn += delta;
+        if (this.lastBubbleSpawn >= bubbleInterval) {
+            const bubble = this.generateBubble(playerX, playerY);
+            if (bubble) {
+                const g = this.scene.add.graphics();
+                g.fillStyle(this.themeConfig.bubbleColor, 0.6);
+                g.fillCircle(bubble.size / 2, bubble.size / 2, bubble.size / 2);
+                g.x = bubble.x;
+                g.y = bubble.y;
+                g.setDepth(3);
+                this.bubbleGraphics.push(g);
+                this.bubbles.push({ ...bubble, graphics: g });
+            }
+            this.lastBubbleSpawn = 0;
+        }
+
+        // Spawn jellyfish
+        this.lastJellyfishSpawn += delta;
+        if (this.lastJellyfishSpawn >= jellyfishInterval) {
+            const jelly = this.generateJellyfish(playerX, playerY);
+            if (jelly) {
+                const g = this.scene.add.graphics();
+                g.fillStyle(this.themeConfig.bubbleColor, 0.4);
+                g.fillCircle(jelly.size / 2, jelly.size / 2, jelly.size / 2);
+                // Add tentacle lines
+                g.lineStyle(1, this.themeConfig.bubbleColor, 0.3);
+                for (let i = 0; i < 4; i++) {
+                    const tx = jelly.size / 2 + (Math.random() - 0.5) * 10;
+                    g.lineBetween(jelly.size / 2, jelly.size / 2, tx, jelly.size + 10);
+                }
+                g.x = jelly.x;
+                g.y = jelly.y;
+                g.setDepth(3);
+                this.jellyfishGraphics.push(g);
+                this.jellyfish.push({ ...jelly, graphics: g });
+            }
+            this.lastJellyfishSpawn = 0;
+        }
+
+        // Update bubble positions (drift outward)
+        for (let i = this.bubbles.length - 1; i >= 0; i--) {
+            const b = this.bubbles[i];
+            b.x += Math.cos(b.angle) * b.speed * (delta / 1000);
+            b.y += Math.sin(b.angle) * b.speed * (delta / 1000);
+            if (b.graphics) {
+                b.graphics.x = b.x;
+                b.graphics.y = b.y;
+            }
+            // Remove if too far from player
+            const dx = b.x - playerX;
+            const dy = b.y - playerY;
+            if (Math.sqrt(dx * dx + dy * dy) > 1500) {
+                if (b.graphics) b.graphics.destroy();
+                this.bubbles.splice(i, 1);
+                this.bubbleGraphics.splice(i, 1);
             }
         }
-        this.loadedChunks.clear();
 
-        // Reload visible chunks around player's current position with new zone theme
-        const worldX = this.playerX || 0;
-        const worldY = this.playerY || 0;
-        const centerChunk = this._worldToChunk(worldX, worldY);
-        const chunksToLoad = [
-            `${centerChunk.chunkX - 1}_${centerChunk.chunkY}`,
-            `${centerChunk.chunkX}_${centerChunk.chunkY}`,
-            `${centerChunk.chunkX + 1}_${centerChunk.chunkY}`,
-            `${centerChunk.chunkX}_${centerChunk.chunkY - 1}`,
-            `${centerChunk.chunkX}_${centerChunk.chunkY + 1}`
-        ];
-        chunksToLoad.forEach(chunkKey => this._loadChunk(chunkKey));
+        // Update jellyfish positions
+        for (let i = this.jellyfish.length - 1; i >= 0; i--) {
+            const j = this.jellyfish[i];
+            j.x += j.vx;
+            j.y += j.vy;
+            j.pulsePhase += delta * 0.003;
+            if (j.graphics) {
+                j.graphics.x = j.x;
+                j.graphics.y = j.y;
+                j.graphics.alpha = 0.3 + Math.sin(j.pulsePhase) * 0.2;
+            }
+            // Remove if too far from player
+            const dx = j.x - playerX;
+            const dy = j.y - playerY;
+            if (Math.sqrt(dx * dx + dy * dy) > 2000) {
+                if (j.graphics) j.graphics.destroy();
+                this.jellyfish.splice(i, 1);
+                this.jellyfishGraphics.splice(i, 1);
+            }
+        }
     }
 
     /**
-     * Override parent update for infinite background support
+     * Override parent update for decoration support
      * @param {number} delta - Delta time
      */
     update(delta) {
-        // Parent class handles base parallax
         super.update(delta);
     }
 
     /**
-     * Clean up infinite background resources
+     * Clean up
      */
     destroy() {
-        // Destroy all loaded chunks
-        for (const [chunkKey, chunkContainer] of this.loadedChunks) {
-            if (chunkContainer) {
-                chunkContainer.destroy();
-            }
-        }
-        this.loadedChunks.clear();
-
-        // Destroy decorations
-        for (const seaweed of this.seaweeds) {
-            if (seaweed.graphics) {
-                seaweed.graphics.destroy();
-            }
-        }
-        this.seaweeds = [];
-
-        for (const bubble of this.decorativeBubbles) {
-            if (bubble) {
-                bubble.destroy();
-            }
-        }
-        this.decorativeBubbles = [];
-
-        // Destroy transition overlay if exists
-        if (this.transitionOverlay) {
-            this.transitionOverlay.destroy();
-            this.transitionOverlay = null;
-        }
-
-        // Call parent destroy
+        this.bubbles = [];
+        this.jellyfish = [];
+        this.lightSpots = [];
+        this.bubbleGraphics.forEach(g => g.destroy());
+        this.jellyfishGraphics.forEach(g => g.destroy());
+        this.lightSpotGraphics.forEach(g => g.destroy());
+        this.bubbleGraphics = [];
+        this.jellyfishGraphics = [];
+        this.lightSpotGraphics = [];
+        if (this.transitionOverlay) this.transitionOverlay.destroy();
         super.destroy();
     }
 }

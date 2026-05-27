@@ -38,48 +38,40 @@ export class BackgroundExpansion extends BackgroundSystem {
     }
 
     /**
-     * Create background with gradient and decorations
+     * Create background - use parent image-based background with decorations
      */
     createBackground() {
-        // Create gradient background using graphics
-        this.bgGraphics = this.scene.add.graphics();
-        this.bgGraphics.setDepth(0);
-        this._drawGradientBackground(this.themeConfig.gradientColors);
+        // Map our theme to parent's theme for image loading
+        const themeMap = { 'deep_sea': 'undersea', 'tropical': 'tropical', 'polar': 'polar' };
+        const parentTheme = themeMap[this.currentThemeId] || 'undersea';
 
-        // Create decoration container
-        this.decorationContainer = this.scene.add.container(0, 0);
-        this.decorationContainer.setDepth(1);
+        // Back up our decoration config
+        const ourThemeConfig = this.themeConfig;
 
-        // Initialize light spots (static,随视角移动)
-        this._initLightSpots();
+        // Set up parent theme temporarily for image loading
+        this.theme = parentTheme;
+        this.themeConfig = BackgroundSystem.THEME_CONFIG[parentTheme];
+        this.selectedBackground = this.themeConfig.backgrounds[0];
+
+        // Load background images (parent's method)
+        this._loadBackgroundImages();
+        this._createBubbleAnimation();
+
+        // Restore our decoration config
+        this.themeConfig = ourThemeConfig;
+
+        // Add our custom decorations layer
+        this._initLightSpotsFromThemeConfig();
     }
 
     /**
-     * Draw gradient background
-     * @param {number[]} colors - [top, mid, bottom] color values
+     * Initialize light spots using our ThemeConfig
      */
-    _drawGradientBackground(colors) {
-        const w = this.screenWidth;
-        const h = this.screenHeight;
-        const segmentHeight = h / (colors.length - 1);
-
-        for (let i = 0; i < colors.length - 1; i++) {
-            const topColor = colors[i];
-            const bottomColor = colors[i + 1];
-            const y1 = i * segmentHeight;
-            const y2 = (i + 1) * segmentHeight;
-
-            this.bgGraphics.fillStyle(topColor, 1);
-            this.bgGraphics.fillRect(0, y1, w, segmentHeight + 1);
-        }
-    }
-
-    /**
-     * Initialize light spots (static decorations)
-     */
-    _initLightSpots() {
-        const count = this.themeConfig.decoration.lightSpot.count;
-        const flickerSpeed = this.themeConfig.decoration.lightSpot.flickerSpeed;
+    _initLightSpotsFromThemeConfig() {
+        const config = THEME_CONFIG[this.currentThemeId] || THEME_CONFIG.deep_sea;
+        const count = config.decoration.lightSpot.count;
+        const flickerSpeed = config.decoration.lightSpot.flickerSpeed;
+        const bubbleColor = config.bubbleColor;
 
         for (let i = 0; i < count; i++) {
             const x = Math.random() * this.screenWidth;
@@ -88,7 +80,7 @@ export class BackgroundExpansion extends BackgroundSystem {
             const baseAlpha = 0.1 + Math.random() * 0.3;
 
             const spot = this.scene.add.graphics();
-            spot.fillStyle(this.themeConfig.bubbleColor, baseAlpha);
+            spot.fillStyle(bubbleColor, baseAlpha);
             spot.fillCircle(size / 2, size / 2, size / 2);
             spot.x = x;
             spot.y = y;
@@ -215,7 +207,15 @@ export class BackgroundExpansion extends BackgroundSystem {
                 // Switch theme
                 this.currentThemeId = newThemeId;
                 this.themeConfig = newTheme;
-                this._drawGradientBackground(newTheme.gradientColors);
+
+                // Update parent theme for images
+                const themeMap = { 'deep_sea': 'undersea', 'tropical': 'tropical', 'polar': 'polar' };
+                this.theme = themeMap[newThemeId] || 'undersea';
+
+                // Apply tint change to images
+                const newTint = BackgroundSystem.THEME_CONFIG[this.theme].tint;
+                const newBubbleColor = newTheme.bubbleColor;
+                this._applyThemeTint(newTint, newBubbleColor);
 
                 // Fade from black
                 this.scene.tweens.add({

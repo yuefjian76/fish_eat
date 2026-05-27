@@ -1391,6 +1391,13 @@ class GameScene extends Phaser.Scene {
             this.backgroundSystem = new BackgroundSystem(this, 1024, 768);
             this.backgroundSystem.createBackground();
         }
+
+        // Theme transition every 2 levels (random theme)
+        if (this.level % 2 === 0 && this.backgroundSystem) {
+            const nextTheme = this.backgroundSystem.getNextTheme();
+            this.backgroundSystem.transitionToNewTheme(nextTheme, 1500);
+            logger.info('Theme transition triggered', { from: this.backgroundSystem.currentThemeId, to: nextTheme, level: this.level });
+        }
     }
 
     /**

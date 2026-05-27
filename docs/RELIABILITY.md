@@ -153,18 +153,28 @@ console.log(`Load time: ${performance.now() - start}ms`);
 
 | 层 | 命令 | 覆盖 |
 |----|------|------|
-| 单元测试 | `npm test` | 731 测试，44 套件 |
-| E2E 冒烟 | `npx playwright test e2e/smoke.spec.js` | 7 测试 |
+| 单元测试 | `npm test` | 每个系统的纯逻辑 |
+| E2E 冒烟 | `npx playwright test e2e/smoke.spec.js` 或 Playwright MCP | 游戏加载 + 核心功能 |
 | 全流程 | `./init.sh` | install → test → verify |
 
-### Test Coverage
+### E2E Testing Requirements
 
-| 模块 | 测试数 | 状态 |
-|------|--------|------|
-| Systems | ~600 | ✅ |
-| Entities | ~80 | ✅ |
-| Scenes | ~50 | ✅ |
-| Config | ~5 | ✅ |
+E2E 测试验证游戏完整流程，确保功能可集成。测试应覆盖：
+
+- **菜单界面** — 登录/注册/游客模式入口正常
+- **游戏加载** — Canvas 渲染，场景切换无崩溃
+- **核心循环** — 玩家移动、碰撞、吃鱼、升级流程正常
+- **UI 响应** — HUD 显示、技能栏、技能使用正常
+
+运行 E2E 验证：
+```bash
+# 方式 1: Playwright MCP（推荐，在 Claude Code 中使用 browser_* 工具）
+# 方式 2: 命令行
+npx playwright test e2e/smoke.spec.js --project=chromium
+# 方式 3: 内置 HTTP server
+python3 -m http.server 8765 &
+npx playwright test e2e/smoke.spec.js
+```
 
 ### Clean State Testing
 
@@ -178,3 +188,54 @@ console.log(`Load time: ${performance.now() - start}ms`);
 1. **PNG 透明度** — 部分水母/章鱼 PNG 背景可能不透明，程序化 fallback 存在
 2. **localStorage 限制** — 大数据量可能触发配额限制
 3. **WebGL 兼容性** — 旧浏览器可能不支持
+
+## Debug Mode
+
+游戏支持 Debug 模式，可通过 URL 参数 `?debug=true` 启用：
+
+### 暴露的全局变量
+
+| 变量 | 访问 | 用途 |
+|------|------|------|
+| `window.__PHASER_GAME__` | 浏览器控制台 | Phaser 游戏实例 |
+| `window.__GAME_SCENE__` | 浏览器控制台 | 当前 GameScene 实例 |
+
+### Debug Overlay
+
+DEBUG 模式下，GameScene 显示只读状态面板：
+
+```
+Wave: calm | HP: 50/50 | Score: 0 | Level: 1 | Enemies: 5
+```
+
+### 运行时调试
+
+在浏览器控制台直接检查游戏状态：
+
+```javascript
+// 查看波次状态
+__GAME_SCENE__.waveSystem.getState()
+
+// 查看敌鱼数量
+__GAME_SCENE__.enemies.length
+
+// 查看玩家血量
+__GAME_SCENE__.hp
+
+// 查看分数
+__GAME_SCENE__.score
+
+// 强制升级（测试用）
+__GAME_SCENE__.growthSystem.addExp(100)
+```
+
+## Observability Checklist
+
+新功能开发时，确保满足可观测性要求：
+
+- [ ] 所有系统使用 `logger.forService('SystemName')` 输出日志
+- [ ] 关键事件使用 INFO 级别（游戏开始、升级、死亡、Boss 出现）
+- [ ] 每帧更新使用 DEBUG 级别（移动、碰撞检测）
+- [ ] 错误使用 ERROR 级别，并包含上下文数据
+- [ ] 日志格式为 JSON，包含 timestamp、level、service、message、data
+- [ ] 新功能上线前在 Playwright MCP 中验证 Console 无 Error

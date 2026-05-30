@@ -1,19 +1,39 @@
 # 进度日志
 
-## 当前阶段：feat-044 属性相克激活 完成
+## 当前阶段：feat-045 技能协同系统 完成
 
-目标：完成 feat-044 属性相克激活。
+目标：完成 feat-045 技能协同系统。
 
 当前进度：
 - ✅ feat-001 ~ feat-041：全部完成（41 个特性）
 - ✅ feat-042：Background Bug Fix + checkEat 统一（754 tests）
 - ✅ feat-043：技能数值平衡（765 tests）
 - ✅ feat-044：属性相克激活（855 tests）
-- ⏳ feat-045：技能协同系统（待做）
+- ✅ feat-045：技能协同系统（855 tests）
 - ✅ feat-046：ScrollingWorld Phase 1 — DepthColorMapper + ScrollingBackground 基础层（850 tests）
 - ✅ feat-047：ScrollingWorld Phase 2 — 视差完整层 + DepthFog + ScrollEdge（850 tests）
 - ✅ feat-048：ScrollingWorld Phase 3 — Prng + DecorationPool（850 tests）
 - ✅ feat-049：ScrollingWorld Phase 4 — 删除 BackgroundExpansion + 清理废弃代码 + 文档更新（850 tests）
+
+---
+
+## 会话 — 2026-05-30（feat-045 完成）
+
+### 已完成
+- ✅ feat-045：技能协同系统
+  - `skills.json`：添加 `synergies` 块，包含 `rush_bite`（pattern: [speed_up, bite], damageMultiplier: 2.0, knockback: true）和 `storm_slash`（pattern: [speed_up, bite, speed_up], cooldownReset: bite, bonusBites: 3）
+  - `SkillSystem`：新增 `recentSkillQueue`（最近3秒技能队列）、`_loadSynergies`、`_cleanSkillQueue`、`_checkSynergy`、`_executeSynergy`、`_queueBonusBite`、`_getFinalDamage` 方法
+  - `FloatingTextSystem`：新增 `showSynergyName` 方法（金色文字，24px，向上飘动并淡出）
+  - 855 tests 通过，init.sh 全部通过，E2E 验证通过（浏览器加载正常，无 JS 错误）
+
+### 文件改动
+- `src/config/skills.json` — 添加 synergies 块
+- `src/systems/SkillSystem.js` — 添加协同系统完整实现
+- `src/systems/FloatingTextSystem.js` — 添加 showSynergyName 方法
+- `docs/superpowers/plans/2026-05-30-feat-045-skill-synergy-design.md` — 实现计划文档
+
+### 下一步
+- 所有已知功能已完成（49/49）
 
 ---
 

@@ -477,7 +477,7 @@
       "dependencies": [
         "feat-044"
       ],
-      "status": "pending",
+      "status": "completed",
       "definition_of_done": [
         "skills.json synergies block added with rush_bite and storm_slash definitions",
         "SkillSystem maintains a recentSkillQueue (last 3s)",
@@ -489,7 +489,7 @@
         "No regression in existing tests",
         "init.sh passes"
       ],
-      "evidence": ""
+      "evidence": "855 tests pass. E2E verified: browser loads, game starts, no JS errors (only favicon.ico 404). Changes: (1) skills.json: added synergies block with rush_bite (pattern: [speed_up, bite], damageMultiplier: 2.0, knockback: true) and storm_slash (pattern: [speed_up, bite, speed_up], cooldownReset: bite, bonusBites: 3); (2) SkillSystem: added recentSkillQueue, _cleanSkillQueue, _loadSynergies, _checkSynergy, _executeSynergy, _queueBonusBite, _getFinalDamage methods; (3) FloatingTextSystem: added showSynergyName method (gold text, 24px, float up and fade)."
     },
     {
       "id": "feat-046",

@@ -92,7 +92,8 @@ test('game.debug.unwatch() when not watching is safe', async ({ page }) => {
 test('game.debug.skill("Q") executes', async ({ page }) => {
     await startGame(page);
     const result = await page.evaluate(() => window.__DEBUG_API__.skill("Q"));
-    expect(result).toHaveProperty('success');
+    expect(result.success).toBe(true);
+    expect(result.skillKey).toBe('Q');
 });
 
 test('game.debug.skill("R") when locked returns error', async ({ page }) => {
@@ -106,7 +107,8 @@ test('game.debug.skill("R") when locked returns error', async ({ page }) => {
 test('game.debug.spawn("shark", 2) creates enemies', async ({ page }) => {
     await startGame(page);
     const before = await page.evaluate(() => window.__DEBUG_API__.state.current.enemyCount);
-    await page.evaluate(() => window.__DEBUG_API__.spawn("shark", 2));
+    const result = await page.evaluate(() => window.__DEBUG_API__.spawn("shark", 2));
+    expect(result.spawned).toBeGreaterThan(0);
     const after = await page.evaluate(() => window.__DEBUG_API__.state.current.enemyCount);
     expect(after - before).toBeGreaterThan(0);
 });
@@ -118,6 +120,7 @@ test('game.debug.spawn("invalid", 1) returns error', async ({ page }) => {
     expect(result.reason).toContain('Invalid fish type');
 });
 
+// Note: Boss exclusion cannot be easily tested here without spawning a real boss
 test('game.debug.killAll() excludes bosses', async ({ page }) => {
     await startGame(page);
     const result = await page.evaluate(() => window.__DEBUG_API__.killAll());
@@ -141,4 +144,23 @@ test('game.debug.eat("nonexistent") returns error', async ({ page }) => {
     const result = await page.evaluate(() => window.__DEBUG_API__.eat("nonexistent"));
     expect(result.error).toBeTruthy();
     expect(result.error).toContain('No nonexistent fish within range');
+});
+
+test('game.debug.maxExp() sets exp to level-up threshold', async ({ page }) => {
+    await startGame(page);
+    const result = await page.evaluate(() => window.__DEBUG_API__.maxExp());
+    expect(result.success).toBe(true);
+    expect(result.exp).toBeGreaterThan(0);
+});
+
+test('game.debug.fullHealth() restores hp to maxHp', async ({ page }) => {
+    await startGame(page);
+    const stateBefore = await page.evaluate(() => window.__DEBUG_API__.state.current);
+    // Take damage first to make test meaningful
+    const damagedHp = stateBefore.hp > 10 ? stateBefore.hp - 10 : stateBefore.hp;
+    await page.evaluate((hp) => { window.__DEBUG_API__.state.current.hp = hp; }, damagedHp);
+    const result = await page.evaluate(() => window.__DEBUG_API__.fullHealth());
+    expect(result.success).toBe(true);
+    const stateAfter = await page.evaluate(() => window.__DEBUG_API__.state.current);
+    expect(stateAfter.hp).toBe(stateAfter.maxHp);
 });

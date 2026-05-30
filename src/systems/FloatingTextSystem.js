@@ -90,6 +90,37 @@ export class FloatingTextSystem {
     }
 
     /**
+     * Show synergy activation text (gold, centered)
+     * @param {string} synergyName - Name of the synergy to display
+     * @returns {Phaser.GameObjects.Text} Created text object
+     */
+    showSynergyName(synergyName) {
+        const x = this.player?.x || this._scene.cameras?.main?.centerX || 400;
+        const y = (this.player?.y || this._scene.cameras?.main?.centerY || 300) - 50;
+
+        const floatText = this._scene.add.text(x, y, synergyName, {
+            fontSize: '24px',
+            color: '#FFD700',
+            stroke: '#000000',
+            strokeThickness: 3
+        });
+        floatText.setOrigin(0.5);
+        floatText.setDepth(1000);
+
+        this._scene.tweens.add({
+            targets: floatText,
+            y: y - 60,
+            alpha: 0,
+            duration: 1200,
+            ease: 'Cubic.easeOut',
+            onComplete: () => floatText.destroy()
+        });
+
+        this.onTextCreated(floatText);
+        return floatText;
+    }
+
+    /**
      * Reset floating text system
      */
     reset() {

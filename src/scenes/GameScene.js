@@ -1146,7 +1146,7 @@ class GameScene extends Phaser.Scene {
                     level: self.level,
                     score: self.score,
                     exp: self.exp,
-                    wave: self._waveState,
+                    wave: self.waveSystem ? self.waveSystem.getState() : 'calm',
                     enemyCount: self.enemies?.length || 0,
                     skillCooldowns: {
                         Q: self.skillSystem?.getCooldownRemaining('bite') || 0,
@@ -1158,6 +1158,23 @@ class GameScene extends Phaser.Scene {
             },
 
             state: {
+                get current() {
+                    return {
+                        hp: self.hp,
+                        maxHp: self.maxHp,
+                        level: self.level,
+                        score: self.score,
+                        exp: self.exp,
+                        wave: self.waveSystem ? self.waveSystem.getState() : 'calm',
+                        enemyCount: self.enemies?.length || 0,
+                        skillCooldowns: {
+                            Q: self.skillSystem?.getCooldownRemaining('bite') || 0,
+                            W: self.skillSystem?.getCooldownRemaining('shield') || 0,
+                            E: self.skillSystem?.getCooldownRemaining('speed_up') || 0,
+                            R: self.skillSystem?.getCooldownRemaining('heal') || 0,
+                        }
+                    };
+                },
                 detailed() {
                     return {
                         enemies: (self.enemies || []).map(e => ({

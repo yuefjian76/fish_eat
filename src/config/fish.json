@@ -8,7 +8,11 @@
     "exp": 15,
     "color": "#FF6B6B",
     "strongAgainst": [],
-    "weakTo": ["shark"]
+    "weakTo": ["shark"],
+    "damageMultiplierVsStrong": 2.0,
+    "damageMultiplierVsWeak": 0.5,
+    "sizeThresholdVsStrong": 1.5,
+    "sizeThresholdVsWeak": 1.2
   },
   "shrimp": {
     "name": "小虾",
@@ -19,7 +23,11 @@
     "exp": 8,
     "color": "#FFB347",
     "strongAgainst": [],
-    "weakTo": ["clownfish", "shark"]
+    "weakTo": ["clownfish", "shark"],
+    "damageMultiplierVsStrong": 2.0,
+    "damageMultiplierVsWeak": 0.5,
+    "sizeThresholdVsStrong": 1.5,
+    "sizeThresholdVsWeak": 1.2
   },
   "shark": {
     "name": "鲨鱼",
@@ -30,43 +38,75 @@
     "exp": 50,
     "color": "#708090",
     "strongAgainst": ["clownfish"],
-    "weakTo": []
+    "weakTo": [],
+    "damageMultiplierVsStrong": 2.0,
+    "damageMultiplierVsWeak": 0.5,
+    "sizeThresholdVsStrong": 1.5,
+    "sizeThresholdVsWeak": 1.2
   },
   "anglerfish": {
     "hp": 30, "speed": 80, "size": 35, "damage": 10,
     "range": 200, "exp": 15, "behavior": "ranged",
-    "color": "#4B0082", "strongAgainst": [], "weakTo": ["shark"]
+    "color": "#4B0082", "strongAgainst": [], "weakTo": ["shark"],
+    "damageMultiplierVsStrong": 2.0,
+    "damageMultiplierVsWeak": 0.5,
+    "sizeThresholdVsStrong": 1.5,
+    "sizeThresholdVsWeak": 1.2
   },
   "jellyfish": {
     "hp": 25, "speed": 50, "size": 40, "damage": 8,
     "aoe": true, "exp": 10, "behavior": "floating",
-    "color": "#ADD8E6", "strongAgainst": [], "weakTo": ["shark", "eel"]
+    "color": "#ADD8E6", "strongAgainst": [], "weakTo": ["shark", "eel"],
+    "damageMultiplierVsStrong": 2.0,
+    "damageMultiplierVsWeak": 0.5,
+    "sizeThresholdVsStrong": 1.5,
+    "sizeThresholdVsWeak": 1.2
   },
   "seahorse": {
     "hp": 20, "speed": 200, "size": 25, "damage": 5,
     "evasive": true, "exp": 12, "behavior": "evasive",
-    "color": "#FFD700", "strongAgainst": [], "weakTo": ["octopus"]
+    "color": "#FFD700", "strongAgainst": [], "weakTo": ["octopus"],
+    "damageMultiplierVsStrong": 2.0,
+    "damageMultiplierVsWeak": 0.5,
+    "sizeThresholdVsStrong": 1.5,
+    "sizeThresholdVsWeak": 1.2
   },
   "octopus": {
     "hp": 50, "speed": 100, "size": 45, "damage": 20,
     "stealth": true, "exp": 20, "behavior": "stealth",
-    "color": "#8B008B", "strongAgainst": ["seahorse"], "weakTo": ["shark", "eel"]
+    "color": "#8B008B", "strongAgainst": ["seahorse"], "weakTo": ["shark", "eel"],
+    "damageMultiplierVsStrong": 2.0,
+    "damageMultiplierVsWeak": 0.5,
+    "sizeThresholdVsStrong": 1.5,
+    "sizeThresholdVsWeak": 1.2
   },
   "eel": {
     "hp": 40, "speed": 250, "size": 50, "damage": 25,
     "dash": true, "exp": 18, "behavior": "dash",
-    "color": "#FFD700", "strongAgainst": [], "weakTo": ["shark"]
+    "color": "#FFD700", "strongAgainst": [], "weakTo": ["shark"],
+    "damageMultiplierVsStrong": 2.0,
+    "damageMultiplierVsWeak": 0.5,
+    "sizeThresholdVsStrong": 1.5,
+    "sizeThresholdVsWeak": 1.2
   },
   "mutant_shark": {
     "name": "变异鲨鱼",
     "hp": 240, "speed": 180, "size": 80, "damage": 30,
     "enrage": true, "elite": true, "exp": 100,
-    "behavior": "enrage", "color": "#FF4444", "strongAgainst": [], "weakTo": []
+    "behavior": "enrage", "color": "#FF4444", "strongAgainst": [], "weakTo": [],
+    "damageMultiplierVsStrong": 2.0,
+    "damageMultiplierVsWeak": 0.5,
+    "sizeThresholdVsStrong": 1.5,
+    "sizeThresholdVsWeak": 1.2
   },
   "giant_jellyfish": {
     "hp": 150, "speed": 60, "size": 120, "damage": 15,
     "chain_lightning": true, "elite": true, "exp": 120,
-    "behavior": "chain_lightning", "color": "#00FFFF", "strongAgainst": [], "weakTo": []
+    "behavior": "chain_lightning", "color": "#00FFFF", "strongAgainst": [], "weakTo": [],
+    "damageMultiplierVsStrong": 2.0,
+    "damageMultiplierVsWeak": 0.5,
+    "sizeThresholdVsStrong": 1.5,
+    "sizeThresholdVsWeak": 1.2
   },
   "boss_squid": {
     "baseHp": 100, "hpPerLevel": 100, "size": 200, "damage": 40,

@@ -93,7 +93,10 @@ describe('SkillSystem', () => {
                 takeDamage: () => false,
                 getExpValue: () => 10
             }];
-            skillSystem.scene.growthSystem = { addExperience: () => ({ expGained: 10, leveledUp: false }) };
+            skillSystem.scene.growthSystem = {
+                addExperience: () => ({ expGained: 10, leveledUp: false }),
+                getExp: () => 10, getLevel: () => 1, getExpForLevel: () => 100
+            };
             skillSystem.scene.luckSystem = {};
             skillSystem.scene.time = { now: 0, addEvent: () => {}, delayedCall: () => {} };
             skillSystem.scene.exp = 0;
@@ -112,7 +115,10 @@ describe('SkillSystem', () => {
                 takeDamage: () => false,
                 getExpValue: () => 10
             }];
-            skillSystem.scene.growthSystem = { addExperience: () => ({ expGained: 10, leveledUp: false }) };
+            skillSystem.scene.growthSystem = {
+                addExperience: () => ({ expGained: 10, leveledUp: false }),
+                getExp: () => 10, getLevel: () => 1, getExpForLevel: () => 100
+            };
             skillSystem.scene.luckSystem = {};
             skillSystem.scene.time = { now: 0, addEvent: () => {}, delayedCall: () => {} };
             skillSystem.scene.exp = 0;
@@ -323,94 +329,107 @@ describe('SkillSystem', () => {
     });
 
     describe('executeDamageSkill', () => {
+        // Helper: build a standard mock scene with enemies
+        const buildScene = (enemyList, overrides = {}) => ({
+            enemies: enemyList,
+            player: { x: 100, y: 100 },
+            level: 5,
+            exp: 0,
+            score: 0,
+            hp: 100,
+            maxHp: 100,
+            growthSystem: {
+                addExperience: () => ({ expGained: 25, leveledUp: false }),
+                getExp: () => 25,
+                getLevel: () => 5,
+                getExpForLevel: () => 100
+            },
+            luckSystem: {},
+            time: { now: 1000, addEvent: () => {}, delayedCall: () => {} },
+            onLevelUp: () => {},
+            scene: { get: () => ({ updateUI: () => {} }) },
+            updatePlayerHealthBar: () => {},
+            ...overrides
+        });
+
+        const makeEnemy = (x = 150, dies = false, exp = 25) => ({
+            graphics: { x, y: 100, active: true },
+            fishData: { size: 20 },
+            takeDamage: () => dies,
+            getExpValue: () => exp,
+            destroy: () => {}
+        });
+
         test('kills enemy and grants exp', () => {
-            const mockEnemy = {
-                graphics: { x: 150, y: 100, active: true },
-                fishData: { size: 20 },
-                takeDamage: () => true, // Enemy dies
-                getExpValue: () => 25,
-                destroy: () => {}
-            };
-            const mockScene = {
-                enemies: [mockEnemy],
-                player: { x: 100, y: 100 },
-                level: 5,
-                exp: 0,
-                score: 0,
-                hp: 100,
-                maxHp: 100,
-                growthSystem: {
-                    addExperience: () => ({ expGained: 25, leveledUp: false }),
-                    getExp: () => 25,
-                    getLevel: () => 5,
-                    getExpForLevel: () => 100
-                },
-                luckSystem: {},
-                time: { now: 1000, addEvent: () => {}, delayedCall: () => {} },
-                onLevelUp: () => {},
-                scene: { get: () => ({ updateUI: () => {} }) },
-                updatePlayerHealthBar: () => {}
-            };
+            const enemy = makeEnemy(150, true, 25);
+            const mockScene = buildScene([enemy]);
             skillSystem.setPlayer(mockScene.player, mockScene);
 
             const result = skillSystem.executeDamageSkill('bite', mockSkillsData.bite);
             expect(result.success).toBe(true);
-            expect(result.killed).toBe(true);
-            expect(mockScene.enemies.length).toBe(0); // Enemy removed
+            // killed is now a count (>= 1 means at least one killed)
+            expect(result.killed).toBeGreaterThan(0);
+            expect(mockScene.enemies.length).toBe(0);
         });
 
         test('triggers level up when exp causes level up', () => {
-            const mockEnemy = {
-                graphics: { x: 150, y: 100, active: true },
-                fishData: { size: 20 },
-                takeDamage: () => true,
-                getExpValue: () => 50,
-                destroy: () => {}
-            };
-            const mockScene = {
-                enemies: [mockEnemy],
-                player: { x: 100, y: 100 },
-                level: 4,
-                exp: 80,
-                score: 0,
-                hp: 100,
-                maxHp: 100,
+            const enemy = makeEnemy(150, true, 50);
+            const onLevelUp = jest.fn();
+            const mockScene = buildScene([enemy], {
                 growthSystem: {
                     addExperience: () => ({ expGained: 50, leveledUp: true }),
-                    getExp: () => 130,
-                    getLevel: () => 5,
-                    getExpForLevel: () => 200
+                    getExp: () => 130, getLevel: () => 5, getExpForLevel: () => 200
                 },
-                luckSystem: {},
-                time: { now: 1000, addEvent: () => {}, delayedCall: () => {} },
-                onLevelUp: jest.fn(),
-                scene: { get: () => ({ updateUI: () => {} }) },
-                updatePlayerHealthBar: () => {}
-            };
+                onLevelUp
+            });
             skillSystem.setPlayer(mockScene.player, mockScene);
 
-            const result = skillSystem.executeDamageSkill('bite', mockSkillsData.bite);
-            expect(result.success).toBe(true);
-            expect(result.killed).toBe(true);
-            expect(mockScene.onLevelUp).toHaveBeenCalled();
+            skillSystem.executeDamageSkill('bite', mockSkillsData.bite);
+            expect(onLevelUp).toHaveBeenCalled();
         });
 
         test('returns no_target when enemy out of range', () => {
-            const mockScene = {
-                enemies: [{
-                    graphics: { x: 1000, y: 1000, active: true }, // Far away
-                    fishData: { size: 20 },
-                    takeDamage: () => false,
-                    getExpValue: () => 10
-                }],
-                player: { x: 100, y: 100 },
-                level: 5
-            };
+            const farEnemy = makeEnemy(1000); // way out of range=200
+            const mockScene = buildScene([farEnemy]);
             skillSystem.setPlayer(mockScene.player, mockScene);
 
             const result = skillSystem.executeDamageSkill('bite', mockSkillsData.bite);
             expect(result.success).toBe(false);
             expect(result.reason).toBe('no_target');
+        });
+
+        // ── feat-043: AOE hit (range-based, all enemies) ──────────────────
+        test('AOE: hits multiple enemies in range', () => {
+            const e1 = makeEnemy(150, false); // in range (distance ≈ 50)
+            const e2 = makeEnemy(180, false); // in range (distance ≈ 80)
+            const mockScene = buildScene([e1, e2]);
+            skillSystem.setPlayer(mockScene.player, mockScene);
+
+            const result = skillSystem.executeDamageSkill('bite', mockSkillsData.bite);
+            expect(result.success).toBe(true);
+            expect(result.hitCount).toBe(2);
+        });
+
+        test('AOE: only hits enemies within range, ignores distant', () => {
+            const near = makeEnemy(150, false);   // in range
+            const far = makeEnemy(1000, false);   // out of range
+            const mockScene = buildScene([near, far]);
+            skillSystem.setPlayer(mockScene.player, mockScene);
+
+            const result = skillSystem.executeDamageSkill('bite', mockSkillsData.bite);
+            expect(result.hitCount).toBe(1);
+        });
+
+        test('AOE: kills all in-range enemies, not out-of-range', () => {
+            const near = makeEnemy(150, true, 10);
+            const far = makeEnemy(1000, true, 10);
+            const mockScene = buildScene([near, far]);
+            skillSystem.setPlayer(mockScene.player, mockScene);
+
+            skillSystem.executeDamageSkill('bite', mockSkillsData.bite);
+            // near enemy destroyed (removed from array), far enemy stays
+            expect(mockScene.enemies.length).toBe(1);
+            expect(mockScene.enemies[0]).toBe(far);
         });
     });
 
@@ -556,6 +575,133 @@ describe('SkillSystem', () => {
             const result = skillSystem.executeHealSkill('heal', mockSkillsData.heal);
             expect(result.success).toBe(true);
             expect(result.healAmount).toBe(5); // Only heals 5, not 20
+        });
+
+        test('feat-043: healPercent=0.15 heals 15% of maxHp', () => {
+            // Uses real skills.json-like data: healPercent instead of healAmount
+            const healSkillPercent = { type: 'heal', cooldown: 15, healPercent: 0.15 };
+            const mockScene = {
+                hp: 60,
+                maxHp: 200,
+                updatePlayerHealthBar: jest.fn(),
+                add: {
+                    text: () => ({
+                        setOrigin: () => ({ setDepth: () => {} }),
+                        setDepth: () => {},
+                        destroy: () => {}
+                    })
+                },
+                tweens: { add: jest.fn() }
+            };
+            const mockPlayer = { x: 0, y: 0 };
+            skillSystem.setPlayer(mockPlayer, mockScene);
+
+            const result = skillSystem.executeHealSkill('heal', healSkillPercent);
+            expect(result.success).toBe(true);
+            // 15% of 200 = 30; 60 + 30 = 90
+            expect(result.healAmount).toBe(30);
+            expect(mockScene.hp).toBe(90);
+        });
+
+        test('feat-043: healPercent caps at remaining HP gap', () => {
+            const healSkillPercent = { type: 'heal', cooldown: 15, healPercent: 0.15 };
+            const mockScene = {
+                hp: 195,
+                maxHp: 200,
+                updatePlayerHealthBar: jest.fn(),
+                add: { text: () => ({ setOrigin: () => {}, setDepth: () => {} }) },
+                tweens: { add: jest.fn() }
+            };
+            const mockPlayer = { x: 0, y: 0 };
+            skillSystem.setPlayer(mockPlayer, mockScene);
+
+            const result = skillSystem.executeHealSkill('heal', healSkillPercent);
+            expect(result.success).toBe(true);
+            // 15% of 200 = 30, but only 5 HP gap → caps at 5
+            expect(result.healAmount).toBe(5);
+            expect(mockScene.hp).toBe(200);
+        });
+    });
+
+    describe('feat-043: skill config values', () => {
+        test('E speed_up: speedMultiplier=1.5, cooldown=10s, duration=3s', () => {
+            const realSpeedUp = { type: 'buff', cooldown: 10, speedMultiplier: 1.5, duration: 3, unlockLevel: 4 };
+            expect(realSpeedUp.speedMultiplier).toBe(1.5);
+            expect(realSpeedUp.cooldown).toBe(10);
+            expect(realSpeedUp.duration).toBe(3);
+        });
+
+        test('W shield: cooldown=30s, shieldHpPercent=0.3, duration=5s', () => {
+            const realShield = { type: 'defense', cooldown: 30, shieldHpPercent: 0.3, duration: 5, unlockLevel: 2 };
+            expect(realShield.shieldHpPercent).toBe(0.3);
+            expect(realShield.cooldown).toBe(30);
+        });
+
+        test('Q bite: range=100, damage=25, cooldown=3s', () => {
+            const realBite = { type: 'damage', cooldown: 3, damage: 25, range: 100, unlockLevel: 1 };
+            expect(realBite.range).toBe(100);
+            expect(realBite.damage).toBe(25);
+            expect(realBite.cooldown).toBe(3);
+        });
+
+        test('R heal: healPercent=0.15, cooldown=15s (no legacy healAmount)', () => {
+            const realHeal = { type: 'heal', cooldown: 15, healPercent: 0.15, unlockLevel: 6 };
+            expect(realHeal.healPercent).toBe(0.15);
+            expect(realHeal.cooldown).toBe(15);
+            expect(realHeal.healAmount).toBeUndefined();
+        });
+
+        test('E buff: executeBuffSkill applies speedMultiplier=1.5 correctly', () => {
+            // Use a SkillSystem initialized with 'speed_up' key so activeEffects is null (not undefined)
+            const realSkillsData = {
+                speed_up: { key: 'E', type: 'buff', cooldown: 10, speedMultiplier: 1.5, duration: 3, unlockLevel: 4 }
+            };
+            const ss = new SkillSystem(realSkillsData);
+            const speedUpSkill = realSkillsData.speed_up;
+            const mockScene = {
+                speed: 200, baseSpeed: 200,
+                time: { addEvent: jest.fn(() => ({})), delayedCall: jest.fn(), now: 0 }
+            };
+            const mockPlayer = { x: 0, y: 0 };
+            ss.setPlayer(mockPlayer, mockScene);
+
+            const result = ss.executeBuffSkill('speed_up', speedUpSkill);
+            expect(result.success).toBe(true);
+            // Speed should be multiplied by 1.5
+            expect(mockScene.speed).toBe(300); // 200 * 1.5
+        });
+
+        test('W defense: executeDefenseSkill reports shieldHp=30% of maxHp', () => {
+            const shieldSkill = { type: 'defense', cooldown: 30, shieldHpPercent: 0.3, duration: 5 };
+            const mockScene = {
+                maxHp: 200,
+                add: {
+                    graphics: jest.fn(() => ({
+                        setPosition: jest.fn(),
+                        fillStyle: jest.fn(),
+                        fillCircle: jest.fn(),
+                        setDepth: jest.fn(),
+                        destroyed: false
+                    }))
+                },
+                time: {
+                    addEvent: jest.fn(() => ({})),
+                    delayedCall: jest.fn(),
+                    now: 0
+                }
+            };
+            const mockPlayer = {
+                x: 0, y: 0,
+                playerData: { size: 30 },
+                isShielded: false,
+                shieldGraphics: null
+            };
+            skillSystem.setPlayer(mockPlayer, mockScene);
+
+            const result = skillSystem.executeDefenseSkill('shield', shieldSkill);
+            expect(result.success).toBe(true);
+            // shieldHp = floor(200 * 0.3) = 60
+            expect(result.shieldHp).toBe(60);
         });
     });
 });

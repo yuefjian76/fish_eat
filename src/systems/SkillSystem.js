@@ -128,99 +128,100 @@ export class SkillSystem {
         const player = this.player;
         const scene = this.scene;
 
-        // Find enemies in range
+        // Collect ALL enemies in range (AOE hit, not single-target)
         const enemies = scene.enemies || [];
         const playerX = player.x;
         const playerY = player.y;
         const range = skill.range;
 
-        let hitEnemy = null;
-        let maxDamage = 0;
-
+        const enemiesInRange = [];
         for (const enemy of enemies) {
             if (!enemy.graphics || !enemy.graphics.active) continue;
-
             const dx = enemy.graphics.x - playerX;
             const dy = enemy.graphics.y - playerY;
             const distance = Math.sqrt(dx * dx + dy * dy);
-
-            // Check if enemy is in range (no directional restriction)
             if (distance <= range + (enemy.fishData?.size || 20)) {
-                const damage = skill.damage;
-                if (damage > maxDamage) {
-                    maxDamage = damage;
-                    hitEnemy = enemy;
-                }
+                enemiesInRange.push(enemy);
             }
         }
 
-        if (hitEnemy) {
-            // Apply type advantage: player (clownfish) vs enemy
-            const playerType = 'clownfish';
+        if (enemiesInRange.length === 0) {
+            return { success: false, reason: 'no_target' };
+        }
+
+        // Freeze frame once for the whole AOE hit
+        if (scene && scene.time && typeof scene.time.pause === 'function') {
+            scene.time.pause();
+            setTimeout(() => {
+                if (scene && scene.time && typeof scene.time.resume === 'function') scene.time.resume();
+            }, 50);
+        }
+
+        const playerType = 'clownfish';
+        let totalKilled = 0;
+        let primaryTarget = enemiesInRange[0]; // for return value
+
+        for (const hitEnemy of enemiesInRange) {
+            // Apply type advantage per enemy
             const enemyConfig = hitEnemy.fishConfig;
             let typeMultiplier = 1.0;
             if (enemyConfig) {
                 if (enemyConfig.weakTo?.includes(playerType)) {
-                    typeMultiplier = 1.5; // 50% bonus damage
+                    typeMultiplier = 1.5;
                 } else if (enemyConfig.strongAgainst?.includes(playerType)) {
-                    typeMultiplier = 0.6; // 40% reduced damage
+                    typeMultiplier = 0.6;
                 }
             }
             const finalDamage = Math.floor(skill.damage * typeMultiplier);
 
-            // Deal damage to enemy
-            const died = hitEnemy.takeDamage(finalDamage);
-
-            // Freeze frame: 50ms pause + enemy flash white
-            if (hitEnemy && scene && scene.time && typeof scene.time.pause === 'function') {
-                scene.time.pause();
+            // Flash enemy white
+            if (hitEnemy.graphics && hitEnemy.graphics.list && hitEnemy.graphics.list[0]) {
+                hitEnemy.graphics.list[0].setTint(0xffffff);
                 setTimeout(() => {
-                    if (scene && scene.time && typeof scene.time.resume === 'function') scene.time.resume();
-                }, 50);
-
-                // Flash enemy white
-                if (hitEnemy.graphics && hitEnemy.graphics.list && hitEnemy.graphics.list[0]) {
-                    hitEnemy.graphics.list[0].setTint(0xffffff);
-                    setTimeout(() => {
-                        if (hitEnemy.graphics && hitEnemy.graphics.list && hitEnemy.graphics.list[0]) {
-                            hitEnemy.graphics.list[0].clearTint();
-                        }
-                    }, 80);
-                }
+                    if (hitEnemy.graphics && hitEnemy.graphics.list && hitEnemy.graphics.list[0]) {
+                        hitEnemy.graphics.list[0].clearTint();
+                    }
+                }, 80);
             }
 
-            // If enemy died from the damage
+            const died = hitEnemy.takeDamage(finalDamage);
+
             if (died) {
-                // Add experience using GrowthSystem
+                totalKilled++;
                 const expGain = hitEnemy.getExpValue();
                 const expResult = this.scene.growthSystem.addExperience(expGain, this.scene.time.now, this.scene.luckSystem);
                 this.scene.exp = this.scene.growthSystem.getExp();
                 this.scene.level = this.scene.growthSystem.getLevel();
                 this.scene.score += expResult.expGained * 10;
 
-                // Remove from enemies array
                 const enemyIndex = this.scene.enemies.findIndex(e => e === hitEnemy);
                 if (enemyIndex !== -1) {
                     this.scene.enemies.splice(enemyIndex, 1);
                 }
-
-                // Destroy enemy graphics
                 hitEnemy.destroy();
 
-                // Level up check
                 if (expResult.leveledUp) {
                     this.scene.onLevelUp();
                 }
-
-                // Update UI
-                const expForNextLevel = this.scene.growthSystem.getExpForLevel(this.scene.level + 1);
-                this.scene.scene.get('UIScene').updateUI(this.scene.score, this.scene.exp, this.scene.level, this.scene.hp, this.scene.maxHp, expForNextLevel);
             }
-
-            return { success: true, skillId, type: skill.type, damage: finalDamage, target: hitEnemy, killed: died };
         }
 
-        return { success: false, reason: 'no_target' };
+        // Single UI update after all hits processed
+        const expForNextLevel = this.scene.growthSystem.getExpForLevel(this.scene.level + 1);
+        this.scene.scene.get('UIScene').updateUI(
+            this.scene.score, this.scene.exp, this.scene.level,
+            this.scene.hp, this.scene.maxHp, expForNextLevel
+        );
+
+        return {
+            success: true,
+            skillId,
+            type: skill.type,
+            damage: skill.damage,
+            hitCount: enemiesInRange.length,
+            killed: totalKilled,
+            target: primaryTarget
+        };
     }
 
     /**
@@ -314,15 +315,19 @@ export class SkillSystem {
 
     /**
      * Execute heal skill
+     * Supports both healPercent (fraction of maxHp, e.g. 0.15) and
+     * legacy healAmount (fixed number). healPercent takes priority.
      */
     executeHealSkill(skillId, skill) {
         const player = this.player;
         const scene = this.scene;
 
-        // Calculate heal amount
+        // Calculate heal amount — percent-based or fixed fallback
         const currentHp = scene.hp;
         const maxHp = scene.maxHp;
-        const healAmount = skill.healAmount;
+        const healAmount = skill.healPercent != null
+            ? Math.floor(maxHp * skill.healPercent)
+            : (skill.healAmount || 0);
         const actualHeal = Math.min(healAmount, maxHp - currentHp);
 
         if (actualHeal <= 0) {

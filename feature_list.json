@@ -352,7 +352,7 @@
       "name": "Skill Balance Tuning",
       "description": "Rebalance skill numbers via skills.json only: E speedMultiplier 1.2->1.5 and cooldown 15s->10s; W cooldown 45s->30s and shieldHpPercent 0.2->0.3; R healAmount fixed 30 -> 15% of maxHp (computed at runtime); Q range 80->100 with all-enemies-in-range hit.",
       "dependencies": ["feat-042"],
-      "status": "pending",
+      "status": "completed",
       "definition_of_done": [
         "skills.json updated with new values",
         "E speed multiplier is 1.5x (distinct from Shift 1.8x)",
@@ -364,7 +364,7 @@
         "No regression in existing 746 tests",
         "init.sh passes"
       ],
-      "evidence": ""
+      "evidence": "skills.json: E speedMultiplier=1.5/cooldown=10, W cooldown=30/shieldHpPercent=0.3, R healPercent=0.15, Q range=100; SkillSystem.executeDamageSkill rewrote to AOE (hitCount+killed count); executeHealSkill supports healPercent; SkillSystem.test.js 46→54 tests (8 new: 3 AOE + 2 healPercent + 3 config values); init.sh 765 tests passed 2026-05-30"
     },
     {
       "id": "feat-044",

@@ -7,7 +7,7 @@
 当前进度：
 - ✅ feat-001 ~ feat-041：全部完成（41 个特性）
 - ✅ feat-042：Background Bug Fix + checkEat 统一（754 tests）
-- ⏳ feat-043：技能数值平衡（待做）
+- ✅ feat-043：技能数值平衡（765 tests）
 - ⏳ feat-044：属性相克激活（待做）
 - ⏳ feat-045：技能协同系统（待做）
 
@@ -31,8 +31,25 @@
 - `feature_list.json` — 新增 feat-042~feat-045 定义，feat-042 标记 completed
 - `progress.md` — 本文件更新
 
+---
+
+## 会话 — 2026-05-30（feat-043 完成）
+
+### 已完成
+- ✅ feat-043：Skill Balance Tuning
+  - `skills.json` 更新：E speedMultiplier 1.2→1.5 / cooldown 15→10s；W cooldown 45→30s / shieldHpPercent 0.2→0.3；R 从固定 healAmount:30 改为 healPercent:0.15（运行时按 maxHp 计算）；Q range 80→100
+  - `SkillSystem.executeDamageSkill` 单目标→全范围 AOE：遍历所有敌人、按距离过滤、返回 hitCount（命中数）+ killed（击杀数）
+  - `SkillSystem.executeHealSkill` 增加 healPercent 支持（优先于 healAmount fallback）
+  - SkillSystem 测试从 46 个扩展到 54 个（+3 AOE / +2 healPercent / +3 数值配置验证 / +1 buff/+1 defense）
+  - init.sh：765 tests 全部通过，5/5 步骤通过
+
+### 文件改动
+- `src/config/skills.json` — 全 4 项技能数值更新
+- `src/systems/SkillSystem.js` — executeDamageSkill AOE 重写；executeHealSkill healPercent 支持
+- `src/systems/__tests__/SkillSystem.test.js` — 46→54 个测试；feat-043 数值验证 describe 块
+
 ### 下一步
-- feat-043：技能数值平衡（skills.json + SkillSystem 运行时逻辑）
+- feat-044：属性相克激活（fish.json 扩展 + BattleSystem.getTypeMultiplier + CollisionSystem 阈值 + GameScene takeDamage）
 
 ---
 

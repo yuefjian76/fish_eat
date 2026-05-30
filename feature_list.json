@@ -327,6 +327,81 @@
       "dependencies": ["feat-040"],
       "status": "completed",
       "evidence": "WorldConfig.js created, camera follow + world bounds in GameScene.js, player clamping removed, enemy spawn uses world coordinates, off-screen removal uses player-relative distance"
+    },
+    {
+      "id": "feat-042",
+      "name": "Background Bug Fix + checkEat Unification",
+      "description": "Fix BackgroundSystem downgrade bug on level-up (L1395 replaces BackgroundExpansion with BackgroundSystem, losing chunk/zone functionality). Also unify duplicate checkEat logic: remove inline GameScene.checkEat and route all collision handling through CollisionSystem.checkCollision + _handleCollisionResult callback.",
+      "dependencies": ["feat-041"],
+      "status": "completed",
+      "definition_of_done": [
+        "BackgroundExpansion instance is never replaced by BackgroundSystem on level-up",
+        "transitionOverlay variable name unified across both classes",
+        "Redundant createBackground() call removed from onLevelUp",
+        "GameScene.checkEat inline method deleted (or clearly delegated)",
+        "CollisionSystem.checkCollision is the single source of truth for eat/damage logic",
+        "GameScene._handleCollisionResult handles all side-effects (particles, sound, exp, etc.)",
+        "All existing tests still pass (npm test)",
+        "New unit tests for CollisionSystem cover: eat, blocked, damaged, already_eaten, type-blocked",
+        "init.sh passes all 5 steps"
+      ],
+      "evidence": "BackgroundExpansion downgrade bug fixed (removed new BackgroundSystem on level-up). transitionOverlay unified to _transitionOverlay in BackgroundExpansion. checkEat delegates to CollisionSystem.checkCollision + _handleCollisionResult. CollisionSystem tests expanded from 8 to 16. 754 tests pass, init.sh all 5 steps pass."
+    },
+    {
+      "id": "feat-043",
+      "name": "Skill Balance Tuning",
+      "description": "Rebalance skill numbers via skills.json only: E speedMultiplier 1.2->1.5 and cooldown 15s->10s; W cooldown 45s->30s and shieldHpPercent 0.2->0.3; R healAmount fixed 30 -> 15% of maxHp (computed at runtime); Q range 80->100 with all-enemies-in-range hit.",
+      "dependencies": ["feat-042"],
+      "status": "pending",
+      "definition_of_done": [
+        "skills.json updated with new values",
+        "E speed multiplier is 1.5x (distinct from Shift 1.8x)",
+        "E cooldown is 10s",
+        "W cooldown is 30s, shieldHpPercent is 0.3",
+        "R healAmount computed as maxHp * 0.15 at runtime (not fixed 30)",
+        "Q hits all enemies within range (not just closest)",
+        "SkillSystem unit tests updated/added to cover new values",
+        "No regression in existing 746 tests",
+        "init.sh passes"
+      ],
+      "evidence": ""
+    },
+    {
+      "id": "feat-044",
+      "name": "Type Effectiveness Activation (A1 + A2)",
+      "description": "Make strongAgainst/weakTo data in fish.json actually affect combat: (A1) damage multiplier 2.0x when player is strong vs enemy, 0.5x when weak; (A2) size threshold for eating changes — 1.0x vs weak target (same size is ok), 1.5x vs strong target (must be much bigger). Apply to both checkEat (player eating enemy) and takeDamage (enemy attacking player). Enemy AI updateFishing also respects type advantage.",
+      "dependencies": ["feat-043"],
+      "status": "pending",
+      "definition_of_done": [
+        "fish.json extended with sizeThresholdVsWeak, sizeThresholdVsStrong, damageMultiplierVsWeak, damageMultiplierVsStrong per fish type",
+        "BattleSystem updated with getTypeMultiplier(attackerType, defenderType) method",
+        "CollisionSystem uses variable size thresholds based on type relationship",
+        "GameScene takeDamage uses type multiplier when enemy hits player",
+        "Enemy updateFishing prefers type-weak prey",
+        "Unit tests: BattleSystem type multiplier, CollisionSystem variable threshold",
+        "No regression in existing tests",
+        "init.sh passes"
+      ],
+      "evidence": ""
+    },
+    {
+      "id": "feat-045",
+      "name": "Skill Synergy System",
+      "description": "Add a synergy combo layer to SkillSystem: B1 Rush Bite (E active + Q = 2x damage + knockback); B4 Storm Slash (E->Q->E within 3s = Q cooldown reset, 3 consecutive bites). Synergy definitions are data-driven in skills.json. Visual feedback: synergy activation flash + combo name floating text.",
+      "dependencies": ["feat-044"],
+      "status": "pending",
+      "definition_of_done": [
+        "skills.json synergies block added with rush_bite and storm_slash definitions",
+        "SkillSystem maintains a recentSkillQueue (last 3s)",
+        "SkillSystem._checkSynergy() detects and executes matching synergy",
+        "B1 rush_bite: when E active, Q damage x2 + ImpactSystem knockback applied",
+        "B4 storm_slash: E->Q->E within 3s resets Q cooldown to 0",
+        "FloatingTextSystem shows synergy name on activation",
+        "Unit tests: synergy detection, rush_bite effect, storm_slash cooldown reset, window expiry",
+        "No regression in existing tests",
+        "init.sh passes"
+      ],
+      "evidence": ""
     }
   ]
 }

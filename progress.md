@@ -1,19 +1,44 @@
 # 进度日志
 
-## 当前阶段：ScrollingWorld Phase 4 完成
+## 当前阶段：feat-044 属性相克激活 完成
 
-目标：完成 feat-049，ScrollingWorld 全部 4 个 phase 收尾。
+目标：完成 feat-044 属性相克激活。
 
 当前进度：
 - ✅ feat-001 ~ feat-041：全部完成（41 个特性）
 - ✅ feat-042：Background Bug Fix + checkEat 统一（754 tests）
 - ✅ feat-043：技能数值平衡（765 tests）
-- ⏳ feat-044：属性相克激活（待做）
+- ✅ feat-044：属性相克激活（855 tests）
 - ⏳ feat-045：技能协同系统（待做）
 - ✅ feat-046：ScrollingWorld Phase 1 — DepthColorMapper + ScrollingBackground 基础层（850 tests）
 - ✅ feat-047：ScrollingWorld Phase 2 — 视差完整层 + DepthFog + ScrollEdge（850 tests）
 - ✅ feat-048：ScrollingWorld Phase 3 — Prng + DecorationPool（850 tests）
 - ✅ feat-049：ScrollingWorld Phase 4 — 删除 BackgroundExpansion + 清理废弃代码 + 文档更新（850 tests）
+
+---
+
+## 会话 — 2026-05-30（feat-044 完成）
+
+### 已完成
+- ✅ feat-044：属性相克激活
+  - `fish.json`：所有非 Boss 鱼类添加 `damageMultiplierVsStrong=2.0`, `damageMultiplierVsWeak=0.5`, `sizeThresholdVsStrong=1.5`, `sizeThresholdVsWeak=1.2`
+  - `BattleSystem.getTypeMultiplier`：新增方法，支持双向属性克制查询
+  - `CollisionSystem.checkCollision`：使用 `player.fishType` 或 `player.playerData?.fishType` 动态读取玩家类型；根据克制关系使用可变 sizeThreshold
+  - `Enemy.attackPlayer`：读取实际 `player.fishType`，优先使用 `scene.battleSystem.getTypeMultiplier()`，fallback 到内联查找
+  - `Enemy.updateFishing`：当多个猎物尺寸接近（±10%）时，优先选择敌人克制的类型
+  - `GameScene`：glow 检查使用 `this.fishType` 替代硬编码的 `'clownfish'`
+  - 855 tests 通过，init.sh 全部通过，E2E 验证通过（浏览器加载正常，无 JS 错误）
+
+### 文件改动
+- `src/config/fish.json` — 所有非 boss 鱼添加 4 个属性克制字段
+- `src/systems/BattleSystem.js` — 新增 `getTypeMultiplier` 方法
+- `src/systems/CollisionSystem.js` — 动态 playerType 读取 + 可变 sizeThreshold
+- `src/entities/Enemy.js` — `attackPlayer` 动态 playerType + `updateFishing` 类型优先选择
+- `src/scenes/GameScene.js` — glow hint 使用 `this.fishType`
+- `CLAUDE.md` — 新增 API 连接断开错误的解决方法
+
+### 下一步
+- feat-045：技能协同系统（依赖 feat-044）
 
 ---
 

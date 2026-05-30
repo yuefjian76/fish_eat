@@ -457,7 +457,7 @@
       "dependencies": [
         "feat-043"
       ],
-      "status": "pending",
+      "status": "completed",
       "definition_of_done": [
         "fish.json extended with sizeThresholdVsWeak, sizeThresholdVsStrong, damageMultiplierVsWeak, damageMultiplierVsStrong per fish type",
         "BattleSystem updated with getTypeMultiplier(attackerType, defenderType) method",
@@ -468,7 +468,7 @@
         "No regression in existing tests",
         "init.sh passes"
       ],
-      "evidence": ""
+      "evidence": "855 tests pass. E2E verified: browser loads, game starts, no JS errors (only favicon.ico 404). Changes: (1) fish.json: all non-boss fish have damageMultiplierVsStrong=2.0, damageMultiplierVsWeak=0.5, sizeThresholdVsStrong=1.5, sizeThresholdVsWeak=1.2; (2) BattleSystem.getTypeMultiplier added; (3) CollisionSystem uses player.fishType/playerData.fishType dynamically + variable threshold; (4) Enemy.attackPlayer reads actual player fishType + uses scene.battleSystem.getTypeMultiplier or inline fallback; (5) Enemy.updateFishing tie-breaking prefers strongAgainst prey when size within 10%; (6) GameScene glow uses this.fishType instead of hardcoded 'clownfish'."
     },
     {
       "id": "feat-045",

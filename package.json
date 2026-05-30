@@ -4,6 +4,8 @@
     "test": "NODE_OPTIONS='--experimental-vm-modules' jest --config jest.config.js"
   },
   "devDependencies": {
-    "jest": "^30.3.0"
+    "@playwright/test": "^1.60.0",
+    "jest": "^30.3.0",
+    "playwright": "^1.60.0"
   }
 }

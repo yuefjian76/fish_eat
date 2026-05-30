@@ -4,6 +4,8 @@
  * Requires game server running on port 8765
  */
 
+import { test, expect } from '@playwright/test';
+
 test('游戏加载成功，无崩溃', async ({ page }) => {
     const errors = [];
     page.on('console', msg => {

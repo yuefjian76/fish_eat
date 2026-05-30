@@ -14,9 +14,138 @@ export class SkillSystem {
 
         // Initialize cooldowns and active effects
         for (const skillId in skillsData) {
+            if (skillId === 'synergies') continue; // Skip synergies block
             this.cooldowns[skillId] = 0;
             this.activeEffects[skillId] = null;
         }
+
+        // Synergy system
+        this.synergies = this._loadSynergies();
+        this.recentSkillQueue = []; // { skillId, timestamp }
+        this._synergyWindowMs = 3000;
+        this.lastDamageHit = null; // { enemy, damage } for synergy effects
+    }
+
+    /**
+     * Load synergy definitions from skillsData
+     * @returns {object} Synergy definitions keyed by synergy id
+     */
+    _loadSynergies() {
+        return this.skillsData?.synergies || {};
+    }
+
+    /**
+     * Remove skills older than _synergyWindowMs from recentSkillQueue
+     */
+    _cleanSkillQueue() {
+        const now = this.scene?.time?.now || Date.now();
+        this.recentSkillQueue = this.recentSkillQueue.filter(
+            entry => now - entry.timestamp < this._synergyWindowMs
+        );
+    }
+
+    /**
+     * Check if the most recent skill completes any synergy pattern
+     * @param {string} latestSkillId - The skill just used
+     * @returns {object|null} The synergy object if matched, null otherwise
+     */
+    _checkSynergy(latestSkillId) {
+        this._cleanSkillQueue();
+
+        const now = this.scene?.time?.now || Date.now();
+        this.recentSkillQueue.push({ skillId: latestSkillId, timestamp: now });
+
+        // Build current pattern from queue
+        const currentPattern = this.recentSkillQueue.map(e => e.skillId);
+
+        // Check each synergy for pattern match
+        for (const [synergyId, synergy] of Object.entries(this.synergies)) {
+            const pattern = synergy.pattern;
+            if (currentPattern.length < pattern.length) continue;
+
+            // Check if the last `pattern.length` entries match the pattern
+            const recentEntries = this.recentSkillQueue.slice(-pattern.length);
+            const recentPattern = recentEntries.map(e => e.skillId);
+
+            if (JSON.stringify(recentPattern) === JSON.stringify(pattern)) {
+                // Synergy matched! Clear the queue to prevent re-trigger
+                this.recentSkillQueue = [];
+                return synergy;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Execute synergy effects
+     * @param {object} synergy - The synergy object to execute
+     */
+    _executeSynergy(synergy) {
+        logger.info(`Synergy activated: ${synergy.name}`);
+
+        // Show floating text for synergy
+        this.scene?.floatingTextSystem?.showSynergyName?.(synergy.name);
+
+        const effects = synergy.effects;
+
+        // rush_bite: damage x2 + knockback
+        if (synergy.name === 'Rush Bite' && this.lastDamageHit?.enemy) {
+            // Apply extra damage equal to original
+            const extraDamage = this.lastDamageHit.damage;
+            this.lastDamageHit.enemy.takeDamage(extraDamage);
+
+            // Knockback via ImpactSystem
+            this.scene?.impactSystem?.applyKnockback?.(this.lastDamageHit.enemy, this.player);
+        }
+
+        // storm_slash: cooldown reset + bonus bites
+        if (synergy.name === 'Storm Slash') {
+            // Reset Q (bite) cooldown
+            if (this.cooldowns['bite'] !== undefined) {
+                this.cooldowns['bite'] = 0;
+            }
+
+            // Queue bonus bites
+            const bonusBites = (effects.bonusBites || 3) - 1; // -1 because first bite already happened
+            for (let i = 0; i < bonusBites; i++) {
+                this._queueBonusBite(i * 150); // Stagger by 150ms each
+            }
+        }
+    }
+
+    /**
+     * Queue a bonus bite to be executed after short delay
+     * @param {number} delay - Delay in ms before executing
+     */
+    _queueBonusBite(delay) {
+        if (!this.scene) return;
+
+        this.scene.time.delayedCall(delay, () => {
+            const enemies = this.scene.enemies || [];
+            if (!this.player || enemies.length === 0) return;
+
+            // Find nearest enemy
+            let nearest = null;
+            let nearestDist = Infinity;
+            const px = this.player.x;
+            const py = this.player.y;
+
+            for (const enemy of enemies) {
+                if (!enemy.graphics || !enemy.graphics.active) continue;
+                const dx = enemy.graphics.x - px;
+                const dy = enemy.graphics.y - py;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < nearestDist && dist <= 150) {
+                    nearestDist = dist;
+                    nearest = enemy;
+                }
+            }
+
+            if (nearest) {
+                nearest.takeDamage(25); // Base bite damage
+            }
+        });
     }
 
     /**
@@ -116,6 +245,12 @@ export class SkillSystem {
             this.cooldowns[skillId] = skill.cooldown;
             logger.info(`Skill used: ${skillId} (${skill.name}), cooldown=${skill.cooldown}s`);
             logger.debug(`Cooldown started for ${skillId}: ${skill.cooldown}s`);
+
+            // Check for synergy activation
+            const synergy = this._checkSynergy(skillId);
+            if (synergy) {
+                this._executeSynergy(synergy);
+            }
         }
 
         return result;
@@ -212,6 +347,12 @@ export class SkillSystem {
             this.scene.score, this.scene.exp, this.scene.level,
             this.scene.hp, this.scene.maxHp, expForNextLevel
         );
+
+        // Track last damage hit for synergy effects
+        this.lastDamageHit = {
+            enemy: primaryTarget,
+            damage: primaryTarget ? this._getFinalDamage(skill, primaryTarget) : skill.damage
+        };
 
         return {
             success: true,
@@ -500,6 +641,26 @@ export class SkillSystem {
      */
     isPlayerSpeedBuffed() {
         return this.activeEffects['speed_up'] !== null;
+    }
+
+    /**
+     * Calculate final damage for a skill against an enemy (including type multiplier)
+     * @param {object} skill - Skill configuration
+     * @param {object} enemy - Enemy object with fishConfig
+     * @returns {number} Final damage value
+     */
+    _getFinalDamage(skill, enemy) {
+        const playerType = this.player?.fishType || 'clownfish';
+        let typeMultiplier = 1.0;
+        const enemyConfig = enemy?.fishConfig;
+        if (enemyConfig) {
+            if (enemyConfig.weakTo?.includes(playerType)) {
+                typeMultiplier = 1.5;
+            } else if (enemyConfig.strongAgainst?.includes(playerType)) {
+                typeMultiplier = 0.6;
+            }
+        }
+        return Math.floor(skill.damage * typeMultiplier);
     }
 }
 

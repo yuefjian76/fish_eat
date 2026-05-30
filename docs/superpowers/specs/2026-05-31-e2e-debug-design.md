@@ -15,40 +15,42 @@
 
 ## 2. Architecture
 
-### Console API: `window.game.debug`
+### Console API: `window.__DEBUG_API__`
 
-When game URL includes `?debug=true`, expose `game.debug` object on `window`:
+When game URL includes `?debug=true`, expose debug API on `window`:
 
 ```javascript
-window.game = {
-  debug: {
-    // State viewing
-    state()           // → Full game state snapshot
-    state.detailed()  // → Extended state (cooldowns, enemy list, etc.)
+window.__DEBUG_API__ = {
+  // State viewing
+  state()           // → Full game state snapshot
+  state.detailed()  // → Extended state (enemies, active effects, etc.)
 
-    // Scene control
-    level(n)          // Jump to specific level (1-15)
-    restart()         // Restart game
+  // Scene control
+  level(n)          // Jump to specific level (1-15, clamped)
+  restart()         // Full game reset (return to MenuScene)
 
-    // Manual actions
-    skill('Q')        // Trigger skill by key
-    eat('fishType')   // Auto-eat target fish type (finds suitable prey)
+  // Manual actions
+  skill('Q')        // Trigger skill by key
+  eat('fishType')   // Auto-eat target fish type (validates size first)
 
-    // Real-time monitoring
-    watch(...keys)    // Continuous output of state changes
-    unwatch()         // Stop watching
+  // Real-time monitoring
+  watch(...keys)    // Continuous output of state changes (replaces any active watch)
+  unwatch()         // Stop watching (no-op if not watching, returns confirmation)
 
-    // Test helpers
-    spawn(type, count) // Spawn enemies via SpawnSystem
-    killAll()          // Remove all enemies
-    fullHealth()       // Restore HP to maxHp
-    maxExp()           // Set EXP to level-up threshold
+  // Test helpers
+  spawn(type, count) // Spawn enemies via SpawnSystem
+  killAll()          // Remove all enemies (excludes bosses)
+  fullHealth()       // Restore HP to maxHp
+  maxExp()           // Set EXP to level-up threshold
 
-    // Info
-    help()            // Print available commands
-  }
+  // Info
+  help()            // Print available commands
 }
 ```
+
+**Security:** API only exposed when `?debug=true` is set. No debug code runs otherwise.
+
+**Namespace choice:** `window.__DEBUG_API__` avoids collision with Phaser's `window.game` (the Game instance).
 
 ---
 
@@ -58,74 +60,100 @@ window.game = {
 
 **`game.debug.state()`**
 - Returns: `{ hp, maxHp, level, score, exp, wave, enemyCount, skillCooldowns }`
-- Example: `game.debug.state()` → `{ hp: 80, maxHp: 100, level: 3, score: 1500, wave: 'surge', enemyCount: 5, skillCooldowns: { Q: 0, W: 2.3, E: 0, R: 15 } }`
+- Example: `game.debug.state()` → `{ hp: 80, maxHp: 100, level: 3, score: 1500, exp: 150, wave: 'surge', enemyCount: 5, skillCooldowns: { Q: 0, W: 2.3, E: 0, R: 15 } }`
+- Returns structured object — never null. Missing fields default to 0 or 'unknown'.
 
 **`game.debug.state.detailed()`**
-- Returns: Extended state including:
-  - All enemy positions and types
-  - Active effects (shield, speed buff)
-  - Player position
-  - Combo multiplier
-  - Time elapsed
+- Returns schema:
+```javascript
+{
+  enemies: [
+    { type: 'shark', x: 100, y: 200, hp: 30, maxHp: 50, size: 40 }
+  ],
+  activeEffects: [
+    { name: 'shield', remainingMs: 2500 },
+    { name: 'speedUp', remainingMs: 1500 }
+  ],
+  player: { x: 512, y: 384, size: 45 },
+  combo: 1.2,
+  elapsedMs: 45000
+}
+```
+- Returns `{ enemies: [], activeEffects: [], player: {}, combo: 1, elapsedMs: 0 }` on error.
 
 ### 3.2 Scene Control
 
 **`game.debug.level(n)`**
-- Sets `this.level = n` and triggers level-up sequence
-- Automatically sets player size, HP, unlocks skills
+- Input validation: clamps to range `[1, 15]`. Non-integer input returns `{ error: 'level must be integer', provided: n }`.
+- Sets `this.level = n`, triggers `this.onLevelUp()` sequence
+- Automatically adjusts player size, HP, unlocks skills
 - Use case: Jump directly to Level 5 to test Boss
 
 **`game.debug.restart()`**
-- Calls `this.scene.restart()` to reset game state
+- Full game reset: calls `this.scene.scene.restart('BootScene')` to return to title
+- Use case: Clean slate between test scenarios
 
 ### 3.3 Manual Actions
 
 **`game.debug.skill('Q'|'W'|'E'|'R')`**
-- Directly calls `this.skillSystem.useSkill(key)`
-- Bypasses cooldown check for testing (optional: add `force: true` param)
-- Returns: skill execution result
+- Returns structured object:
+  - Success: `{ success: true, skillKey: 'Q', action: 'damage' }`
+  - Locked: `{ success: false, reason: 'Skill R not unlocked until Level 6', currentLevel: 3, requiredLevel: 6 }`
+  - Cooldown: `{ success: false, reason: 'Skill on cooldown', remainingCooldown: 2.3 }`
+- Note: Does NOT bypass cooldown in normal mode — debug mode still respects cooldown (use `skillSystem.cooldowns['bite'] = 0` to override manually if needed)
 
 **`game.debug.eat('fishType')`**
-- Finds nearest fish matching `fishType` and triggers eat logic
-- If no matching fish, logs warning and returns null
-- Use case: `game.debug.eat('shark')` to test eating a specific type
+- Finds nearest fish matching `fishType` within 1000 units
+- **Size validation:** If player is too small to eat the target (player.size < target.size * 1.2), returns `{ error: 'Player too small to eat {fishType}', playerSize: n, requiredSize: m }`
+- If no fish found: `{ error: 'No {fishType} fish within range', searchedRange: 1000 }`
+- On success: triggers eat logic and returns `{ success: true, eaten: 'shark', expGained: 50 }`
 
 ### 3.4 Real-time Monitoring
 
 **`game.debug.watch('hp', 'score', ...)`**
-- Continuously outputs state changes to Console
-- Format: `[HH:MM:SS] hp: 80/100, score: 1500, wave: surge`
-- Updates every 500ms
-- Color-coded output: hp (red when low), score (green), wave (yellow)
-- Persists until `game.debug.unwatch()` called or page refresh
+- Replaces any active watch session (single interval only — calling twice replaces first)
+- Returns the interval ID (number) so tests can track it
+- Outputs every 500ms in format: `[HH:MM:SS] hp: 80/100, score: 1500, wave: surge`
+- Color-coded: hp < 30% → red, score → green, wave → yellow
+- Only outputs when value changes (reduces noise)
 
 **`game.debug.unwatch()`**
-- Stops all active watch intervals
-- Returns: Confirmation message
+- No-op if not watching (returns `'Nothing to unwatch'` in this case)
+- Otherwise stops interval and returns `'Watch stopped'`
 
 ### 3.5 Test Helpers
 
 **`game.debug.spawn('shark', 3)`**
-- Calls `this.spawnSystem.spawnEnemy('shark', count)` (or similar)
-- Enemies spawn at system-determined positions (not necessarily near player)
-- Returns: Number of enemies spawned
+- Returns: `{ spawned: 3, failed: 0 }` on success
+- Returns: `{ spawned: 0, failed: 1, reason: 'Invalid fish type: invalid_type' }` on failure
+- Invalid type logs warning, returns descriptive error
 
 **`game.debug.killAll()`**
-- Iterates `this.enemies` and calls `enemy.destroy()` on each
+- Excludes boss enemies (skips any enemy where `enemy.fishConfig?.isBoss === true`)
+- Returns: `{ killed: 12, skipped: 1, reason: 'Boss enemies excluded' }`
 - Use case: Reset battlefield for specific test scenarios
 
 **`game.debug.fullHealth()`**
 - Sets `this.hp = this.maxHp`
 - Updates UI via `this.scene.get('UIScene').updateUI(...)`
+- Returns: `{ success: true, hp: 100, maxHp: 100 }`
 
 **`game.debug.maxExp()`**
-- Sets EXP to threshold for next level-up
-- Triggers level-up sequence if boundary crossed
+- Sets EXP to `getExpForLevel(level + 1) - 1` (just below threshold)
+- Triggers level-up if crossing boundary
+- Returns: `{ success: true, exp: 199, nextLevelAt: 200 }` or `{ exp: 200, leveledUp: true, newLevel: 4 }`
 
 ### 3.6 Info
 
 **`game.debug.help()`**
-- Prints formatted list of all available commands with descriptions
+- Returns a string (printable to console), format: `NAME — DESCRIPTION` per line
+- Example:
+```
+state() — Returns full game state snapshot
+level(n) — Jump to level n (1-15)
+skill('Q') — Trigger skill by key
+...
+```
 
 ---
 
@@ -139,8 +167,7 @@ Add in `create()` method, after debug overlay setup (~L352):
 // Initialize debug API when ?debug=true
 const urlParams = new URLSearchParams(window.location.search);
 if (urlParams.get('debug') === 'true') {
-    window.game = window.game || {};
-    window.game.debug = this._createDebugAPI();
+    window.__DEBUG_API__ = this._createDebugAPI();
 }
 ```
 
@@ -159,8 +186,8 @@ console.log(
 ### 4.3 Error Handling
 
 - Invalid commands: Log error with suggestion
-- Invalid parameters: Show expected type/format
-- Watch on inactive scene: Graceful no-op
+- Invalid parameters: Return structured error object
+- Watch on inactive scene: Graceful no-op (watch returns null, unwatch returns 'Nothing to unwatch')
 
 ---
 
@@ -170,12 +197,20 @@ New test file: `e2e/debug-api.spec.js`
 
 | Test | Description |
 |------|-------------|
-| `game.debug.state()` returns object | Verify state structure |
-| `game.debug.level(N)` changes level | Set level 5, verify via state |
+| `game.debug.state()` returns object with hp, maxHp, level, score, wave | Verify state structure |
+| `game.debug.level(5)` changes level | Set level 5, verify via state |
+| `game.debug.level(20)` clamps to 15 | Verify out-of-bounds handling |
+| `game.debug.level('bad')` returns error | Verify invalid input handling |
 | `game.debug.watch('hp')` outputs continuously | Monitor for 2 seconds |
+| `game.debug.unwatch()` stops watching | Verify unwatch works |
+| `game.debug.unwatch()` when not watching is safe | No-op returns message |
 | `game.debug.skill('Q')` executes | Verify cooldown starts |
+| `game.debug.skill('R')` when locked returns error | Verify lock check works |
 | `game.debug.spawn('shark', 2)` creates enemies | Count enemies before/after |
+| `game.debug.spawn('invalid', 1)` returns error | Verify invalid type handling |
+| `game.debug.killAll()` excludes bosses | Verify boss protection |
 | `game.debug.help()` prints commands | Verify non-empty output |
+| `game.debug.eat('nonexistent')` returns error | Verify no-match handling |
 
 ---
 
@@ -184,16 +219,18 @@ New test file: `e2e/debug-api.spec.js`
 - Non-debug mode exposure (security)
 - Remote/network debugging
 - Mobile/touch support for debug UI
+- Bypassing cooldown in normal gameplay
 
 ---
 
 ## 7. Acceptance Criteria
 
-1. `?debug=true` exposes `window.game.debug` with all methods in Console
-2. `game.debug.state()` returns current hp, maxHp, level, score, wave
-3. `game.debug.level(5)` actually changes player level to 5
-4. `game.debug.watch('hp')` outputs hp every 500ms until `unwatch()`
-5. `game.debug.skill('Q')` triggers bite skill
-6. `game.debug.spawn('shark', 3)` adds 3 sharks to the game
+1. `?debug=true` exposes `window.__DEBUG_API__` with all methods in Console
+2. `game.debug.state()` returns current hp, maxHp, level, score, wave, skillCooldowns
+3. `game.debug.level(5)` actually changes player level to 5 (clamps to 1-15)
+4. `game.debug.watch('hp')` outputs hp every 500ms when value changes until `unwatch()`
+5. `game.debug.skill('Q')` triggers bite skill, returns structured result
+6. `game.debug.spawn('shark', 3)` adds 3 sharks (returns count)
 7. All existing E2E smoke tests still pass
 8. No debug code runs when `?debug` is not set
+9. `window.__DEBUG_API__` namespace does not collide with Phaser `window.game`

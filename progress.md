@@ -8,10 +8,10 @@
 - ✅ feat-001 ~ feat-041：全部完成（41 个特性）
 - ✅ feat-042：Background Bug Fix + checkEat 统一（754 tests）
 - ✅ feat-043：技能数值平衡（765 tests）
-- ✅ feat-044：属性相克激活（待做）
-- ✅ feat-045：技能协同系统（待做）
-- ✅ feat-046：ScrollingWorld Phase 1 — DepthColorMapper + ScrollingBackground 基础层（821 tests）
-- ✅ feat-047：ScrollingWorld Phase 2 — 视差完整层 + DepthFog + ScrollEdge（832 tests）
+- ⏳ feat-044：属性相克激活（待做）
+- ⏳ feat-045：技能协同系统（待做）
+- ✅ feat-046：ScrollingWorld Phase 1 — DepthColorMapper + ScrollingBackground 基础层（850 tests）
+- ✅ feat-047：ScrollingWorld Phase 2 — 视差完整层 + DepthFog + ScrollEdge（850 tests）
 - ✅ feat-048：ScrollingWorld Phase 3 — Prng + DecorationPool（850 tests）
 - ✅ feat-049：ScrollingWorld Phase 4 — 删除 BackgroundExpansion + 清理废弃代码 + 文档更新（850 tests）
 

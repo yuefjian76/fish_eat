@@ -554,7 +554,7 @@
         "GameScene.js 新增代码 < 20 行（仅调用层）",
         "init.sh 通过，850 tests 无回归"
       ],
-      "evidence": "Prng.test.js (8 tests), DecorationPool.test.js (10 tests), E2E 验证: waveState=peak, score=0, backgroundSystem=BackgroundExpansion, collisionSystem/floatingTextSystem 存在。init.sh 850 tests passed 2026-05-30"
+      "evidence": "Prng.test.js (8 tests), DecorationPool.test.js (10 tests), E2E 验证: waveState=peak, score=0, backgroundSystem=ScrollingBackground, collisionSystem/floatingTextSystem 存在。init.sh 850 tests passed 2026-05-30"
     },
     {
       "id": "feat-049",

@@ -1,0 +1,99 @@
+[    3387ms] [LOG] %c %c %c %c %c Phaser v3.60.0 (WebGL | Web Audio) %c https://phaser.io background: #ff0000 background: #ffff00 background: #00ff00 background: #00ffff color: #ffffff; background: #000000 background: transparent @ https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js:0
+[    3590ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://localhost:8765/favicon.ico:0
+[    4361ms] [VERBOSE] [DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o @ http://localhost:8765/?debug=true:0
+[   79739ms] [LOG] [2026-05-30T09:02:45.434Z] [DEBUG] Enemy spawned: type=clownfish, x=11012, y=1915, aiLevel=0.5, enemyLevel=2 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[   79739ms] [LOG] [2026-05-30T09:02:45.435Z] [DEBUG] Enemy spawned: type=clownfish, x=11012, y=1629, aiLevel=0.5, enemyLevel=2 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[   79739ms] [LOG] [2026-05-30T09:02:45.435Z] [DEBUG] Enemy spawned: type=shark, x=1731, y=10884, aiLevel=0.5, enemyLevel=2 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[   79744ms] [LOG] [2026-05-30T09:02:45.440Z] [INFO] Game started - Difficulty: easy, Enemy count: 3-4 @ http://localhost:8765/src/systems/DebugLogger.js:83
+[   80369ms] [LOG] BGM loaded: src/assets/audio/bgm_peaceful.mp3 @ http://localhost:8765/src/systems/AudioSystem.js:44
+[   80380ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://localhost:8765/favicon.ico:0
+[   81664ms] [LOG] [2026-05-30T09:02:47.360Z] [DEBUG] Enemy spawned: type=jellyfish, x=11012, y=1938, aiLevel=0.5, enemyLevel=1 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[   83674ms] [LOG] [2026-05-30T09:02:49.370Z] [DEBUG] Enemy spawned: type=shark, x=1873, y=-10111.290534191126, aiLevel=0.5, enemyLevel=3 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[   85674ms] [LOG] [2026-05-30T09:02:51.370Z] [DEBUG] Enemy spawned: type=clownfish, x=11065.218721905967, y=379, aiLevel=0.5, enemyLevel=1 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[   87406ms] [LOG] [2026-05-30T09:02:53.102Z] [INFO] Entering 珊瑚礁 @ http://localhost:8765/src/systems/DebugLogger.js:83
+[   87415ms] [LOG] [2026-05-30T09:02:53.111Z] [INFO] Entering 浅海 @ http://localhost:8765/src/systems/DebugLogger.js:83
+[   87424ms] [LOG] [2026-05-30T09:02:53.119Z] [INFO] Entering 珊瑚礁 @ http://localhost:8765/src/systems/DebugLogger.js:83
+[   87435ms] [LOG] [2026-05-30T09:02:53.130Z] [INFO] Entering 浅海 @ http://localhost:8765/src/systems/DebugLogger.js:83
+[   87445ms] [LOG] [2026-05-30T09:02:53.140Z] [INFO] Entering 珊瑚礁 @ http://localhost:8765/src/systems/DebugLogger.js:83
+[   87663ms] [LOG] [2026-05-30T09:02:53.359Z] [INFO] Wave state: surge @ http://localhost:8765/src/systems/DebugLogger.js:83
+[   87663ms] [LOG] [2026-05-30T09:02:53.359Z] [INFO] Spawn interval: 400ms @ http://localhost:8765/src/systems/DebugLogger.js:83
+[   87663ms] [LOG] [2026-05-30T09:02:53.359Z] [DEBUG] Enemy spawned: type=shrimp, x=2381, y=10905.616677048554, aiLevel=0.5, enemyLevel=3 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[   88064ms] [LOG] [2026-05-30T09:02:53.760Z] [DEBUG] Enemy spawned: type=shrimp, x=11442.872239805989, y=1466, aiLevel=0.5, enemyLevel=5 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[   88464ms] [LOG] [2026-05-30T09:02:54.160Z] [DEBUG] Enemy spawned: type=jellyfish, x=-9551.266709247773, y=1260, aiLevel=0.5, enemyLevel=5 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[   88874ms] [LOG] [2026-05-30T09:02:54.570Z] [DEBUG] Enemy spawned: type=shrimp, x=-9548.450220068751, y=866, aiLevel=0.5, enemyLevel=3 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[   89284ms] [LOG] [2026-05-30T09:02:54.980Z] [DEBUG] Enemy spawned: type=clownfish, x=2135, y=-10035.972072412507, aiLevel=0.5, enemyLevel=4 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[   89684ms] [LOG] [2026-05-30T09:02:55.379Z] [DEBUG] Enemy spawned: type=shrimp, x=1898, y=-10094.005682386625, aiLevel=0.5, enemyLevel=4 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[   90093ms] [LOG] [2026-05-30T09:02:55.789Z] [DEBUG] Enemy spawned: type=clownfish, x=11452.919501277222, y=516, aiLevel=0.5, enemyLevel=4 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[   90504ms] [LOG] [2026-05-30T09:02:56.199Z] [DEBUG] Enemy spawned: type=jellyfish, x=1962, y=-10035.371821577392, aiLevel=0.5, enemyLevel=4 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[   90904ms] [LOG] [2026-05-30T09:02:56.600Z] [DEBUG] Enemy spawned: type=clownfish, x=442, y=11003.070277359178, aiLevel=0.5, enemyLevel=3 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[   91314ms] [LOG] [2026-05-30T09:02:57.010Z] [DEBUG] Enemy spawned: type=clownfish, x=562, y=-10026.383970215724, aiLevel=0.5, enemyLevel=3 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[   91664ms] [LOG] [2026-05-30T09:02:57.359Z] [INFO] Wave state: peak @ http://localhost:8765/src/systems/DebugLogger.js:83
+[   91664ms] [LOG] [2026-05-30T09:02:57.360Z] [INFO] Spawn interval: 2000ms @ http://localhost:8765/src/systems/DebugLogger.js:83
+[   93314ms] [LOG] [2026-05-30T09:02:59.009Z] [DEBUG] Enemy spawned: type=shrimp, x=535, y=10986.348068102378, aiLevel=0.5, enemyLevel=5 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[   94673ms] [LOG] [2026-05-30T09:03:00.369Z] [INFO] Wave state: calm @ http://localhost:8765/src/systems/DebugLogger.js:83
+[   94673ms] [LOG] [2026-05-30T09:03:00.369Z] [INFO] Spawn interval: 2000ms @ http://localhost:8765/src/systems/DebugLogger.js:83
+[   95324ms] [LOG] [2026-05-30T09:03:01.019Z] [DEBUG] Enemy spawned: type=shrimp, x=1572, y=-10005.32275675343, aiLevel=0.5, enemyLevel=4 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[   97334ms] [LOG] [2026-05-30T09:03:03.030Z] [DEBUG] Enemy spawned: type=shrimp, x=-9547.000000003733, y=1343, aiLevel=0.5, enemyLevel=4 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[   99343ms] [LOG] [2026-05-30T09:03:05.038Z] [DEBUG] Enemy spawned: type=shrimp, x=2873, y=11004.00712448424, aiLevel=0.5, enemyLevel=6 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  101344ms] [LOG] [2026-05-30T09:03:07.039Z] [DEBUG] Enemy spawned: type=shrimp, x=11452.999999999998, y=974, aiLevel=0.5, enemyLevel=4 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  102674ms] [LOG] [2026-05-30T09:03:08.369Z] [INFO] Wave state: surge @ http://localhost:8765/src/systems/DebugLogger.js:83
+[  102674ms] [LOG] [2026-05-30T09:03:08.370Z] [INFO] Spawn interval: 400ms @ http://localhost:8765/src/systems/DebugLogger.js:83
+[  102674ms] [LOG] [2026-05-30T09:03:08.370Z] [DEBUG] Enemy spawned: type=clownfish, x=1022, y=-10091.885340842331, aiLevel=0.5, enemyLevel=5 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  103084ms] [LOG] [2026-05-30T09:03:08.779Z] [DEBUG] Enemy spawned: type=clownfish, x=2817, y=10967.410035312554, aiLevel=0.5, enemyLevel=6 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  103484ms] [LOG] [2026-05-30T09:03:09.180Z] [DEBUG] Enemy spawned: type=clownfish, x=11452.999999999998, y=726, aiLevel=0.5, enemyLevel=4 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  103884ms] [LOG] [2026-05-30T09:03:09.579Z] [DEBUG] Enemy spawned: type=shark, x=11452.999999999998, y=2373, aiLevel=0.5, enemyLevel=5 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  104293ms] [LOG] [2026-05-30T09:03:09.989Z] [DEBUG] Enemy spawned: type=shark, x=381, y=10911.719516399968, aiLevel=0.5, enemyLevel=4 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  104694ms] [LOG] [2026-05-30T09:03:10.389Z] [DEBUG] Enemy spawned: type=jellyfish, x=672, y=10901.53125376249, aiLevel=0.5, enemyLevel=3 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  105103ms] [LOG] [2026-05-30T09:03:10.799Z] [DEBUG] Enemy spawned: type=clownfish, x=1328, y=10954.969974737442, aiLevel=0.5, enemyLevel=4 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  105504ms] [LOG] [2026-05-30T09:03:11.199Z] [DEBUG] Enemy spawned: type=shark, x=1317, y=-9998.53390972302, aiLevel=0.5, enemyLevel=4 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  105913ms] [LOG] [2026-05-30T09:03:11.609Z] [DEBUG] Enemy spawned: type=clownfish, x=11452.999999999998, y=1753, aiLevel=0.5, enemyLevel=3 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  106314ms] [LOG] [2026-05-30T09:03:12.010Z] [DEBUG] Enemy spawned: type=clownfish, x=11452.999999999998, y=1157, aiLevel=0.5, enemyLevel=4 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  106674ms] [LOG] [2026-05-30T09:03:12.369Z] [INFO] Wave state: peak @ http://localhost:8765/src/systems/DebugLogger.js:83
+[  106674ms] [LOG] [2026-05-30T09:03:12.369Z] [INFO] Spawn interval: 2000ms @ http://localhost:8765/src/systems/DebugLogger.js:83
+[  108324ms] [LOG] [2026-05-30T09:03:14.019Z] [DEBUG] Enemy spawned: type=clownfish, x=-9547.000000000002, y=1305, aiLevel=0.5, enemyLevel=4 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  109684ms] [LOG] [2026-05-30T09:03:15.379Z] [INFO] Wave state: calm @ http://localhost:8765/src/systems/DebugLogger.js:83
+[  109684ms] [LOG] [2026-05-30T09:03:15.380Z] [INFO] Spawn interval: 2000ms @ http://localhost:8765/src/systems/DebugLogger.js:83
+[  110333ms] [LOG] [2026-05-30T09:03:16.028Z] [DEBUG] Enemy spawned: type=clownfish, x=-9547.000000000002, y=759, aiLevel=0.5, enemyLevel=5 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  112334ms] [LOG] [2026-05-30T09:03:18.029Z] [DEBUG] Enemy spawned: type=shrimp, x=11452.999999999998, y=2427, aiLevel=0.5, enemyLevel=6 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  114344ms] [LOG] [2026-05-30T09:03:20.039Z] [DEBUG] Enemy spawned: type=shrimp, x=-9547.000000000002, y=498, aiLevel=0.5, enemyLevel=3 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  116344ms] [LOG] [2026-05-30T09:03:22.039Z] [DEBUG] Enemy spawned: type=clownfish, x=2025, y=10987.109776430401, aiLevel=0.5, enemyLevel=3 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  117684ms] [LOG] [2026-05-30T09:03:23.379Z] [INFO] Wave state: surge @ http://localhost:8765/src/systems/DebugLogger.js:83
+[  117684ms] [LOG] [2026-05-30T09:03:23.379Z] [INFO] Spawn interval: 400ms @ http://localhost:8765/src/systems/DebugLogger.js:83
+[  117684ms] [LOG] [2026-05-30T09:03:23.380Z] [DEBUG] Enemy spawned: type=clownfish, x=11452.999999999998, y=287, aiLevel=0.5, enemyLevel=5 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  118094ms] [LOG] [2026-05-30T09:03:23.789Z] [DEBUG] Enemy spawned: type=clownfish, x=11452.999999999998, y=1115, aiLevel=0.5, enemyLevel=4 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  118493ms] [LOG] [2026-05-30T09:03:24.188Z] [DEBUG] Enemy spawned: type=clownfish, x=881, y=10980.037733688225, aiLevel=0.5, enemyLevel=3 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  118894ms] [LOG] [2026-05-30T09:03:24.589Z] [DEBUG] Enemy spawned: type=clownfish, x=2052, y=-10080.606578446394, aiLevel=0.5, enemyLevel=4 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  119304ms] [LOG] [2026-05-30T09:03:24.999Z] [DEBUG] Enemy spawned: type=shrimp, x=405, y=10899.698556632997, aiLevel=0.5, enemyLevel=4 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  119714ms] [LOG] [2026-05-30T09:03:25.409Z] [DEBUG] Enemy spawned: type=shrimp, x=-9547.000000000002, y=370, aiLevel=0.5, enemyLevel=3 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  120123ms] [LOG] [2026-05-30T09:03:25.819Z] [DEBUG] Enemy spawned: type=shrimp, x=1910, y=10999.564799762547, aiLevel=0.5, enemyLevel=4 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  120524ms] [LOG] [2026-05-30T09:03:26.219Z] [DEBUG] Enemy spawned: type=shark, x=807, y=-10012.205775353345, aiLevel=0.5, enemyLevel=3 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  120934ms] [LOG] [2026-05-30T09:03:26.629Z] [DEBUG] Enemy spawned: type=clownfish, x=-9547.000000000002, y=173, aiLevel=0.5, enemyLevel=3 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  121343ms] [LOG] [2026-05-30T09:03:27.038Z] [DEBUG] Enemy spawned: type=clownfish, x=-9547.000000000002, y=1213, aiLevel=0.5, enemyLevel=3 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  121694ms] [LOG] [2026-05-30T09:03:27.389Z] [INFO] Wave state: peak @ http://localhost:8765/src/systems/DebugLogger.js:83
+[  121694ms] [LOG] [2026-05-30T09:03:27.389Z] [INFO] Spawn interval: 2000ms @ http://localhost:8765/src/systems/DebugLogger.js:83
+[  123344ms] [LOG] [2026-05-30T09:03:29.039Z] [DEBUG] Enemy spawned: type=jellyfish, x=923, y=-10102.630069731225, aiLevel=0.5, enemyLevel=4 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  124694ms] [LOG] [2026-05-30T09:03:30.389Z] [INFO] Wave state: calm @ http://localhost:8765/src/systems/DebugLogger.js:83
+[  124694ms] [LOG] [2026-05-30T09:03:30.389Z] [INFO] Spawn interval: 2000ms @ http://localhost:8765/src/systems/DebugLogger.js:83
+[  125343ms] [LOG] [2026-05-30T09:03:31.039Z] [DEBUG] Enemy spawned: type=shrimp, x=-9547.000000000002, y=2261, aiLevel=0.5, enemyLevel=3 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  127344ms] [LOG] [2026-05-30T09:03:33.039Z] [DEBUG] Enemy spawned: type=clownfish, x=1632, y=10910.726959862217, aiLevel=0.5, enemyLevel=3 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  129354ms] [LOG] [2026-05-30T09:03:35.050Z] [DEBUG] Enemy spawned: type=shrimp, x=2883, y=10921.561320995343, aiLevel=0.5, enemyLevel=4 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  131364ms] [LOG] [2026-05-30T09:03:37.059Z] [DEBUG] Enemy spawned: type=jellyfish, x=730, y=10933.04544477394, aiLevel=0.5, enemyLevel=4 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  132703ms] [LOG] [2026-05-30T09:03:38.398Z] [INFO] Wave state: surge @ http://localhost:8765/src/systems/DebugLogger.js:83
+[  132703ms] [LOG] [2026-05-30T09:03:38.399Z] [INFO] Spawn interval: 400ms @ http://localhost:8765/src/systems/DebugLogger.js:83
+[  132703ms] [LOG] [2026-05-30T09:03:38.399Z] [DEBUG] Enemy spawned: type=shrimp, x=1748, y=10999.957731739138, aiLevel=0.5, enemyLevel=3 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  133103ms] [LOG] [2026-05-30T09:03:38.798Z] [DEBUG] Enemy spawned: type=shrimp, x=2582, y=-10014.139163439304, aiLevel=0.5, enemyLevel=6 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  133504ms] [LOG] [2026-05-30T09:03:39.199Z] [DEBUG] Enemy spawned: type=shark, x=2225, y=10926.563198258229, aiLevel=0.5, enemyLevel=3 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  133914ms] [LOG] [2026-05-30T09:03:39.609Z] [DEBUG] Enemy spawned: type=shrimp, x=-9547.000000000002, y=1652, aiLevel=0.5, enemyLevel=3 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  134324ms] [LOG] [2026-05-30T09:03:40.019Z] [DEBUG] Enemy spawned: type=clownfish, x=-9547.000000000002, y=1012, aiLevel=0.5, enemyLevel=4 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  134733ms] [LOG] [2026-05-30T09:03:40.429Z] [DEBUG] Enemy spawned: type=clownfish, x=1440, y=-10003.183865960651, aiLevel=0.5, enemyLevel=4 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  135133ms] [LOG] [2026-05-30T09:03:40.829Z] [DEBUG] Enemy spawned: type=clownfish, x=2257, y=-10005.779100436226, aiLevel=0.5, enemyLevel=3 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  135544ms] [LOG] [2026-05-30T09:03:41.239Z] [DEBUG] Enemy spawned: type=shrimp, x=11452.999999999998, y=1155, aiLevel=0.5, enemyLevel=5 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  135944ms] [LOG] [2026-05-30T09:03:41.639Z] [DEBUG] Enemy spawned: type=clownfish, x=2935, y=10896.826639008757, aiLevel=0.5, enemyLevel=6 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  136344ms] [LOG] [2026-05-30T09:03:42.040Z] [DEBUG] Enemy spawned: type=clownfish, x=11452.999999999998, y=1862, aiLevel=0.5, enemyLevel=4 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  136704ms] [LOG] [2026-05-30T09:03:42.399Z] [INFO] Wave state: peak @ http://localhost:8765/src/systems/DebugLogger.js:83
+[  136704ms] [LOG] [2026-05-30T09:03:42.399Z] [INFO] Spawn interval: 2000ms @ http://localhost:8765/src/systems/DebugLogger.js:83
+[  138353ms] [LOG] [2026-05-30T09:03:44.048Z] [DEBUG] Enemy spawned: type=clownfish, x=-9547.000000000002, y=45, aiLevel=0.5, enemyLevel=3 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  139704ms] [LOG] [2026-05-30T09:03:45.399Z] [INFO] Wave state: calm @ http://localhost:8765/src/systems/DebugLogger.js:83
+[  139704ms] [LOG] [2026-05-30T09:03:45.399Z] [INFO] Spawn interval: 2000ms @ http://localhost:8765/src/systems/DebugLogger.js:83
+[  140364ms] [LOG] [2026-05-30T09:03:46.059Z] [DEBUG] Enemy spawned: type=clownfish, x=11452.999999999998, y=2126, aiLevel=0.5, enemyLevel=3 @ http://localhost:8765/src/systems/DebugLogger.js:73
+[  142364ms] [LOG] [2026-05-30T09:03:48.059Z] [DEBUG] Enemy spawned: type=jellyfish, x=-9547.000000000002, y=2122, aiLevel=0.5, enemyLevel=4 @ http://localhost:8765/src/systems/DebugLogger.js:73

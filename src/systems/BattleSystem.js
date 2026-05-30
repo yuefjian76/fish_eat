@@ -27,27 +27,17 @@ export class BattleSystem {
     }
 
     /**
-     * Check if attacker can deal damage to target (considers type advantage)
+     * Get type effectiveness multiplier for attacker vs defender
      * @param {string} attackerType - Type of attacking fish
-     * @param {string} targetType - Type of target fish
-     * @returns {boolean} True if attacker can deal damage
+     * @param {string} defenderType - Type of defending fish
+     * @returns {number} Multiplier: 2.0 if strongAgainst, 0.5 if weakTo, 1.0 otherwise
      */
-    canAttack(attackerType, targetType) {
-        const attackerConfig = this.fishData[attackerType];
-        const targetConfig = this.fishData[targetType];
-        if (!attackerConfig) return false;
-
-        // If attacker is strong against target (target is attacker's prey), attacker CAN attack
-        if (attackerConfig.strongAgainst && attackerConfig.strongAgainst.includes(targetType)) {
-            return true;
-        }
-
-        // If target is strong against attacker (attacker is target's prey), attacker CANNOT attack
-        if (targetConfig && targetConfig.strongAgainst && targetConfig.strongAgainst.includes(attackerType)) {
-            return false;
-        }
-
-        return true;
+    getTypeMultiplier(attackerType, defenderType) {
+        const attackerData = this.fishData[attackerType];
+        if (!attackerData) return 1.0;
+        if (attackerData.strongAgainst?.includes(defenderType)) return 2.0;
+        if (attackerData.weakTo?.includes(defenderType)) return 0.5;
+        return 1.0;
     }
 
     /**

@@ -20,7 +20,8 @@
       "Bash(unzip -o tropical_mountains.zip -d tropical_mountains)",
       "WebFetch(domain:opengameart.org)",
       "Bash(unzip -o underwater_world_bg.zip -d underwater_world)",
-      "Bash(file underwater_world/*.png)"
+      "Bash(file underwater_world/*.png)",
+      "Bash(./init.sh)"
     ]
   }
 }

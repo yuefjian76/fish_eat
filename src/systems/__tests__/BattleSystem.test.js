@@ -7,50 +7,48 @@ describe('BattleSystem', () => {
         battleSystem = new BattleSystem({});
     });
 
-    describe('canAttack', () => {
-        test('returns false if attacker type not in fishData', () => {
-            const fishData = { clownfish: {} };
+    describe('getTypeMultiplier', () => {
+        test('returns 2.0 when attacker strongAgainst defender', () => {
+            const fishData = {
+                shark: { strongAgainst: ['clownfish'] },
+                clownfish: {}
+            };
             const system = new BattleSystem(fishData);
-            expect(system.canAttack('unknown', 'clownfish')).toBe(false);
+            expect(system.getTypeMultiplier('shark', 'clownfish')).toBe(2.0);
         });
 
-        test('returns true if attacker has no type advantage against target', () => {
+        test('returns 0.5 when attacker weakTo defender', () => {
+            const fishData = {
+                clownfish: { weakTo: ['shark'] },
+                shark: {}
+            };
+            const system = new BattleSystem(fishData);
+            expect(system.getTypeMultiplier('clownfish', 'shark')).toBe(0.5);
+        });
+
+        test('returns 1.0 when neutral (no type advantage)', () => {
             const fishData = {
                 clownfish: { strongAgainst: ['shrimp'] },
                 shark: {}
             };
             const system = new BattleSystem(fishData);
-            expect(system.canAttack('shark', 'clownfish')).toBe(true);
+            expect(system.getTypeMultiplier('clownfish', 'shark')).toBe(1.0);
         });
 
-        test('returns true if attacker is strong against target (attacker can eat target)', () => {
+        test('returns 1.0 when attacker type not in fishData', () => {
             const fishData = {
-                clownfish: { strongAgainst: ['shrimp'] },
-                shrimp: {}
+                clownfish: {}
             };
             const system = new BattleSystem(fishData);
-            expect(system.canAttack('clownfish', 'shrimp')).toBe(true);
+            expect(system.getTypeMultiplier('unknown', 'clownfish')).toBe(1.0);
         });
 
-        test('returns false if target is strong against attacker (target can eat attacker)', () => {
-            // shark strongAgainst clownfish means shark can eat clownfish
-            // So if clownfish attacks shark, shark can eat clownfish (clownfish shouldn't attack)
+        test('returns 1.0 when defender type not in fishData', () => {
             const fishData = {
-                clownfish: { strongAgainst: [] },
                 shark: { strongAgainst: ['clownfish'] }
             };
             const system = new BattleSystem(fishData);
-            // When target (shark) is predator of attacker (clownfish), attacker cannot attack
-            expect(system.canAttack('clownfish', 'shark')).toBe(false);
-        });
-
-        test('returns true if attacker is NOT strong against target', () => {
-            const fishData = {
-                clownfish: { strongAgainst: ['shrimp'] },
-                shark: {}
-            };
-            const system = new BattleSystem(fishData);
-            expect(system.canAttack('clownfish', 'shark')).toBe(true);
+            expect(system.getTypeMultiplier('shark', 'unknown')).toBe(1.0);
         });
     });
 

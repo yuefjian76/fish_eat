@@ -9,86 +9,53 @@
 
 | Dimension | Status |
 |-----------|--------|
-| All 40 features | ✅ 100% completed |
-| Unit tests | ✅ ~730 passing, 0 failed |
+| Features | ✅ feat-001 ~ feat-043 + feat-046 ~ feat-049 completed (47/49 done) |
+| Unit tests | ✅ 850 passing, 0 failed |
 | `./init.sh` | ✅ All 5 steps pass |
-| Harness files | ✅ All 9 present and up to date |
-| Docs | ✅ All 3 docs files present |
+| E2E | ✅ Browser loads, wave/enemy spawning/BGM all work |
+| Harness files | ✅ All present |
+| Docs | ✅ ARCHITECTURE.md, PRODUCT.md, RELIABILITY.md all updated |
 | Active feature | None — project is in clean state |
 | Blocking issues | None |
 
 ---
 
-## What Was Accomplished This Session (2026-05-30)
+## What Was Accomplished (2026-05-30)
 
-### Harness Infrastructure Rewrite
+### ScrollingWorld Implementation (feat-046 ~ feat-049)
 
-This session performed a full rewrite of all harness documentation and tooling files to align with the **5-Subsystem Harness Engineering architecture**. No game code was modified.
+| feat | 内容 | Tests |
+|------|------|-------|
+| feat-046 | DepthColorMapper 纯函数 + ScrollingBackground 基础层 | 850 total |
+| feat-047 | 视差层(0.08/0.25/0.50) + DepthFog + ScrollEdge + BubblePool | 850 total |
+| feat-048 | Prng(mulberry32) + DecorationPool(chunk管理,200上限) | 850 total |
+| feat-049 | 删除BackgroundExpansion, GameScene→ScrollingBackground, 文档更新 | 850 total |
 
-| File | Change | Summary |
-|------|--------|---------|
-| `AGENTS.md` | Complete rewrite | Full 5-subsystem harness architecture with fish_eat-specific content |
-| `CLAUDE.md` | Complete rewrite | Concise quick-reference: commands, file map, architecture, game mechanics |
-| `init.sh` | Bug fix + restructure | Fixed hardcoded `/Users/yuefengjiang/AI/fish_eat` path; now portable via `SCRIPT_DIR`; restructured to 5 explicit steps |
-| `clean-state-checklist.md` | Complete rewrite | 8 categories, 40+ game-specific check items (wave system, boss triggers, collision rules, etc.) |
-| `evaluator-rubric.md` | Complete rewrite | 17 scoring criteria; added Infinite Map + Zones and Observability; harness/docs/system assessment tables |
-| `session-handoff.md` | This file | Reflects current completed state |
-| `quality-document.md` | Updated | Reflects harness refactoring as completed quality work |
+**新增文件:**
+- `src/systems/DepthColorMapper.js` — worldY→颜色/雾/bubble（纯函数）
+- `src/systems/ScrollingBackground.js` — 深度渐变+3层视差+DepthFog+ScrollEdge+BubblePool
+- `src/systems/DecorationPool.js` — 程序化装饰对象池
+- `src/utils/Prng.js` — mulberry32 PRNG
+- `src/config/depth_gradient.json` — 深度颜色配置
+- `scripts/preprocess_textures.py` — 纹理预处理脚本
+- 对应测试文件 × 4
 
-### Critical Bug Fixed
+**删除文件:**
+- `src/systems/BackgroundExpansion.js`
 
-**Problem**: `init.sh` line 28 had a hardcoded absolute path `/Users/yuefengjiang/AI/fish_eat`, breaking the script on any machine other than the original author's.
+**关键设计:**
+- 世界尺寸: 20000×20000，出生点 (10000, 14000)
+- 5 个深度区域: surface/shallow/mid/deep/abyss
+- 深度雾: worldY>12000 时 alpha 0→0.65
 
-**Fix**:
-```bash
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$SCRIPT_DIR"
-```
+**Bug 修复:**
+- `themeConfig?.name` 空指针 → 添加可选链
+- `survivalSeconds` 缩进错误 → 已修复
+- `_createTileLayers` Graphics 占位符 → 改为 `add.image` 加载真实纹理
 
-**Verification**: `bash init.sh` passes all 5 steps.
-
----
-
-## Project Architecture (for next agent context)
-
-```
-fish_eat/
-├── src/
-│   ├── scenes/        # GameScene (1837 LOC), MenuScene, BootScene, GameOverScene, UIScene, ShopScene
-│   ├── systems/       # 8 extracted systems (WaveSystem, SpawnSystem, CollisionSystem, …)
-│   ├── entities/      # Player, Enemy (AI state machine)
-│   ├── config/        # fish.json, skills.json, achievements.json, zones.json, enemies.json
-│   └── utils/         # DebugLogger, helpers
-├── e2e/               # smoke.spec.js (7 Playwright tests)
-├── docs/              # ARCHITECTURE_REFACTOR_PLAN.md, feature_list.json schema, etc.
-├── docs/              # ARCHITECTURE.md, PRODUCT.md, RELIABILITY.md
-└── [harness files]    # AGENTS.md, CLAUDE.md, init.sh, feature_list.json, progress.md,
-                       # session-handoff.md, quality-document.md, clean-state-checklist.md,
-                       # evaluator-rubric.md
-```
-
-### Layer Boundaries (enforced)
-
-```
-Scene Layer  →  System Layer  →  Entity Layer  →  Config Layer (JSON)
-GameScene       WaveSystem         Player          fish.json
-UIScene         SpawnSystem        Enemy           skills.json
-ShopScene       CollisionSystem    Projectile      zones.json
-                TreasureSystem     …               achievements.json
-                SkillSystem
-                GrowthSystem
-                AudioSystem
-                AchievementSystem
-```
-
-### System Communication Pattern
-
-```
-GameScene ──DI──▶ System.update(delta)
-          ◀── callback ── System calls onXxx(result)
-```
-
-No system imports another system directly. All cross-system coordination goes through GameScene.
+**CLAUDE.md 更新:**
+- 新增"交付标准"章节，禁止占位符实现
+- 工作规则新增第3条：禁止占位符交付
 
 ---
 
@@ -96,25 +63,36 @@ No system imports another system directly. All cross-system coordination goes th
 
 | Range | Category | Count | Status |
 |-------|----------|-------|--------|
-| feat-001 – feat-024 | Core game features | 24 | ✅ All completed |
-| feat-025 – feat-033 | Architecture refactor (8 systems extracted) | 9 | ✅ All completed |
-| feat-034 – feat-040 | Enhancements (camera, audio, shop, etc.) | 7 | ✅ All completed |
-| **Total** | | **40** | **100%** |
+| feat-001 ~ feat-024 | 核心游戏功能 | 24 | ✅ All completed |
+| feat-025 ~ feat-033 | 架构重构（8个系统提取） | 9 | ✅ All completed |
+| feat-034 ~ feat-040 | 增强功能 | 7 | ✅ All completed |
+| feat-041 | 无限地图系统 | 1 | ✅ completed |
+| feat-042 | Background Bug Fix | 1 | ✅ completed |
+| feat-043 | 技能数值平衡 | 1 | ✅ completed |
+| feat-044 | 属性相克激活 | 1 | ⏳ pending |
+| feat-045 | 技能协同系统 | 1 | ⏳ pending |
+| feat-046 ~ feat-049 | ScrollingWorld | 4 | ✅ All completed |
+| **Total** | | **49** | **47 ✅ / 2 ⏳** |
 
 ---
 
-## Architecture Decisions (permanent record)
+## Pending Features
+
+| ID | Name | Dependencies |
+|----|------|-------------|
+| feat-044 | 属性相克激活 | feat-043 |
+| feat-045 | 技能协同系统 | feat-044 |
+
+---
+
+## Architecture Decisions (updated)
 
 | Module | Decision |
 |--------|----------|
-| CollisionSystem | Returns structured result `{type, fish, expGain, comboMultiplier, score, isLevelUp, canEat}`; GameScene handles all side-effects |
-| SpawnSystem | Callback `onEnemyCreated(enemy)` — GameScene handles boss check/audio/particles |
-| TreasureSystem | Independent, `onCollect` callback |
-| RangedAttackSystem | Independent, `onEnemyAttack` callback |
-| SpawnSystem ↔ WaveSystem | DI + query interface (`waveSystem.getSpawnInterval()`) |
-| scene.restart() | Every system implements `reset(config)`; GameScene calls in `init()` |
-| E2E observability | `window.__GAME_SCENE__` exposed only in DEBUG mode (`?debug=true`) |
-| Overlap management | 3 separate overlaps: CollisionSystem (eat), TreasureSystem (chest), RangedAttackSystem (projectile) |
+| ScrollingBackground | 使用 `add.image` + `setPosition` 实现视差，而非 TileSprite |
+| DepthColorMapper | 纯静态函数，委托给 ScrollingBackground 内部 `_compute*` 方法 |
+| DecorationPool | chunk 种子决定装饰分布，同位置可复现 |
+| Prng | mulberry32，相同种子相同序列 |
 
 ---
 
@@ -122,56 +100,23 @@ No system imports another system directly. All cross-system coordination goes th
 
 | Check | Command | Result |
 |-------|---------|--------|
-| All unit tests | `npm test` | ~730 passed, 0 failed |
-| Full harness init | `./init.sh` | All 5 steps pass |
-| JS syntax | `node --input-type=module` check | Pass |
-| JSON configs | JSON.parse for 5 configs | All valid |
-| Harness files | Presence check | All 12 files present |
+| All unit tests | `./init.sh` | 850 passed, 0 failed |
+| E2E browser | Playwright MCP | wave/enemy spawning/BGM OK, no JS Error |
+| Syntax check | `node --check src/scenes/GameScene.js` | Pass |
 
 ---
 
 ## Next Session Startup
 
 ```bash
-# Step 1: Orient yourself
-cat AGENTS.md          # 5-subsystem harness overview
-cat CLAUDE.md          # quick reference: commands, files, architecture
-
-# Step 2: Validate environment
+# Step 1: Orient
 ./init.sh              # must pass before ANY code changes
+cat feature_list.json  # check pending features
+cat progress.md       # review history
 
-# Step 3: Check current state
-cat feature_list.json  # confirm all 40 features completed
-cat progress.md        # review session history
-cat docs/ARCHITECTURE.md  # system architecture reference
+# Step 2: Choose work
+# Option A: feat-044 属性相克激活
+# Option B: feat-045 技能协同系统
 
-# Step 4: Choose work
-# All 40 features complete — next work is Phase 3 (optional enhancements):
-#   Phase 3.1: Infinite map system polish
-#   Phase 3.2: Enemy AI behavior tree optimization
-#   Phase 3.3: Achievement system expansion
-# OR: pick items from README_IMPROVEMENTS.md (12 UX proposals)
+# Step 3: Implement + verify + update docs
 ```
-
----
-
-## Phase 3 Candidates (for next session, if desired)
-
-| ID | Name | Effort | Notes |
-|----|------|--------|-------|
-| Phase 3.1 | Infinite Map Polish | Medium | zones.json already exists, needs boundary tuning |
-| Phase 3.2 | Enemy AI Behavior Tree | Large | Replace simple state machine with weighted decisions |
-| Phase 3.3 | Achievement Expansion | Small | Add 5 more milestone achievements |
-| UX-01 | Pause Menu | Small | ESC key → overlay with resume/quit |
-| UX-02 | Sound Toggle | Small | Mute button in HUD |
-| UX-03 | Leaderboard | Medium | localStorage top-10 scores |
-
-See `README_IMPROVEMENTS.md` for full list of 12 UX proposals.
-
----
-
-## Known Non-Issues
-
-- GameScene is still ~1600 LOC — this is acceptable after 8 system extractions; target was `<2000 LOC` ✅
-- PNG transparency issues: documented fallback exists, non-blocking
-- E2E tests require a running browser/Playwright — not part of `./init.sh` but documented in `AGENTS.md`

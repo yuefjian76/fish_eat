@@ -362,6 +362,10 @@ class GameScene extends Phaser.Scene {
             this._debugText.setScrollFactor(0);
             this._debugText.setDepth(9999);
             this._prevDebugState = '';
+
+            // Initialize debug console API when ?debug=true
+            window.__DEBUG_API__ = this._createDebugAPI();
+            console.log('%c[DEBUG] Game debug API ready — type game.debug.help() for commands', 'color: #00ff88');
         }
 
         logger.info(`Game started - Difficulty: ${this.difficulty}, Enemy count: ${initialSpawnCount}-${this.enemyCountMax}`);
@@ -1121,6 +1125,266 @@ class GameScene extends Phaser.Scene {
         const waveTimer = this.waveSystem.getTimer();
         this._waveGraphics.fillStyle(waveColors[waveState], waveAlpha[waveState]);
         this._waveGraphics.fillRect(900, 150, barWidth * (waveTimer / waveDuration), barHeight);
+    }
+
+    /**
+     * Create debug API exposed on window.__DEBUG_API__ when ?debug=true
+     * Provides console-based inspection and manipulation of game state for development.
+     * @returns {Object} Debug API object with state viewing, scene control, manual actions, monitoring, and test helpers
+     */
+    _createDebugAPI() {
+        const self = this;
+        let _watchInterval = null;
+        let _watchKeys = [];
+
+        const api = {
+            // === State Viewing ===
+            state() {
+                return {
+                    hp: self.hp,
+                    maxHp: self.maxHp,
+                    level: self.level,
+                    score: self.score,
+                    exp: self.exp,
+                    wave: self._waveState,
+                    enemyCount: self.enemies?.length || 0,
+                    skillCooldowns: {
+                        Q: self.skillSystem?.getCooldownRemaining('bite') || 0,
+                        W: self.skillSystem?.getCooldownRemaining('shield') || 0,
+                        E: self.skillSystem?.getCooldownRemaining('speed_up') || 0,
+                        R: self.skillSystem?.getCooldownRemaining('heal') || 0,
+                    }
+                };
+            },
+
+            state: {
+                detailed() {
+                    return {
+                        enemies: (self.enemies || []).map(e => ({
+                            type: e.fishType,
+                            x: e.graphics?.x || 0,
+                            y: e.graphics?.y || 0,
+                            hp: e.hp || 0,
+                            maxHp: e.maxHp || 0,
+                            size: e.fishConfig?.size || 0,
+                        })),
+                        activeEffects: Object.entries(self.skillSystem?.activeEffects || {})
+                            .filter(([, v]) => v !== null)
+                            .map(([name, effect]) => ({
+                                name,
+                                remainingMs: effect.duration ? Math.max(0, effect.duration - (self.time?.now - effect.startTime)) : 0,
+                            })),
+                        player: {
+                            x: self.player?.x || 0,
+                            y: self.player?.y || 0,
+                            size: self.player?.playerData?.size || 0,
+                        },
+                        combo: self.comboSystem?.getComboMultiplier?.() || 1,
+                        elapsedMs: self.time?.now || 0,
+                    };
+                }
+            },
+
+            // === Scene Control ===
+            level(n) {
+                const parsed = parseInt(n);
+                if (isNaN(parsed)) {
+                    return { error: `level must be integer, got: ${n}` };
+                }
+                const clamped = Math.max(1, Math.min(15, parsed));
+                self.level = clamped;
+                self.onLevelUp();
+                return { success: true, level: clamped };
+            },
+
+            restart() {
+                self.scene.scene.restart('BootScene');
+                return { success: true, message: 'Restarting game...' };
+            },
+
+            // === Manual Actions ===
+            skill(key) {
+                const keyMap = { Q: 'bite', W: 'shield', E: 'speed_up', R: 'heal' };
+                const skillId = keyMap[key?.toUpperCase()];
+                if (!skillId) {
+                    return { error: `Invalid key: ${key}. Use Q/W/E/R` };
+                }
+                const skillData = self.skillsData?.[skillId];
+                if (!skillData) {
+                    return { error: `Skill ${key} not found in skillsData` };
+                }
+                const unlockLevel = skillData.unlockLevel || 1;
+                if (self.level < unlockLevel) {
+                    return { success: false, reason: `Skill ${key} not unlocked until Level ${unlockLevel}`, currentLevel: self.level, requiredLevel: unlockLevel };
+                }
+                const cooldown = self.skillSystem?.getCooldownRemaining(skillId) || 0;
+                if (cooldown > 0) {
+                    return { success: false, reason: 'Skill on cooldown', remainingCooldown: cooldown };
+                }
+                const result = self.skillSystem?.useSkill(key);
+                return { success: true, skillKey: key, action: skillData.type };
+            },
+
+            eat(fishType) {
+                if (!fishType) {
+                    return { error: 'fishType required, e.g. eat("shark")' };
+                }
+                const enemies = self.enemies || [];
+                const px = self.player?.x || 512;
+                const py = self.player?.y || 384;
+                let nearest = null;
+                let nearestDist = Infinity;
+                for (const enemy of enemies) {
+                    if (!enemy.graphics?.active) continue;
+                    if (enemy.fishType !== fishType) continue;
+                    const dx = (enemy.graphics.x || 0) - px;
+                    const dy = (enemy.graphics.y || 0) - py;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < nearestDist && dist <= 1000) {
+                        nearestDist = dist;
+                        nearest = enemy;
+                    }
+                }
+                if (!nearest) {
+                    return { error: `No ${fishType} fish within range`, searchedRange: 1000 };
+                }
+                const playerSize = self.player?.playerData?.size || 30;
+                const targetSize = nearest.fishConfig?.size || 30;
+                if (playerSize < targetSize * 1.2) {
+                    return { error: `Player too small to eat ${fishType}`, playerSize, requiredSize: Math.ceil(targetSize * 1.2) };
+                }
+                const result = self.collisionSystem?.checkCollision(self.player, nearest.graphics, self.player.playerData);
+                if (result?.type === 'eat') {
+                    return { success: true, eaten: fishType, expGained: result.expGain || 0 };
+                }
+                return { success: false, reason: result?.type || 'eat_failed', details: result };
+            },
+
+            // === Real-time Monitoring ===
+            watch(...keys) {
+                if (_watchInterval) {
+                    clearInterval(_watchInterval);
+                }
+                _watchKeys = keys;
+                if (keys.length === 0) {
+                    return { error: 'Specify keys to watch, e.g. watch("hp", "score")' };
+                }
+                _watchInterval = setInterval(() => {
+                    const state = api.state();
+                    const parts = [];
+                    for (const key of _watchKeys) {
+                        const val = state[key];
+                        if (val === undefined) continue;
+                        if (key === 'hp') {
+                            parts.push(`hp: ${state.hp}/${state.maxHp}`);
+                        } else if (key === 'score') {
+                            parts.push(`score: ${state.score}`);
+                        } else if (key === 'wave') {
+                            parts.push(`wave: ${state.wave}`);
+                        } else if (key === 'level') {
+                            parts.push(`lv: ${state.level}`);
+                        } else if (key === 'exp') {
+                            parts.push(`exp: ${state.exp}`);
+                        } else {
+                            parts.push(`${key}: ${val}`);
+                        }
+                    }
+                    if (parts.length > 0) {
+                        const timestamp = new Date().toTimeString().split(' ')[0];
+                        console.log(`%c[${timestamp}] ${parts.join(', ')}`, 'color: #88ff88');
+                    }
+                }, 500);
+                return { success: true, watching: keys, intervalId: _watchInterval };
+            },
+
+            unwatch() {
+                if (_watchInterval) {
+                    clearInterval(_watchInterval);
+                    _watchInterval = null;
+                    _watchKeys = [];
+                    return { success: true, message: 'Watch stopped' };
+                }
+                return { success: true, message: 'Nothing to unwatch' };
+            },
+
+            // === Test Helpers ===
+            spawn(type, count) {
+                if (!type || count <= 0) {
+                    return { spawned: 0, failed: 1, reason: 'Invalid parameters: spawn(type, count)' };
+                }
+                const fishConfig = self.fishData?.[type];
+                if (!fishConfig) {
+                    return { spawned: 0, failed: count, reason: `Invalid fish type: ${type}` };
+                }
+                for (let i = 0; i < count; i++) {
+                    const enemy = new Enemy(self, Math.random() * 800, Math.random() * 600, fishConfig, 1);
+                    self.enemies.push(enemy);
+                }
+                return { spawned: count, failed: 0 };
+            },
+
+            killAll() {
+                const enemies = self.enemies || [];
+                let killed = 0;
+                let skipped = 0;
+                for (const enemy of enemies) {
+                    if (enemy.fishConfig?.isBoss) {
+                        skipped++;
+                        continue;
+                    }
+                    enemy.destroy?.();
+                    killed++;
+                }
+                self.enemies = self.enemies.filter(e => e.graphics?.active !== false);
+                return { killed, skipped, message: `Killed ${killed}, skipped ${skipped} boss(es)` };
+            },
+
+            fullHealth() {
+                self.hp = self.maxHp;
+                self.scene?.get('UIScene')?.updateUI?.(self.score, self.exp, self.level, self.hp, self.maxHp, self.growthSystem?.getExpForLevel(self.level + 1) || 100);
+                return { success: true, hp: self.hp, maxHp: self.maxHp };
+            },
+
+            maxExp() {
+                const nextLevelExp = self.growthSystem?.getExpForLevel(self.level + 1) || 100;
+                const targetExp = nextLevelExp - 1;
+                const prevLevel = self.level;
+                self.exp = targetExp;
+                const leveledUp = self.growthSystem?.addExperience(0, self.time?.now, self.luckSystem);
+                const newLevel = self.growthSystem?.getLevel() || self.level;
+                return {
+                    success: true,
+                    exp: targetExp,
+                    nextLevelAt: nextLevelExp,
+                    leveledUp: newLevel > prevLevel,
+                    newLevel: newLevel
+                };
+            },
+
+            // === Info ===
+            help() {
+                const lines = [
+                    'state() — Returns full game state snapshot',
+                    'state.detailed() — Returns extended state (enemies, effects, position)',
+                    'level(n) — Jump to level n (1-15, clamped)',
+                    'restart() — Full game reset (return to BootScene)',
+                    'skill("Q"|"W"|"E"|"R") — Trigger skill by key',
+                    'eat("fishType") — Auto-eat target fish type (validates size first)',
+                    'watch("hp", "score", ...) — Real-time monitoring (Ctrl+C to stop)',
+                    'unwatch() — Stop watching',
+                    'spawn("shark", 3) — Spawn 3 sharks',
+                    'killAll() — Remove all enemies (excludes bosses)',
+                    'fullHealth() — Restore HP to maxHp',
+                    'maxExp() — Set EXP to just below level-up threshold',
+                    'help() — Show this message',
+                ];
+                const msg = lines.join('\n');
+                console.log(`%c[DEBUG API]\n${msg}`, 'color: #88ff88');
+                return msg;
+            },
+        };
+
+        return api;
     }
 
     /**

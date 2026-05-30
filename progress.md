@@ -1,8 +1,8 @@
 # 进度日志
 
-## 当前阶段：Phase 3 — 游戏性优化（克制系统 + 技能协同）
+## 当前阶段：Phase 3 → Phase 4 准备 — 游戏性优化 + 滚动世界设计
 
-目标：激活克制系统、增加技能协同、修复后台系统遗留 Bug。
+目标：激活克制系统、增加技能协同、完成 ScrollingWorld 文档与 TDD 规划（feat-046~049）。
 
 当前进度：
 - ✅ feat-001 ~ feat-041：全部完成（41 个特性）
@@ -10,6 +10,7 @@
 - ✅ feat-043：技能数值平衡（765 tests）
 - ⏳ feat-044：属性相克激活（待做）
 - ⏳ feat-045：技能协同系统（待做）
+- 📝 feat-046~049：ScrollingWorld 文档 + TDD 计划（文档完成，实现待做）
 
 ---
 
@@ -50,6 +51,50 @@
 
 ### 下一步
 - feat-044：属性相克激活（fish.json 扩展 + BattleSystem.getTypeMultiplier + CollisionSystem 阈值 + GameScene takeDamage）
+
+---
+
+## 会话 — 2026-05-30（Scrolling World 需求设计文档）
+
+### 已完成
+- ✅ Scrolling World 用户需求确认（Q1~Q5 + 世界尺寸 A 20000×20000，出生点 (10000,14000)）
+- ✅ `docs/SCROLLING_WORLD_REQUIREMENTS.md` 创建（全功能需求 PRD）
+  - FR-COORD / DEPTH / TILE / FOG / EDGE / BUBBLE / DECO / LIFECYCLE 8 个功能需求组
+  - NFR：PERF（60fps）/ MAINT / TEST（TDD）/ COMPAT（桌面Chrome）
+  - 5 个验收标准，术语表
+- ✅ `docs/SCROLLING_WORLD_DESIGN.md` 创建（技术设计 + TDD 计划）
+  - 新增文件清单：ScrollingBackground.js / DecorationPool.js / DepthColorMapper.js / Prng.js / depth_gradient.json
+  - TDD 测试组 A~N（约 56 个测试用例），所有纯函数先测后写
+  - 4 阶段实现计划（feat-046~049），每阶段含 scope_guard + rollback 策略
+  - 坐标系语义图、深度区域表、各层 parallax 参数
+- ✅ `docs/ARCHITECTURE.md` 更新
+  - 新增 Scrolling World Systems 表（ScrollingBackground / DepthColorMapper / DecorationPool / Prng）
+  - 废弃声明（BackgroundExpansion / BackgroundSystem chunk 方法）
+  - 深度实现层次图（depth=0~8）、纹理预处理说明
+- ✅ `feature_list.json` 更新（feat-046~049 全部录入）
+  - 每项含：tdd_test_groups / definition_of_done / scope_guard / phase
+  - 总计 49 个 feature，无重复（Python 脚本验证）
+- ✅ 提交：`3b03be8 docs(scrolling-world): requirements + design + feature_list feat-046~049`
+
+### 关键设计决策（写入文档）
+| 问题 | 决策 |
+|------|------|
+| 背景实现方式 | TileSprite（使用现有 bg_undersea 图片，镜像预处理消除接缝） |
+| 深度感优先实现 | DepthGradientLayer 全屏颜色渐变（5 个颜色 stop，每帧重绘 3 个 fillRect） |
+| 水平装饰变化 | DecorationPool，mulberry32 PRNG，按 chunkX 种子决定型号和位置 |
+| 世界尺寸 | 20000×20000，出生点 worldY=14000（深海区域） |
+| 深度区域（5 个） | 浅海(0-2k) / 中层(2k-4k) / 深海(4k-8k) / 深渊(8k-12k) / 无底(12k-20k) |
+| 接缝消除 | Python 脚本：原图(1280) + 水平翻转 = 2560px 无缝纹理，LR diff=0 |
+
+### 文件改动
+- `docs/SCROLLING_WORLD_REQUIREMENTS.md` — 新建（全功能 PRD，~280 行）
+- `docs/SCROLLING_WORLD_DESIGN.md` — 新建（TDD 计划 + 技术设计，~500 行）
+- `docs/ARCHITECTURE.md` — 新增 Scrolling World Systems 部分
+- `feature_list.json` — feat-046~049 完整录入（49 项，含 tdd_test_groups/DoD/scope_guard）
+
+### 下一步选择（按优先级）
+1. **feat-046**（ScrollingWorld Phase 1）：TDD 实现 — `_computeDepthColor` / `_interpolateColor` / `WorldConfig` 修改
+2. **feat-044**：属性相克激活（按原计划推进 Phase 3）
 
 ---
 

@@ -1,8 +1,8 @@
 # 进度日志
 
-## 当前阶段：feat-045 技能协同系统 完成
+## 当前阶段：E2E Debug Console API 完成
 
-目标：完成 feat-045 技能协同系统。
+目标：实现浏览器调试 API，便于测试和验证游戏功能。
 
 当前进度：
 - ✅ feat-001 ~ feat-041：全部完成（41 个特性）
@@ -10,10 +10,28 @@
 - ✅ feat-043：技能数值平衡（765 tests）
 - ✅ feat-044：属性相克激活（855 tests）
 - ✅ feat-045：技能协同系统（855 tests）
-- ✅ feat-046：ScrollingWorld Phase 1 — DepthColorMapper + ScrollingBackground 基础层（850 tests）
-- ✅ feat-047：ScrollingWorld Phase 2 — 视差完整层 + DepthFog + ScrollEdge（850 tests）
-- ✅ feat-048：ScrollingWorld Phase 3 — Prng + DecorationPool（850 tests）
-- ✅ feat-049：ScrollingWorld Phase 4 — 删除 BackgroundExpansion + 清理废弃代码 + 文档更新（850 tests）
+- ✅ feat-046~feat-049：ScrollingWorld 全部完成（850 tests）
+- ✅ E2E Debug API：`window.__DEBUG_API__` 实现（16 E2E tests, 855 unit tests）
+
+---
+
+## 会话 — 2026-05-31（E2E Debug Console API 完成）
+
+### 已完成
+- ✅ E2E Debug Console API：`window.__DEBUG_API__`
+  - `GameScene._createDebugAPI()`：14 个方法（state/level/skill/eat/watch/spawn/killAll/fullHealth/maxExp/restart/help）
+  - `e2e/debug-api.spec.js`：16 个 E2E 测试用例
+  - 初始化条件：`?debug=true` 时才暴露，保障生产安全
+  - 使用方法：浏览器打开 `http://localhost:8765?debug=true`，Console 输入 `__DEBUG_API__.help()`
+
+### 文件改动
+- `src/scenes/GameScene.js` — `_createDebugAPI()` 方法（~250 行）
+- `e2e/debug-api.spec.js` — 16 个 Playwright 测试
+- `playwright.config.mjs` — Playwright ESM 配置
+
+### 下一步
+- 项目已全部完成（49/49 features + E2E debug API）
+- 继续使用 debug API 测试和验证游戏功能
 
 ---
 

@@ -42,7 +42,7 @@ export class BackgroundExpansion extends BackgroundSystem {
 
         // Transition state
         this.isTransitioning = false;
-        this.transitionOverlay = null;
+        this._transitionOverlay = null;
     }
 
     /**
@@ -406,17 +406,17 @@ export class BackgroundExpansion extends BackgroundSystem {
         };
 
         // Create transition overlay
-        this.transitionOverlay = this.scene.add.graphics();
-        this.transitionOverlay.setDepth(100);
-        this.transitionOverlay.setAlpha(0);
+        this._transitionOverlay = this.scene.add.graphics();
+        this._transitionOverlay.setDepth(100);
+        this._transitionOverlay.setAlpha(0);
 
         // Draw overlay
-        this.transitionOverlay.fillStyle(0x000000, 1);
-        this.transitionOverlay.fillRect(0, 0, this.screenWidth, this.screenHeight);
+        this._transitionOverlay.fillStyle(0x000000, 1);
+        this._transitionOverlay.fillRect(0, 0, this.screenWidth, this.screenHeight);
 
         // Fade to black
         this.scene.tweens.add({
-            targets: this.transitionOverlay,
+            targets: this._transitionOverlay,
             alpha: 1,
             duration: duration / 2,
             ease: 'Sine.easeIn',
@@ -431,14 +431,14 @@ export class BackgroundExpansion extends BackgroundSystem {
 
                 // Fade back
                 this.scene.tweens.add({
-                    targets: this.transitionOverlay,
+                    targets: this._transitionOverlay,
                     alpha: 0,
                     duration: duration / 2,
                     ease: 'Sine.easeOut',
                     onComplete: () => {
-                        if (this.transitionOverlay) {
-                            this.transitionOverlay.destroy();
-                            this.transitionOverlay = null;
+                        if (this._transitionOverlay) {
+                            this._transitionOverlay.destroy();
+                            this._transitionOverlay = null;
                         }
                         this.isTransitioning = false;
                     }
@@ -512,9 +512,9 @@ export class BackgroundExpansion extends BackgroundSystem {
         this.decorativeBubbles = [];
 
         // Destroy transition overlay if exists
-        if (this.transitionOverlay) {
-            this.transitionOverlay.destroy();
-            this.transitionOverlay = null;
+        if (this._transitionOverlay) {
+            this._transitionOverlay.destroy();
+            this._transitionOverlay = null;
         }
 
         // Call parent destroy

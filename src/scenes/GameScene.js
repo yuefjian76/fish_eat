@@ -20,6 +20,7 @@ import { ComboSystem } from '../systems/ComboSystem.js';
 import { AudioSystem } from '../systems/AudioSystem.js';
 import { AchievementSystem } from '../systems/AchievementSystem.js';
 import { DailyChallengeSystem } from '../systems/DailyChallengeSystem.js';
+import { CollisionSystem } from '../systems/CollisionSystem.js';
 import { WORLD_CONFIG } from '../constants/WorldConfig.js';
 import { logger } from '../systems/DebugLogger.js';
 
@@ -236,6 +237,13 @@ class GameScene extends Phaser.Scene {
 
         // Setup skill system with player reference
         this.skillSystem.setPlayer(this.player, this);
+
+        // Initialize collision system — must be after createPlayer() so this.player exists
+        this.collisionSystem = new CollisionSystem({
+            scene: this,
+            player: this.player,
+            fishData: this.fishData
+        });
 
         // Create skill bar UI
         this.skillBar = new SkillBar(this, this.skillsData, this.skillSystem);
@@ -713,29 +721,31 @@ class GameScene extends Phaser.Scene {
         }
     }
 
+    /**
+     * Phaser overlap callback: player vs fish.
+     * Delegates collision logic to CollisionSystem (single source of truth),
+     * then handles all side-effects here.
+     */
     checkEat(player, fish) {
-        if (fish.getData('eaten')) return;
+        const result = this.collisionSystem.checkCollision(player, fish);
+        this._handleCollisionResult(result);
+    }
 
-        const playerSize = this.player.playerData.size;
+    /**
+     * Handle the structured result from CollisionSystem.checkCollision.
+     * All side-effects (particles, sound, exp, damage, UI) live here.
+     * @param {object} result - Collision result from CollisionSystem
+     */
+    _handleCollisionResult(result) {
+        if (!result || result.type === 'already_eaten' || result.type === 'blocked') {
+            return;
+        }
+
+        const fish = result.fish;
         const fishSize = fish.fishData.size;
         const fishType = fish.fishType;
 
-        // Can eat smaller fish (player > enemy * 1.2)
-        if (playerSize > fishSize * 1.2) {
-            // Check strong against / weak to
-            const playerType = 'clownfish'; // Player is always clownfish for now
-
-            const fishStrength = this.fishData[fishType].strongAgainst;
-
-            logger.debug(`Eat check: playerSize=${playerSize}, fishSize=${fishSize}, fishType=${fishType}`);
-
-            // Cannot eat if fish is strong against player (player is fish's prey)
-            if (fishStrength && fishStrength.includes(playerType)) {
-                logger.debug(`Eat check result: cannot eat ${fishType} (strong against player)`);
-                return; // Cannot eat
-            }
-
-            logger.debug(`Eat check result: can eat ${fishType}`);
+        if (result.type === 'eat') {
             fish.setData('eaten', true);
 
             // Screen shake on eat (small positive feedback)
@@ -772,7 +782,6 @@ class GameScene extends Phaser.Scene {
             if (enemyIndex !== -1) {
                 logger.debug(`Enemy death: type=${fishType}, x=${fish.x}, y=${fish.y}`);
                 const enemy = this.enemies[enemyIndex];
-                // Destroy health bar first
                 if (enemy && enemy.healthBar) {
                     enemy.healthBar.destroy();
                 }
@@ -792,24 +801,14 @@ class GameScene extends Phaser.Scene {
 
             // Update UI
             this.scene.get('UIScene').updateUI(this.score, this.exp, this.level, this.hp, this.maxHp, this.growthSystem.getExpForLevel(this.level + 1));
-        }
-        // Take damage from larger fish (fish > player * 1.2)
-        else if (fishSize > playerSize * 1.2) {
-            // Check if fish is strong against player (player is attacker's prey)
-            const fishStrength = this.fishData[fishType].strongAgainst;
-            if (fishStrength && fishStrength.includes('clownfish')) {
-                return; // Fish is strong against player, no damage
-            }
 
+        } else if (result.type === 'damaged') {
             // Check if player is spawn-invincible
-            if (this._spawnInvincible) {
-                return; // Skip damage
-            }
+            if (this._spawnInvincible) return;
 
-            // Take damage (fish deals damage equal to fish size / 4)
-            const damage = Math.floor(fishSize / 4);
+            const damage = result.damage;
             logger.debug(`Damage dealt to player: ${damage} (fishSize=${fishSize})`);
-            this.outOfCombatTimer = 0; // Reset out-of-combat timer on damage
+            this.outOfCombatTimer = 0;
             this.hp -= damage;
             if (this.hp < 0) this.hp = 0;
             this.uiDirty = true;
@@ -1383,24 +1382,14 @@ class GameScene extends Phaser.Scene {
         // Check for boss spawn
         this.checkBossSpawn();
 
-        // Update background if theme changed
-        const previousTheme = this.getThemeForLevel(this.level - 1);
-        const currentTheme = this.getThemeForLevel(this.level);
-        if (previousTheme !== currentTheme) {
-            this.createBackground();
-            // Also recreate background decorations
-            if (this.backgroundSystem) {
-                this.backgroundSystem.destroy();
-            }
-            this.backgroundSystem = new BackgroundSystem(this, 1024, 768);
-            this.backgroundSystem.createBackground();
-        }
-
         // Theme transition every 2 levels (random theme)
+        // NOTE: Do NOT replace backgroundSystem instance here — it would downgrade
+        // BackgroundExpansion (chunk/zone support) to plain BackgroundSystem.
+        // transitionToNewTheme() handles the visual swap in-place.
         if (this.level % 2 === 0 && this.backgroundSystem) {
             const nextTheme = this.backgroundSystem.getNextTheme();
             this.backgroundSystem.transitionToNewTheme(nextTheme, 1500);
-            logger.info('Theme transition triggered', { from: this.backgroundSystem.currentThemeId, to: nextTheme, level: this.level });
+            logger.info('Theme transition triggered', { to: nextTheme, level: this.level });
         }
     }
 

@@ -1,12 +1,38 @@
 # 进度日志
 
-## 当前阶段：架构重构 Phase 2 完成，进入 Phase 3
+## 当前阶段：Phase 3 — 游戏性优化（克制系统 + 技能协同）
 
-目标：将 GameScene (70KB/1800+ 行) 拆分为 8 个独立系统。
+目标：激活克制系统、增加技能协同、修复后台系统遗留 Bug。
 
 当前进度：
-- ✅ feat-025 ~ feat-040：全部完成（40 个特性）
-- ✅ 718 个测试全部通过
+- ✅ feat-001 ~ feat-041：全部完成（41 个特性）
+- ✅ feat-042：Background Bug Fix + checkEat 统一（754 tests）
+- ⏳ feat-043：技能数值平衡（待做）
+- ⏳ feat-044：属性相克激活（待做）
+- ⏳ feat-045：技能协同系统（待做）
+
+---
+
+## 会话 — 2026-05-30（Phase 3 启动）
+
+### 已完成
+- ✅ feat-042：Background Bug Fix + checkEat 统一
+  - 修复 BackgroundExpansion 在 level-up 时被降级为 BackgroundSystem 的 Bug
+  - 统一 `_transitionOverlay` 变量命名（BackgroundExpansion 与父类一致）
+  - 移除 `onLevelUp` 中多余的 `createBackground()` 和 previousTheme 判断
+  - `GameScene.checkEat` 改为委托 `CollisionSystem.checkCollision`，副作用集中到 `_handleCollisionResult`
+  - CollisionSystem 测试从 8 个扩展到 16 个
+  - 754 tests 通过，init.sh 全部通过
+
+### 文件改动
+- `src/scenes/GameScene.js` — checkEat 委托 + CollisionSystem import + _handleCollisionResult + onLevelUp bug fix
+- `src/systems/BackgroundExpansion.js` — transitionOverlay → _transitionOverlay（3处）
+- `src/systems/__tests__/CollisionSystem.test.js` — 扩充到 16 个测试
+- `feature_list.json` — 新增 feat-042~feat-045 定义，feat-042 标记 completed
+- `progress.md` — 本文件更新
+
+### 下一步
+- feat-043：技能数值平衡（skills.json + SkillSystem 运行时逻辑）
 
 ---
 

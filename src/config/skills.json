@@ -44,5 +44,27 @@
     "range": 0,
     "healPercent": 0.15,
     "unlockLevel": 6
+  },
+  "synergies": {
+    "rush_bite": {
+      "name": "Rush Bite",
+      "description": "E active + Q = 2x damage + knockback",
+      "pattern": ["speed_up", "bite"],
+      "windowMs": 3000,
+      "effects": {
+        "damageMultiplier": 2.0,
+        "knockback": true
+      }
+    },
+    "storm_slash": {
+      "name": "Storm Slash",
+      "description": "E->Q->E within 3s = Q cooldown reset, 3 consecutive bites",
+      "pattern": ["speed_up", "bite", "speed_up"],
+      "windowMs": 3000,
+      "effects": {
+        "cooldownReset": "bite",
+        "bonusBites": 3
+      }
+    }
   }
 }

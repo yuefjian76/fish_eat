@@ -201,3 +201,25 @@ logger.error('Failed to load config', { file, error });
 - **PNG 透明度**：部分鱼类 PNG 背景不透明，FishFactory 自动 fallback 程序化绘制
 - **WebGL**：需要 WebGL 支持（现代浏览器默认支持）
 - **localStorage**：认证和存档通过 localStorage 持久化
+
+---
+
+## 故障排除
+
+### API 连接断开错误
+
+**错误信息：**
+```
+API Error: The socket connection was closed unexpectedly.
+For more information, pass `verbose: true` in the second argument to fetch()
+```
+
+**解决方法：** 等待几秒后重试。这是临时性网络错误，通常不需要任何代码修改。
+
+---
+
+## 自动compact规则
+
+上下文满时自动触发compact（类似 API Error: 400 invalid params, context window exceeds limit）。
+
+compact后继续工作，不需要用户确认。

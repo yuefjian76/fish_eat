@@ -273,12 +273,21 @@ export class Enemy {
         this.lastAttackTime = currentTime;
         this.state = Enemy.STATE.ATTACKING;
 
-        // Calculate type multiplier (if fish is strong against player, deal more damage)
+        // Calculate type multiplier using battle system lookup
         let typeMultiplier = 1.0;
-        if (this.fishConfig.strongAgainst?.includes('clownfish')) {
-            typeMultiplier = 1.5; // Fish deals 50% more damage to player
-        } else if (this.fishConfig.weakTo?.includes('clownfish')) {
-            typeMultiplier = 0.5; // Fish deals 50% less damage to player
+        const playerFishType = player?.fishType;
+        if (playerFishType) {
+            // Use scene.battleSystem if available for proper type lookup
+            if (this.scene.battleSystem?.getTypeMultiplier) {
+                typeMultiplier = this.scene.battleSystem.getTypeMultiplier(this.fishType, playerFishType);
+            } else {
+                // Fallback: inline type lookup
+                if (this.fishConfig.strongAgainst?.includes(playerFishType)) {
+                    typeMultiplier = 2.0; // Fish deals 2x damage to player it strongAgainst
+                } else if (this.fishConfig.weakTo?.includes(playerFishType)) {
+                    typeMultiplier = 0.5; // Fish deals 0.5x damage to player it weakTo
+                }
+            }
         }
 
         // Deal damage based on fish size AND level - logarithmic scale for balanced gameplay
@@ -427,23 +436,64 @@ export class Enemy {
     updateFishing(delta) {
         // If no target, find one
         if (!this.fishingTarget || !this.fishingTarget.graphics || !this.fishingTarget.graphics.active) {
-            // Find smaller enemies
+            // Find smaller enemies with type-aware tie-breaking
             const enemies = this.scene.fishes.getChildren();
             const selfSize = this.fishConfig.size;
+            const selfFishType = this.fishType;
 
+            // Collect all valid prey
+            const validPrey = [];
             for (const enemy of enemies) {
                 if (enemy === this.graphics || !enemy.active) continue;
                 if (enemy.fishData && enemy.fishData.size < selfSize * 0.9) {
-                    // Found a valid target
-                    this.fishingTarget = enemy;
-                    break;
+                    validPrey.push(enemy);
                 }
             }
 
-            // No target found, return to wandering
-            if (!this.fishingTarget) {
+            if (validPrey.length === 0) {
+                // No target found, return to wandering
+                this.fishingTarget = null;
                 this.state = Enemy.STATE.WANDERING;
                 return;
+            }
+
+            if (validPrey.length === 1) {
+                this.fishingTarget = validPrey[0];
+            } else {
+                // Multiple candidates - use type tie-breaking
+                // Find max size among candidates
+                let maxSize = 0;
+                for (const prey of validPrey) {
+                    if (prey.fishData.size > maxSize) maxSize = prey.fishData.size;
+                }
+
+                // Filter to candidates within ±10% of max size
+                const closePrey = validPrey.filter(prey =>
+                    prey.fishData.size >= maxSize * 0.9
+                );
+
+                // Prefer prey enemy is strongAgainst
+                let bestPrey = null;
+                for (const prey of closePrey) {
+                    const preyType = prey.fishType;
+                    if (this.fishConfig.strongAgainst?.includes(preyType)) {
+                        bestPrey = prey;
+                        break; // StrongAgainst found, prefer this one
+                    }
+                }
+
+                // Fall back to largest if no type advantage
+                if (!bestPrey) {
+                    let largestSize = 0;
+                    for (const prey of closePrey) {
+                        if (prey.fishData.size > largestSize) {
+                            largestSize = prey.fishData.size;
+                            bestPrey = prey;
+                        }
+                    }
+                }
+
+                this.fishingTarget = bestPrey || validPrey[0];
             }
         }
 

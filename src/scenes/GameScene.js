@@ -987,7 +987,7 @@ class GameScene extends Phaser.Scene {
             const glow = this._getGlowColor(
                 this.player.playerData.size,
                 enemy.graphics.fishData.size,
-                enemy.fishConfig.strongAgainst?.includes('clownfish')
+                enemy.fishConfig.strongAgainst?.includes(this.fishType)
             );
             if (!glow) return;
             const r = enemy.graphics.fishData.size + 2;

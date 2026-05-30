@@ -65,8 +65,8 @@ export class CollisionSystem {
         const fishSize = fish.fishData.size;
         const fishType = fish.fishType;
 
-        // Read playerType dynamically from player object
-        const playerType = player.fishType || 'clownfish';
+        // Read playerType dynamically from player object (supports both player.fishType and player.playerData.fishType)
+        const playerType = player.fishType || player.playerData?.fishType || 'clownfish';
 
         // Look up fish and player type data
         const fishData = this._fishData[fishType];

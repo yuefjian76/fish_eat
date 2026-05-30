@@ -65,45 +65,51 @@ export class CollisionSystem {
         const fishSize = fish.fishData.size;
         const fishType = fish.fishType;
 
-        // Player must be 20% larger to eat
-        if (playerSize > fishSize * 1.2) {
-            // Check strong against / weak to
-            const playerType = 'clownfish';
-            const fishStrength = this._fishData[fishType]?.strongAgainst;
+        // Read playerType dynamically from player object
+        const playerType = player.fishType || 'clownfish';
 
-            // Cannot eat if fish is strong against player
-            if (fishStrength && fishStrength.includes(playerType)) {
-                return {
-                    type: 'blocked',
-                    fish,
-                    canEat: false,
-                    reason: 'strong_against'
-                };
-            }
+        // Look up fish and player type data
+        const fishData = this._fishData[fishType];
+        const playerData = this._fishData[playerType];
 
-            // Can eat
+        // Determine type relationships
+        const fishStrongAgainstPlayer = fishData?.strongAgainst?.includes(playerType) ?? false;
+        const playerStrongAgainstFish = playerData?.strongAgainst?.includes(fishType) ?? false;
+
+        // Determine size threshold based on type relationship
+        let sizeThreshold = 1.2;
+        let damageMultiplier = 1.0;
+
+        if (fishStrongAgainstPlayer) {
+            sizeThreshold = fishData.sizeThresholdVsStrong ?? 1.5;
+        } else if (playerStrongAgainstFish) {
+            sizeThreshold = playerData.sizeThresholdVsWeak ?? 1.2;
+            damageMultiplier = playerData.damageMultiplierVsStrong ?? 2.0;
+        }
+
+        // If fish strongAgainst player, block all interactions with strong_against reason
+        if (fishStrongAgainstPlayer) {
+            return {
+                type: 'blocked',
+                fish,
+                canEat: false,
+                reason: 'strong_against'
+            };
+        }
+
+        // Normal path: player can eat fish
+        if (playerSize > fishSize * sizeThreshold) {
+            // Apply type multiplier to exp
             return {
                 type: 'eat',
                 fish,
                 canEat: true,
-                expGain: fish.fishData.exp,
+                expGain: fish.fishData.exp * damageMultiplier,
                 fishSize: fishSize
             };
         }
-        // Fish is larger than player by 20%+
-        else if (fishSize > playerSize * 1.2) {
-            // Check if fish is strong against player
-            const playerType = 'clownfish';
-            const fishStrength = this._fishData[fishType]?.strongAgainst;
-            if (fishStrength && fishStrength.includes(playerType)) {
-                return {
-                    type: 'blocked',
-                    fish,
-                    canEat: false,
-                    reason: 'strong_against'
-                };
-            }
-
+        // Fish is larger than player
+        else if (fishSize > playerSize * sizeThreshold) {
             // Take damage
             return {
                 type: 'damaged',

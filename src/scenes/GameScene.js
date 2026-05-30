@@ -11,7 +11,8 @@ import { SpawnSystem } from '../systems/SpawnSystem.js';
 import { FloatingTextSystem } from '../systems/FloatingTextSystem.js';
 import { WaveSystem } from '../systems/WaveSystem.js';
 import { BackgroundSystem } from '../systems/BackgroundSystem.js';
-import { BackgroundExpansion } from '../systems/BackgroundExpansion.js';
+import { ScrollingBackground } from '../systems/ScrollingBackground.js';
+import { DecorationPool } from '../systems/DecorationPool.js';
 import { MapExpansionSystem } from '../systems/MapExpansionSystem.js';
 import { BossSystem } from '../systems/BossSystem.js';
 import { BossAnimation } from '../systems/BossAnimation.js';
@@ -197,9 +198,16 @@ class GameScene extends Phaser.Scene {
         // Initialize skill system
         this.skillSystem = new SkillSystem(this.skillsData);
 
-        // Initialize BackgroundExpansion (infinite background system) and create background
-        this.backgroundSystem = new BackgroundExpansion(this, this.screenWidth || 1024, this.screenHeight || 768);
-        this.backgroundSystem.createBackground();
+        // Initialize ScrollingBackground (infinite background system) and create background
+        const gradientConfig = this.cache.json.get('depthGradient') || { stops: [], fogStart: 12000, fogEnd: 20000, fogMaxAlpha: 0.65 };
+        this.backgroundSystem = new ScrollingBackground(this, gradientConfig, {
+            worldWidth:  WORLD_CONFIG.WIDTH,
+            worldHeight: WORLD_CONFIG.HEIGHT,
+            viewportW:   this.screenWidth || 1024,
+            viewportH:   this.screenHeight || 768,
+            theme: 'undersea',
+        });
+        this.backgroundSystem.create();
 
         // Initialize MapExpansionSystem for zone tracking
         const zonesData = this.cache.json.get('zonesData');
@@ -209,7 +217,8 @@ class GameScene extends Phaser.Scene {
         };
 
         // Update UI with theme name
-        this.scene.get('UIScene').updateTheme(this.backgroundSystem.themeConfig.name);
+        const themeName = this.backgroundSystem.themeConfig?.name || 'Undersea';
+        this.scene.get('UIScene').updateTheme(themeName);
 
         // Start background music (map theme name: undersea→deep, polar→arctic)
         const bgmTheme = this.backgroundSystem.theme === 'polar' ? 'arctic' : this.backgroundSystem.theme;
@@ -512,11 +521,7 @@ class GameScene extends Phaser.Scene {
      * @param {object} oldZone - Old zone
      */
     _onZoneChange(newZone, oldZone) {
-        // Update background system
-        if (this.backgroundSystem?.transitionToZone) {
-            this.backgroundSystem.transitionToZone(newZone);
-        }
-
+        // ScrollingBackground 不需要 transitionToZone（深度由 worldY 决定）
         // Show zone indicator
         this._showZoneIndicator(newZone);
 
@@ -1005,23 +1010,18 @@ class GameScene extends Phaser.Scene {
             this.skillBar.update();
         }
 
-        // Update background decorations (bubbles animation)
+        // Update background system
         if (this.backgroundSystem) {
-            this.backgroundSystem.update(delta);
-            // Update decoration elements (bubbles, jellyfish) around player
-            if (this.backgroundSystem.updateDecorations) {
-                this.backgroundSystem.updateDecorations(delta, this.player.x, this.player.y);
-            }
+            this.backgroundSystem.update(
+                this.cameras.main.scrollX,
+                this.cameras.main.scrollY,
+                delta
+            );
         }
 
         // Update map expansion system for infinite map / zone tracking
         if (this.mapExpansion) {
             this.mapExpansion.updatePlayerPosition(this.player.x, this.player.y);
-
-            if (this.backgroundSystem?.updateBackground) {
-                const zone = this.mapExpansion.getCurrentZone();
-                this.backgroundSystem.updateBackground(this.player.x, this.player.y, zone);
-            }
 
             // Adjust enemy level range based on zone
             const [minLevel, maxLevel] = this.mapExpansion.getEnemyLevelRange();

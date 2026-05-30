@@ -214,3 +214,42 @@ if (Math.random() < driftBottleChance) → DriftBottle effect
 - Entity 不含游戏逻辑判断
 - Scene 通过回调处理系统副作用
 - 所有系统有 `reset(config)` 方法
+
+## ScrollingWorld Systems (feat-046~049)
+
+### 新增系统
+
+| System | 文件 | 职责 | 接口 |
+|--------|------|------|------|
+| `DepthColorMapper` | `systems/DepthColorMapper.js` | worldY→颜色/雾 alpha/气泡配置（纯函数） | `computeDepthColor()`, `worldYToDepthZone()`, `computeFogAlpha()` |
+| `ScrollingBackground` | `systems/ScrollingBackground.js` | 深度渐变层 + 3层 TileSprite 视差 + DepthFog + ScrollEdge + BubblePool | `create()`, `update(scrollX, scrollY, delta)`, `setTheme()`, `destroy()` |
+| `DecorationPool` | `systems/DecorationPool.js` | 程序化装饰对象池，chunk 管理，上限 200 个 | `create()`, `update(scrollX, scrollY, playerWorldY)`, `destroy()` |
+| `Prng` | `utils/Prng.js` | mulberry32 确定性 PRNG | `create(seed)`, `chunkSeed(cx, cy)` |
+
+### 深度区域（5 个）
+
+| 区域 ID | worldY 范围 | 名称 | 颜色基调 |
+|---------|------------|------|---------|
+| `surface` | 0 ~ 2000 | 浅海 | 亮青绿 `#64c8d2` |
+| `shallow` | 2000 ~ 4000 | 珊瑚礁 | 青蓝 `#1ea0b4` |
+| `mid` | 4000 ~ 8000 | 中层 | 深蓝 `#0a5064` |
+| `deep` | 8000 ~ 12000 | 深海 | 暗蓝 `#062b42` |
+| `abyss` | 12000 ~ 20000 | 深渊 | 接近黑 `#02050f` |
+
+### 深度实现层次
+
+| 层次 | 类型 | scrollFactor | 备注 |
+|------|------|-------------|------|
+| DepthGradient | Graphics | 0 | 每帧重绘全屏底色 |
+| BgLayer | TileSprite | 0.08 | 最慢视差 |
+| MidLayer | TileSprite | 0.25 | 中速视差 |
+| FgLayer | TileSprite | 0.50 | 快速视差 |
+| DepthFog | Graphics | 0 | worldY>12000 出现 |
+| ScrollEdge | Graphics[4] | 0 | 四边 120px 渐变条 |
+| BubblePool | Graphics[40] | 0 | 深度参数化 |
+| DecorationPool | Graphics | 0 | chunk 种子决定分布 |
+
+### 废弃声明
+
+- `BackgroundExpansion.js` — 已删除，功能由 ScrollingBackground 替代
+- `BackgroundSystem.js` — 仅保留 `THEME_CONFIG` 静态数据，主题切换功能保留

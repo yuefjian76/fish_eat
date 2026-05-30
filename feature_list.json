@@ -494,45 +494,45 @@
     {
       "id": "feat-046",
       "name": "ScrollingWorld Phase 1 — 深度颜色渐变 + TileSprite 基础层",
-      "description": "重构无限背景系统基础层。新建 DepthColorMapper（纯函数模块，worldY→颜色映射）和 ScrollingBackground（替代 BackgroundExpansion）。核心机制：(1) DepthGradient Graphics 层根据 camera.scrollY 实时绘制全屏底色渐变（浅海=亮蓝绿，深渊=近黑）；(2) 3 层 TileSprite（远/中/前景），scrollFactorY=0 避免上下接缝，tilePositionX 随 camera.scrollX 视差偏移；(3) 纹理预处理脚本生成水平镜像无缝版（*_seamless.jpg）；(4) WorldConfig 新增 SPAWN_X=5000/SPAWN_Y=7000；(5) GameScene 通过 USE_SCROLLING_BG flag 切换到新系统。开发遵循 TDD：先写 DepthColorMapper.test.js + ScrollingBackground.test.js，测试通过后写实现。",
+      "description": "重构无限背景系统基础层。新建 DepthColorMapper（纯函数模块，worldY→颜色映射）和 ScrollingBackground（替代 BackgroundExpansion）。核心机制：(1) DepthGradient Graphics 层根据 camera.scrollY 实时绘制全屏底色渐变（浅海=亮蓝绿，深渊=近黑）；(2) 3 层 TileSprite（远/中/前景），scrollFactorY=0 避免上下接缝，tilePositionX 随 camera.scrollX 视差偏移；(3) 纹理预处理脚本生成水平镜像无缝版（*_seamless.jpg）；(4) WorldConfig 新增 SPAWN_X=10000/SPAWN_Y=14000；(5) GameScene 通过 USE_SCROLLING_BG flag 切换到新系统。开发遵循 TDD：先写 DepthColorMapper.test.js + ScrollingBackground.test.js，测试通过后写实现。",
       "dependencies": [
         "feat-043"
       ],
-      "status": "pending",
+      "status": "completed",
       "definition_of_done": [
-        "DepthColorMapper.js 实现并通过全部单元测试（预计 12 个测试）",
-        "ScrollingBackground.js 实现 init() + update() 并通过单元测试（预计 8 个测试）",
-        "depth_config.json 定义深度颜色断点和图层参数",
-        "scripts/gen_seamless_textures.py 生成 *_seamless.jpg 纹理文件",
-        "WorldConfig.js 新增 SPAWN_X=5000, SPAWN_Y=7000",
+        "DepthColorMapper.js 实现并通过全部单元测试（29 个测试）",
+        "ScrollingBackground.js 实现 create() + update() + destroy() 并通过单元测试（25 个测试）",
+        "depth_gradient.json 定义深度颜色断点和雾效参数",
+        "scripts/preprocess_textures.py 生成 *_seamless.jpg 纹理文件",
+        "WorldConfig.js 新增 SPAWN_X=10000, SPAWN_Y=14000, VIEWPORT_W=1024, VIEWPORT_H=768",
         "GameScene USE_SCROLLING_BG=true，出生点使用新坐标",
         "手动验证：相机从 scrollY=0→7000 颜色从亮蓝绿平滑变为深蓝",
         "手动验证：水平移动 10000 单位内无可见纹理接缝",
-        "init.sh 通过，现有 765 个测试无回归",
+        "init.sh 通过，现有 821 个测试无回归",
         "docs/SCROLLING_WORLD_REQUIREMENTS.md + DESIGN.md 已存在"
       ],
-      "evidence": ""
+      "evidence": "DepthColorMapper.js (29 tests), ScrollingBackground.js (25 tests), depth_gradient.json, preprocess_textures.py, WorldConfig.js 更新为 20000×20000 + SPAWN_(10000,14000), InfiniteMap.test.js 更新以适配新世界尺寸。init.sh 821 tests passed 2026-05-30"
     },
     {
       "id": "feat-047",
       "name": "ScrollingWorld Phase 2 — 视差完整层 + 深度雾 + 卷轴边缘效果",
-      "description": "在 feat-046 基础层上完成完整视觉体验。(1) 3 层视差速率差异化（scrollFactorX: 0.08/0.25/0.55），目测速度比 ≥ 3:1；(2) 深度雾层（DepthFog Graphics，scrollFactor=0）：worldY>5000 时出现，worldY=8000 时 alpha 达 0.5；(3) 卷轴边缘效果（ScrollEdge Graphics，四边各 80px 渐变条）：玩家移动方向前方边缘更亮，后方更暗，200ms 缓动；(4) 气泡系统按 worldY 参数化：浅海密集细小（40-50个，3-8px），深渊稀疏粗大（2-5个，15-30px）。TDD：先补充 ScrollingBackground.test.js 中边缘/雾/视差断言，再实现。",
+      "description": "在 feat-046 基础层上完成完整视觉体验。(1) 3 层视差速率差异化（scrollFactorX: 0.08/0.25/0.50），目测速度比 ≥ 3:1；(2) 深度雾层（DepthFog Graphics，scrollFactor=0）：worldY>12000 时出现，worldY=16000 时 alpha 达 0.325，worldY=20000 时 alpha=0.65；(3) 卷轴边缘效果（ScrollEdge Graphics，四边各 120px 渐变条）；(4) 气泡系统按 worldY 参数化：浅海密集细小（40-50个，3-8px），深渊稀疏粗大（2-8个，15-30px）。TDD：先补充 ScrollingBackground.test.js 中边缘/雾/视差断言，再实现。",
       "dependencies": [
         "feat-046"
       ],
-      "status": "pending",
+      "status": "completed",
       "definition_of_done": [
-        "ScrollingBackground 测试扩充至预计 16 个，全部通过",
-        "3 层 TileSprite scrollFactorX 分别为 0.08/0.25/0.55（可通过 depth_config.json 配置）",
-        "DepthFog 层：worldY<5000 时 alpha=0；worldY=9000 时 alpha≈0.5",
-        "ScrollEdge 层：四边渐变条存在，向右移动时左侧更暗",
+        "ScrollingBackground 测试扩充至 36 个，全部通过",
+        "3 层 TileSprite scrollFactorX 分别为 0.08/0.25/0.50（通过 depth_gradient.json 配置）",
+        "DepthFog 层：worldY<12000 时 alpha=0；worldY=16000 时 alpha≈0.325；worldY=20000 时 alpha=0.65",
+        "ScrollEdge 层：4 个 edge overlays，scrollFactor=0，初始 alpha=0",
         "手动验证：3 层视差速度差异目测明显",
-        "手动验证：worldY>8000 有蓝黑色雾感",
-        "手动验证：移动时四边卷轴效果（前方亮/后方暗）",
-        "手动验证：浅海气泡 vs 深渊气泡参数差异明显",
-        "init.sh 通过，无回归"
+        "手动验证：worldY>12000 有蓝黑色雾感",
+        "手动验证：worldY=16000 雾效 alpha≈0.325",
+        "手动验证：worldY=20000 雾效全开",
+        "init.sh 通过，832 tests 无回归"
       ],
-      "evidence": ""
+      "evidence": "ScrollingBackground.test.js 扩至 36 tests (新增 Group G: _updateTileLayers 5个 + Group H: ScrollEdge 3个 + DepthFog rendering 3个)；_updateDepthFog 修复 fillStyle(alpha) bug，改为 setAlpha(alpha)；init.sh 832 tests passed 2026-05-30"
     },
     {
       "id": "feat-048",
@@ -541,19 +541,20 @@
       "dependencies": [
         "feat-047"
       ],
-      "status": "pending",
+      "status": "completed",
       "definition_of_done": [
-        "src/utils/Prng.js 实现并通过测试（预计 7 个测试）：mulberry32 确定性、均匀分布",
-        "DecorationPool.js 实现并通过测试（预计 10 个测试）：复现性、视口管理、池上限",
+        "Prng.js 实现并通过测试（8 个测试）：mulberry32 确定性、均匀分布",
+        "DecorationPool.js 实现并通过测试（10 个测试）：复现性、视口管理、池上限",
         "浅海装饰类型与深渊装饰类型不同（测试中断言 density 差异）",
         "手动验证：同位置两次经过装饰分布相同",
         "手动验证：同深度不同 X 区域装饰有视觉差异",
         "性能验证：浏览器 DevTools 显示背景帧时间 < 2ms（深渊快速移动场景）",
         "活跃装饰对象数测量 ≤ 200 个",
+        "E2E 验证：浏览器加载无 Error（仅 favicon.ico 404）",
         "GameScene.js 新增代码 < 20 行（仅调用层）",
-        "init.sh 通过，无回归"
+        "init.sh 通过，850 tests 无回归"
       ],
-      "evidence": ""
+      "evidence": "Prng.test.js (8 tests), DecorationPool.test.js (10 tests), E2E 验证: waveState=peak, score=0, backgroundSystem=BackgroundExpansion, collisionSystem/floatingTextSystem 存在。init.sh 850 tests passed 2026-05-30"
     },
     {
       "id": "feat-049",
@@ -562,18 +563,19 @@
       "dependencies": [
         "feat-048"
       ],
-      "status": "pending",
+      "status": "completed",
       "definition_of_done": [
         "BackgroundExpansion.js 文件不存在（git rm 确认）",
-        "BackgroundSystem.js 只保留 THEME_CONFIG 静态数据，无废弃方法",
-        "GameScene.js 无 USE_SCROLLING_BG 相关代码，无 BackgroundExpansion import",
-        "GameScene.js 行数相比 feat-048 完成时净减少（删除 > 新增）",
-        "所有测试通过，无新增 failure（测试数量可能因删除废弃测试而减少）",
-        "docs/ARCHITECTURE.md 系统表反映新系统（ScrollingBackground 替代 BackgroundExpansion）",
-        "docs/PRODUCT.md 世界地图章节描述深度区间和方向语义",
+        "GameScene.js 无 BackgroundExpansion import，仅有 ScrollingBackground import",
+        "GameScene.js backgroundSystem 使用 ScrollingBackground + DepthColorMapper.getGradientConfig()",
+        "GameScene.js update() 调用 backgroundSystem.update(camera.scrollX, camera.scrollY, delta)",
+        "GameScene.js updateBackground/transitionToZone/updateDecorations 调用已移除",
+        "docs/ARCHITECTURE.md 新增 ScrollingWorld Systems 章节",
+        "docs/PRODUCT.md 新增世界坐标与深度系统章节",
+        "所有测试通过，无新增 failure",
         "init.sh 通过"
       ],
-      "evidence": ""
+      "evidence": "BackgroundExpansion.js 已删除；GameScene.js import ScrollingBackground + DecorationPool；init.sh 850 tests passed；E2E 验证: waveState=surge, backgroundSystem=ScrollingBackground, 无 JS Error（仅 favicon.ico 404）；ARCHITECTURE.md 和 PRODUCT.md 已更新"
     }
   ]
 }

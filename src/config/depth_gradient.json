@@ -1,0 +1,13 @@
+{
+  "stops": [
+    { "worldY": 0,     "color": "0x64c8d2" },
+    { "worldY": 2000,  "color": "0x1ea0b4" },
+    { "worldY": 8000,  "color": "0x0a5064" },
+    { "worldY": 14000, "color": "0x062b42" },
+    { "worldY": 20000, "color": "0x02050f" }
+  ],
+  "fogStart": 12000,
+  "fogEnd": 20000,
+  "fogColor": "0x010818",
+  "fogMaxAlpha": 0.65
+}

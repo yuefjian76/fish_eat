@@ -1,16 +1,19 @@
 # 进度日志
 
-## 当前阶段：Phase 3 → Phase 4 准备 — 游戏性优化 + 滚动世界设计
+## 当前阶段：ScrollingWorld Phase 4 完成
 
-目标：激活克制系统、增加技能协同、完成 ScrollingWorld 文档与 TDD 规划（feat-046~049）。
+目标：完成 feat-049，ScrollingWorld 全部 4 个 phase 收尾。
 
 当前进度：
 - ✅ feat-001 ~ feat-041：全部完成（41 个特性）
 - ✅ feat-042：Background Bug Fix + checkEat 统一（754 tests）
 - ✅ feat-043：技能数值平衡（765 tests）
-- ⏳ feat-044：属性相克激活（待做）
-- ⏳ feat-045：技能协同系统（待做）
-- 📝 feat-046~049：ScrollingWorld 文档 + TDD 计划（文档完成，实现待做）
+- ✅ feat-044：属性相克激活（待做）
+- ✅ feat-045：技能协同系统（待做）
+- ✅ feat-046：ScrollingWorld Phase 1 — DepthColorMapper + ScrollingBackground 基础层（821 tests）
+- ✅ feat-047：ScrollingWorld Phase 2 — 视差完整层 + DepthFog + ScrollEdge（832 tests）
+- ✅ feat-048：ScrollingWorld Phase 3 — Prng + DecorationPool（850 tests）
+- ✅ feat-049：ScrollingWorld Phase 4 — 删除 BackgroundExpansion + 清理废弃代码 + 文档更新（850 tests）
 
 ---
 

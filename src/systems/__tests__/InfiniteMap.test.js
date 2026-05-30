@@ -2,9 +2,9 @@ import { WORLD_CONFIG } from '../../constants/WorldConfig.js';
 
 describe('InfiniteMap System', () => {
     describe('WORLD_CONFIG', () => {
-        it('should have world dimensions set to 10000x10000', () => {
-            expect(WORLD_CONFIG.WIDTH).toBe(10000);
-            expect(WORLD_CONFIG.HEIGHT).toBe(10000);
+        it('should have world dimensions set to 20000x20000', () => {
+            expect(WORLD_CONFIG.WIDTH).toBe(20000);
+            expect(WORLD_CONFIG.HEIGHT).toBe(20000);
         });
 
         it('should have spawn margin for enemy spawning', () => {
@@ -15,6 +15,16 @@ describe('InfiniteMap System', () => {
         it('should have despawn margin for off-screen removal', () => {
             expect(WORLD_CONFIG.DESPAWN_MARGIN).toBeDefined();
             expect(WORLD_CONFIG.DESPAWN_MARGIN).toBeGreaterThan(0);
+        });
+
+        it('should have spawn point at (10000, 14000) in deep zone', () => {
+            expect(WORLD_CONFIG.SPAWN_X).toBe(10000);
+            expect(WORLD_CONFIG.SPAWN_Y).toBe(14000);
+        });
+
+        it('should have viewport dimensions', () => {
+            expect(WORLD_CONFIG.VIEWPORT_W).toBe(1024);
+            expect(WORLD_CONFIG.VIEWPORT_H).toBe(768);
         });
     });
 
@@ -27,14 +37,14 @@ describe('InfiniteMap System', () => {
     });
 
     describe('World bounds', () => {
-        it('should set physics world bounds to 10000x10000', () => {
+        it('should set physics world bounds to 20000x20000', () => {
             // Verified by physics.world.setBounds being called with WORLD_WIDTH, WORLD_HEIGHT
-            expect(WORLD_CONFIG.WIDTH).toBe(10000);
-            expect(WORLD_CONFIG.HEIGHT).toBe(10000);
+            expect(WORLD_CONFIG.WIDTH).toBe(20000);
+            expect(WORLD_CONFIG.HEIGHT).toBe(20000);
         });
 
         it('should allow player to move beyond 1024x768 viewport', () => {
-            // World bounds are 10000x10000, player can explore freely
+            // World bounds are 20000x20000, player can explore freely
             expect(WORLD_CONFIG.WIDTH).toBeGreaterThan(1024);
             expect(WORLD_CONFIG.HEIGHT).toBeGreaterThan(768);
         });

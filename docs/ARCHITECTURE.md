@@ -77,6 +77,44 @@ BootScene → MenuScene → GameScene + UIScene → GameOverScene
 | `PlayerControlSystem` | `systems/PlayerControlSystem.js` | 键盘/鼠标输入 | - |
 | `HealthRegenSystem` | `systems/HealthRegenSystem.js` | 脱战回血 | - |
 
+### Scrolling World Systems（feat-046~049，Phase 4）
+
+> 替代旧的 `BackgroundExpansion` + `BackgroundSystem` 组合，实现基于深度的卷轴式无限背景。
+
+| System / Module | 文件 | 职责 | 接口 |
+|-----------------|------|------|------|
+| `ScrollingBackground` | `systems/ScrollingBackground.js` | 5 层背景渲染（底色/远/中/前/雾/边缘）| `init()`, `update(scrollX,scrollY,velX,velY)`, `setTheme()` |
+| `DepthColorMapper` | `systems/DepthColorMapper.js` | 纯函数：worldY → 颜色/雾alpha/区域名 | `getDepthColor(y)`, `getScreenGradient(scrollY,h)`, `getDepthFogAlpha(y)` |
+| `DecorationPool` | `systems/DecorationPool.js` | 程序化装饰对象池，按(chunkX,chunkY)种子生成 | `update(scrollX,scrollY,w,h)` |
+| `Prng` | `utils/Prng.js` | mulberry32 确定性 PRNG；chunkSeed(x,y) | `mulberry32(seed)`, `chunkSeed(x,y)` |
+
+**废弃（feat-049 删除）**:
+- `BackgroundExpansion.js` — Chunk 方案，有上下接缝问题
+- `BackgroundSystem.js` 中的 chunk/seaweed/transitionToTheme 方法（THEME_CONFIG 静态数据保留）
+
+**世界坐标语义（feat-046 起）**:
+```
+worldY  0 ~ 2000  → 浅海（亮蓝绿，#64c8d2）    ↑ 往上
+worldY  2000~5000 → 中层（饱和蓝，#1ea0b4）      出生点 worldY=7000
+worldY  5000~8000 → 深海（深蓝，#062b42）         ↓ 往下
+worldY  8000~10000→ 深渊（近黑，#02050f）
+```
+
+**深度感实现层次**:
+```
+depth=0  DepthGradientLayer  Graphics  scrollFactor(0,0)  底色按 scrollY 实时计算
+depth=1  BgTile              TileSprite scrollFactor(0.08,0) 远景纹理，极慢水平视差
+depth=2  MidTile             TileSprite scrollFactor(0.25,0) 中景纹理
+depth=3  FgTile              TileSprite scrollFactor(0.55,0) 前景轮廓
+depth=6  Bubbles             Graphics池  scrollFactor(1,1)   气泡（世界坐标）
+depth=7  DepthFogLayer       Graphics  scrollFactor(0,0)  深渊雾（y>5000渐出现）
+depth=8  ScrollEdgeLayer     Graphics  scrollFactor(0,0)  卷轴四边暗化
+```
+
+**纹理预处理**（`scripts/gen_seamless_textures.py`，一次性）:
+- 原图（1280×720）+ 水平镜像 → 无缝纹理（2560×720），保存为 `*_seamless.jpg`
+- 水平拼接接缝 diff = 0；垂直方向不平铺（scrollFactorY=0）
+
 ### System Communication Pattern
 
 ```javascript

@@ -1,3 +1,5 @@
+> 维护者:任何修改后请跑 `./init.sh` + 跑 `e2e/*` 全部测试,详见 `session-handoff.md`。
+
 # Clean State Checklist — 鱼吃鱼 (Fish Eat Fish)
 
 在每次提交前和每个会话结束时运行此清单。

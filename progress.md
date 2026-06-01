@@ -1,17 +1,20 @@
 # 进度日志
 
-## 当前阶段：E2E Debug Console API 完成
+## 当前阶段：Phase 3 规划（49/49 features 完成）
 
-目标：实现浏览器调试 API，便于测试和验证游戏功能。
+49/49 features 全部 completed，`./init.sh` 5 步全过，`window.__DEBUG_API__` 已实现。
+下一阶段方向见 [`docs/PHASE_3_ROADMAP.md`](docs/PHASE_3_ROADMAP.md)。
 
-当前进度：
-- ✅ feat-001 ~ feat-041：全部完成（41 个特性）
-- ✅ feat-042：Background Bug Fix + checkEat 统一（754 tests）
-- ✅ feat-043：技能数值平衡（765 tests）
-- ✅ feat-044：属性相克激活（855 tests）
-- ✅ feat-045：技能协同系统（855 tests）
-- ✅ feat-046~feat-049：ScrollingWorld 全部完成（850 tests）
-- ✅ E2E Debug API：`window.__DEBUG_API__` 实现（16 E2E tests, 855 unit tests）
+### 完成里程碑
+
+- ✅ feat-001 ~ feat-024：核心游戏功能（24 个）
+- ✅ feat-025 ~ feat-033：架构重构（8 个系统提取）
+- ✅ feat-034 ~ feat-040：增强功能（7 个）
+- ✅ feat-041 ~ feat-045：类型相克 + 技能协同（5 个）
+- ✅ feat-046 ~ feat-049：ScrollingWorld（4 个）
+- ✅ E2E Debug API：`window.__DEBUG_API__`（16 E2E tests）
+
+**单元测试**：855 个 | **E2E 测试**：23 个（16 debug-api + 7 smoke） | **完成度**：49/49
 
 ---
 
@@ -291,6 +294,35 @@
 
 ### 下一步
 等待用户确认后，按 A → B → C 阶段顺序实施
+
+---
+
+## 会话 — 2026-06-01（harness 状态同步）
+
+### 已完成
+- ✅ harness 5 子系统文件与 feature_list.json 49/49 同步
+- ✅ AGENTS.md / CLAUDE.md 框架保留，内容更新
+- ✅ progress / session-handoff / quality-document / evaluator-rubric 状态对齐
+- ✅ IMPLEMENTATION_PRIORITY / OPTIMIZATION_ANALYSIS / README_IMPROVEMENTS / findings 加 ⚠️ 横幅，候选链 ROADMAP
+- ✅ docs/PHASE_3_ROADMAP.md 新建，5 个 Phase 3 候选方向
+
+### 文件改动
+- `AGENTS.md` / `CLAUDE.md` — 5 子系统框架保留，内容按 49/49 更新
+- `progress.md` / `session-handoff.md` / `quality-document.md` / `evaluator-rubric.md` — 状态对齐
+- `IMPLEMENTATION_PRIORITY.md` / `OPTIMIZATION_ANALYSIS.md` / `README_IMPROVEMENTS.md` / `findings.md` — 加 ⚠️ 横幅 + 现状段
+- `claude-progress.md` / `clean-state-checklist.md` — 顶部加横幅/提示
+- `docs/PHASE_3_ROADMAP.md` — 新建
+
+### 验证
+- `./init.sh` 5 步全过（855 个测试）
+- `e2e/debug-api.spec.js` 16 测试全过
+- `e2e/smoke.spec.js` 7 测试全过
+- `git status` 干净
+- 0 broken `PHASE_3_ROADMAP` 引用
+
+### 下一步
+- 下次会话从 `docs/PHASE_3_ROADMAP.md` 选 1 个候选方向开始 brainstorming
+- 走标准 harness 流程: spec → plan → 实现 → 验证
 
 ---
 

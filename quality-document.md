@@ -1,7 +1,7 @@
 # Quality Document — 鱼吃鱼 (Fish Eat Fish)
 
 > **Harness Subsystem**: State — authoritative quality record for the project.
-> Updated: 2026-05-30 (after harness infrastructure rewrite session)
+> Updated: 2026-06-01 (harness state sync session)
 
 ---
 
@@ -13,7 +13,7 @@
 
 | Dimension | Grade | Evidence |
 |-----------|-------|----------|
-| Build & Compile | A | `npm test`: ~730 passed, 0 failed; `init.sh` all 5 steps pass |
+| Build & Compile | A | `npm test`: 855 passed, 0 failed; `init.sh` all 5 steps pass |
 | Game Loop | A | Scene flow BootScene→MenuScene→GameScene+UIScene→GameOverScene complete |
 | Player Controls | A | Keyboard / mouse / touch with dead zone and easing; PlayerControlSystem extracted |
 | Enemy AI | A | State machine WANDERING/CHASING/ATTACKING/FLEEING; 5 special behaviors |
@@ -30,6 +30,11 @@
 | Shop System | A | In-game shop (feat-040); ShopScene + coin economy |
 | Infinite Map + Zones | A | zones.json; camera follow; parallax layers (feat-037) |
 | Harness Infrastructure | A | All 9 harness files present; init.sh portable; 5-subsystem docs complete |
+| ScrollingWorld | A | 4 阶段全部完成(feat-046~049),20000×20000 世界,5 深度区,程序化装饰 | 
+| ScrollingBackground | A | 3 层视差 + DepthFog + ScrollEdge + BubblePool |
+| DecorationPool + Prng | A | mulberry32 确定性 PRNG,200 上限,chunk 复用 |
+| DEBUG_API | A | 14 调试方法,16 E2E 测试,仅 `?debug=true` 暴露 |
+| Skill Synergy | A | rush_bite / storm_slash,3s 队列窗口,FloatingText 反馈 |
 
 ---
 
@@ -40,7 +45,9 @@
 | Core Game Features | feat-001 – feat-024 | 24 | ✅ All completed |
 | Architecture Refactor | feat-025 – feat-033 | 9 | ✅ All completed |
 | Enhancements | feat-034 – feat-040 | 7 | ✅ All completed |
-| **Total** | | **40** | **100%** |
+| Type Effectiveness + Synergy | feat-041 – feat-045 | 5 | ✅ All completed |
+| ScrollingWorld | feat-046 – feat-049 | 4 | ✅ All completed |
+| **Total** | | **49** | **100%** |
 
 ---
 
@@ -56,6 +63,13 @@
 | RangedAttackSystem | ~100 | 10 | 100% | ✅ |
 | PlayerControlSystem | ~130 | 14 | 100% | ✅ |
 | HealthRegenSystem | ~70 | 9 | 100% | ✅ |
+| DepthColorMapper | ~30 | 29 | 100% | N/A(pure functions) |
+| ScrollingBackground | ~250 | 36 | 100% | ✅ |
+| DecorationPool | ~150 | 10 | 100% | ✅ |
+| Prng | ~30 | 8 | 100% | N/A(pure functions) |
+| AudioMusicSystem | ~80 | 23 | 100% | ✅ |
+| ShopSystem | ~120 | 36 | 100% | ✅ |
+| ImpactSystem | ~100 | 13 | 100% | ✅ |
 
 ---
 
@@ -66,7 +80,7 @@
 | `AGENTS.md` | ✅ Current | Complete 5-subsystem harness architecture; fish_eat-specific |
 | `CLAUDE.md` | ✅ Current | Concise quick reference; commands, file map, architecture tables |
 | `init.sh` | ✅ Current | Portable (SCRIPT_DIR pattern); 5 explicit steps; hardcoded path bug fixed |
-| `feature_list.json` | ✅ Current | 40 features, all status "completed" |
+| `feature_list.json` | ✅ Current | 49 features, all status "completed" |
 | `progress.md` | ✅ Current | Session history through 2026-05-30 |
 | `session-handoff.md` | ✅ Current | Reflects completed state; Phase 3 candidates listed |
 | `quality-document.md` | ✅ Current | This file |
@@ -90,7 +104,7 @@
 
 ### Build
 ```
-npm test        → ~730 tests passed, 0 failed, 44+ suites
+npm test        → 855 tests passed, 0 failed, 44+ suites
 ./init.sh       → All 5 steps pass (install / test / syntax / JSON / harness files)
 ```
 
@@ -132,8 +146,8 @@ npm test        → ~730 tests passed, 0 failed, 44+ suites
 |----------|--------|
 | `clean-state-checklist.md` | All 40+ checks pass |
 | `evaluator-rubric.md` | 5.0/5 overall score |
-| `feature_list.json` | 40/40 features at status "completed" |
-| `npm test` | ~730 passed, 0 failed |
+| `feature_list.json` | 49/49 features at status "completed" |
+| `npm test` | 855 passed, 0 failed |
 | `./init.sh` | All 5 steps pass |
 
 ---
@@ -156,4 +170,5 @@ npm test        → ~730 tests passed, 0 failed, 44+ suites
 | 2026-04-17 | Initial game implementation — 308 tests → 435 tests; 5 special fish behaviors |
 | 2026-05-23 | Architecture refactor complete — 8 systems extracted; 718 tests pass |
 | 2026-05-24 | All 40 features completed; ~730 tests; init.sh passes |
+| 2026-06-01 | Harness state sync — 49/49 features, 855 tests, E2E debug-api (16 tests), PHASE_3_ROADMAP |
 | **2026-05-30** | **Harness infrastructure rewrite — 5-subsystem docs; init.sh portability fix; evaluator-rubric rewrite** |

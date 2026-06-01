@@ -1,3 +1,7 @@
+> ⚠️ **截至 2026-06-01,本文档与 `session-handoff.md` 内容重叠;请以 `session-handoff.md` 为单源真相**。
+> 状态数字(feature count / test count)以 `feature_list.json` + `./init.sh` 实测为准。
+> 下一阶段方向见 `docs/PHASE_3_ROADMAP.md`。
+
 # claude-progress.md -- Session Log
 
 ## 鱼吃鱼 (Fish Eat Fish) - 开发进度

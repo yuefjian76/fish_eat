@@ -56,6 +56,7 @@
 5. **阅读 `docs/RELIABILITY.md`** — 理解日志规范和可观测性要求
 6. **执行 `./init.sh`** — 验证环境健康（必须全部通过）
 7. **阅读 `feature_list.json`** — 查看当前功能状态，选择目标功能
+8. **阅读 `docs/PHASE_3_ROADMAP.md`** — 查看下一阶段候选方向，选择 brainstorming 起点
 
 如果 `./init.sh` 有步骤失败，**先修复再开始新功能**。
 
@@ -63,9 +64,10 @@
 
 ```
 docs/
-  ARCHITECTURE.md   -- 游戏架构、系统关系、实体模式、数据流
-  PRODUCT.md        -- 游戏功能需求、操控说明、UI 布局
-  RELIABILITY.md    -- 日志规范、可观测性、clean state 要求
+  ARCHITECTURE.md        -- 游戏架构、系统关系、实体模式、数据流
+  PRODUCT.md             -- 游戏功能需求、操控说明、UI 布局
+  RELIABILITY.md         -- 日志规范、可观测性、clean state 要求
+  PHASE_3_ROADMAP.md     -- Phase 3 候选方向(从 OPTIMIZATION_ANALYSIS / IMPLEMENTATION_PRIORITY 整合)
 ```
 
 添加新功能时，先更新对应文档再写代码。
@@ -287,6 +289,17 @@ window.__GAME_SCENE__.hp                      // 玩家当前血量
 window.__GAME_SCENE__.level                   // 玩家等级
 ```
 
+### E2E 调试 API(`window.__DEBUG_API__`)
+
+启用: URL 加 `?debug=true`,会同时暴露 `window.__GAME_SCENE__` 和 `window.__DEBUG_API__`。
+
+`__DEBUG_API__` 包含 14 个方法,用于 E2E 测试和手动调试:
+- `state()` / `level(n)` / `skill(slot)` / `eat(fishType)` / `watch(event, on)`
+- `spawn(...)` / `killAll()` / `fullHealth()` / `maxExp()` / `restart()`
+- `help()` 等
+
+详见 `e2e/debug-api.spec.js`(16 个 E2E 测试)。
+
 ---
 
 ## 目录结构
@@ -305,7 +318,8 @@ fish_eat/
 ├── docs/
 │   ├── ARCHITECTURE.md    # 游戏架构说明
 │   ├── PRODUCT.md         # 产品功能说明
-│   └── RELIABILITY.md     # 日志和可靠性规范
+│   ├── RELIABILITY.md     # 日志和可靠性规范
+│   └── PHASE_3_ROADMAP.md     # Phase 3 候选方向
 ├── src/
 │   ├── main.js            # Phaser 配置 + 游戏初始化
 │   ├── config/            # JSON 数据配置（fish/skills/levels 等）
@@ -315,7 +329,7 @@ fish_eat/
 │   ├── constants/         # 全局常量（DepthLayers/WorldConfig）
 │   └── ui/                # UI 组件（SkillBar）
 ├── tests/                 # 测试文件
-├── e2e/                   # E2E 冒烟测试（Playwright）
+├── e2e/                   # E2E 测试(Playwright: smoke.spec.js + debug-api.spec.js)
 └── __mocks__/             # Jest mock 文件
 ```
 
@@ -330,3 +344,4 @@ fish_eat/
 | localStorage | 认证和用户数据通过 localStorage 持久化 | 跨页面刷新保留会话 |
 | GameScene 体量 | GameScene.js ~1800 行（已提取 8 个系统） | 架构边界已清晰，继续按需提取 |
 | ES Modules | 浏览器端 ES module，无构建步骤 | 需通过 HTTP server 访问（不能 file://） |
+| DEBUG_API | `window.__DEBUG_API__` 仅在 `?debug=true` 时暴露 | 生产环境不暴露;URL 缺参数则对象为 undefined |

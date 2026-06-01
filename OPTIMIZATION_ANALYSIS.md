@@ -1,3 +1,6 @@
+> ⚠️ **截至 2026-06-01,12 个方案中 1/3/4/5 已部分或全部完成;2/6/7/8/9/10/11/12 仍候选,见 `docs/PHASE_3_ROADMAP.md`**。
+> 已完成映射:方案 1 → ImpactSystem;方案 3 → feat-038;方案 4 → feat-044;方案 5 → feat-045。
+
 # 🎮 Fish Eat Fish - 深度体验优化分析报告
 
 **分析时间**: 2026/04/17  
@@ -26,22 +29,22 @@
 ## 🎯 改进方案总览 (12个)
 
 ### 🔴 高优先级 (3)
-- **方案1**: 统一打击反馈系统 (Unified Impact Feedback)
-- **方案2**: 动作演出系统 (Action Choreography)
-- **方案3**: 视觉层次重构 (Visual Hierarchy Refactor)
+- **方案1**: 统一打击反馈系统 (Unified Impact Feedback) — ✅ ImpactSystem.js 已存在
+- **方案2**: 动作演出系统 (Action Choreography) — 🔜 候选 (P1,见 ROADMAP)
+- **方案3**: 视觉层次重构 (Visual Hierarchy Refactor) — ✅ feat-038 (DEPTH_LAYERS)
 
 ### 🟡 中优先级 (4)
-- **方案4**: 鱼种克制强化 (Weakness System Deep Integration)
-- **方案5**: 技能系统多样化 (Skill Diversity Enhancement)
-- **方案6**: 节奏感系统 (Rhythm & Pacing System)
-- **方案7**: 进度里程碑系统 (Milestone Progression)
+- **方案4**: 鱼种克制强化 (Weakness System Deep Integration) — ✅ feat-044
+- **方案5**: 技能系统多样化 (Skill Diversity Enhancement) — ✅ feat-045 + 候选
+- **方案6**: 节奏感系统 (Rhythm & Pacing System) — 🔜 候选 (P2, 见 ROADMAP)
+- **方案7**: 进度里程碑系统 (Milestone Progression) — ✅ feat-015 (AchievementSystem 15 个成就)
 
 ### 🟢 低优先级 (5)
-- **方案8**: 动态背景系统 (Dynamic Environment)
-- **方案9**: 敌人行为多样化 (Enhanced Enemy Behaviors)
-- **方案10**: 极限计时系统 (Rush Hour Mode)
-- **方案11**: 音频层次重构 (Audio Stratification)
-- **方案12**: 设置和无障碍选项 (Accessibility++)
+- **方案8**: 动态背景系统 (Dynamic Environment) — ✅ feat-046~049 (ScrollingWorld)
+- **方案9**: 敌人行为多样化 (Enhanced Enemy Behaviors) — 🔜 候选 (P1, 见 ROADMAP)
+- **方案10**: 极限计时系统 (Rush Hour Mode) — 🔜 候选 (P2, 见 ROADMAP)
+- **方案11**: 音频层次重构 (Audio Stratification) — ✅ feat-014 + feat-039
+- **方案12**: 设置和无障碍选项 (Accessibility++) — 🔜 候选 (P2, 见 ROADMAP)
 
 ---
 

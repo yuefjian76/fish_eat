@@ -1,30 +1,33 @@
 # 🎯 Fish Eat Fish - 实施优先级矩阵
 
+> ⚠️ **截至 2026-06-01,本文档反映 2026-05-24 之前状态;feat-038(DEPTH_LAYERS)/ ImpactSystem / feat-044(属性克制) 已完成**。
+> 当前状态以 `feature_list.json` 49/49 为准;Phase 3 候选见 `docs/PHASE_3_ROADMAP.md`。
+
 ## 快速查阅表
 
 ### 🚨 立即着手 (Next 3 Days)
 | # | 方案 | 改动文件 | 难度 | 工时 | ROI | 说明 |
 |----|------|---------|------|------|-----|------|
-| 1 | 视觉层次重构 | 创建`DEPTH_LAYERS.js`, 修改全局depth值 | 简单 | 1天 | 🔥🔥🔥 | 立竿见影改善视觉噪点 |
-| 2 | 打击反馈系统 | 创建`ImpactSystem.js`, 修改`GameScene.js`/`Enemy.js` | 中等 | 3天 | 🔥🔥🔥🔥 | 核心爽快感来源 |
-| 3 | 克制系统强化 | 创建`TypeAdvantageSystem.js`, 修改敌人伤害计算 | 中等 | 2天 | 🔥🔥🔥🔥 | 提升策略深度 |
+| 1 | 视觉层次重构 | 创建`DEPTH_LAYERS.js`(`feat-038` 已完成 ✅), 修改全局 depth 值 | 简单 | 1天 | 🔥🔥🔥 | 立竿见影改善视觉噪点 |
+| 2 | 打击反馈系统 | 创建`ImpactSystem.js`(`ImpactSystem.js` 已存在 ✅), 修改`GameScene.js`/`Enemy.js` | 中等 | 3天 | 🔥🔥🔥🔥 | 核心爽快感来源 |
+| 3 | 克制系统强化 | 创建`TypeAdvantageSystem.js`(`feat-044` 已通过 BattleSystem.getTypeMultiplier 完成 ✅), 修改敌人伤害计算 | 中等 | 2天 | 🔥🔥🔥🔥 | 提升策略深度 |
 
 ### ⚡ 第二周优先 (Week 2)
 | # | 方案 | 改动文件 | 难度 | 工时 | ROI | 说明 |
 |----|------|---------|------|------|-----|------|
-| 4 | 节奏感系统 | 创建`PacingSystem.js`, 修改生成逻辑 | 中等 | 2天 | 🔥🔥🔥 | 动态难度提升沉浸感 |
-| 5 | 进度里程碑 | 创建`MilestoneSystem.js`, 配置`milestones.json` | 简单 | 1.5天 | 🔥🔥 | 增加中期目标感 |
-| 6 | 技能系统多样 | 扩展`skills.json`, 创建`SkillSynergySystem.js` | 复杂 | 4天 | 🔥🔥🔥 | 提升重玩价值 |
+| 4 | 节奏感系统 | 创建`PacingSystem.js` (候选 → PacingSystem 待评估整合 → ROADMAP), 修改生成逻辑 | 中等 | 2天 | 🔥🔥🔥 | 动态难度提升沉浸感 |
+| 5 | 进度里程碑 | 创建`MilestoneSystem.js` (`✅ feat-015 AchievementSystem 15 个成就`), 配置`milestones.json` | 简单 | 1.5天 | 🔥🔥 | 增加中期目标感 |
+| 6 | 技能系统多样 | 扩展`skills.json` 已部分 ✅; 复杂协同仍候选 → ROADMAP, 创建`SkillSynergySystem.js` | 复杂 | 4天 | 🔥🔥🔥 | 提升重玩价值 |
 
 ### 📅 第三周后 (Week 3+)
 | # | 方案 | 改动文件 | 难度 | 工时 | ROI | 说明 |
 |----|------|---------|------|------|-----|------|
-| 7 | 动作演出系统 | 创建`AnimationDirector.js`, 重构敌人行为 | 复杂 | 5天 | 🔥🔥🔥🔥 | 大幅提升可读性 |
-| 8 | 音频分层 | 扩展`AudioSystem.js` | 简单 | 1天 | 🔥🔥 | 听觉反馈分层 |
-| 9 | 动态背景 | 修改`BackgroundSystem.js` | 简单 | 1天 | 🔥 | 增强沉浸感 |
-| 10 | 群体AI | 修改`Enemy.js`, 新增方法 | 中等 | 2天 | 🔥🔥 | 敌人更聪明 |
-| 11 | 极限模式 | 修改`MenuScene.js`/`GameScene.js` | 简单 | 1天 | 🔥🔥 | 新游戏模式 |
-| 12 | 无障碍选项 | 创建`SettingsScene.js` | 简单 | 2天 | 🔥 | 提升可访问性 |
+| 7 | 动作演出系统 | 创建`AnimationDirector.js`, 重构敌人行为 (→ ROADMAP) | 复杂 | 5天 | 🔥🔥🔥🔥 | 大幅提升可读性 |
+| 8 | 音频分层 | 扩展`AudioSystem.js` (→ ROADMAP) | 简单 | 1天 | 🔥🔥 | 听觉反馈分层 |
+| 9 | 动态背景 | 修改`BackgroundSystem.js` (→ ROADMAP) | 简单 | 1天 | 🔥 | 增强沉浸感 |
+| 10 | 群体AI | 修改`Enemy.js`, 新增方法 (→ ROADMAP) | 中等 | 2天 | 🔥🔥 | 敌人更聪明 |
+| 11 | 极限模式 | 修改`MenuScene.js`/`GameScene.js` (→ ROADMAP) | 简单 | 1天 | 🔥🔥 | 新游戏模式 |
+| 12 | 无障碍选项 | 创建`SettingsScene.js` (→ ROADMAP) | 简单 | 2天 | 🔥 | 提升可访问性 |
 
 ---
 

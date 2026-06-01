@@ -14,9 +14,9 @@ export class ScrollingBackground {
     // 静态配置
     // =======================================================================
     static LAYER_CONFIG = {
-        bg:  { parallaxX: 0.08, parallaxY: 0.05, alpha: 0.55, depth: 1  },
-        mid: { parallaxX: 0.25, parallaxY: 0.15, alpha: 0.40, depth: 2  },
-        fg:  { parallaxX: 0.50, parallaxY: 0.30, alpha: 0.22, depth: 3  },
+        bg:  { parallaxX: 0.08, parallaxY: 0.05, alpha: 1.0,  depth: 1  },
+        mid: { parallaxX: 0.25, parallaxY: 0.15, alpha: 0.85, depth: 2  },
+        fg:  { parallaxX: 0.50, parallaxY: 0.30, alpha: 0.55, depth: 3  },
     };
 
     static EDGE_WIDTH   = 120;   // 卷轴边缘宽度 px
@@ -251,7 +251,15 @@ export class ScrollingBackground {
     // =======================================================================
 
     /**
-     * 更新深度渐变层：根据玩家 worldY 绘制全屏底色
+     * 更新深度渐变层：在屏幕底部 30% 绘制深度色（"深度雾" 效果），
+     * 让屏幕上 70% 区域的 bg 视差纹理完全可见，玩家移动时卷轴展开明显。
+     *
+     * 历史 Bug: 此前 fillRect(0, 0, viewportW, viewportH) 用纯色整屏覆盖，
+     * 配合 bg layer alpha 0.55，深度色完全主导视觉，玩家看到的只是
+     * "depth 纯色 + 模糊 bg 纹理"，并非真在滚动的 bg。
+     *
+     * 修复后: 只填充屏幕底部 30%，上方 70% 完全透明，bg 视差纹理清晰可见。
+     *
      * @param {number} playerWorldY
      */
     _updateDepthGradient(playerWorldY) {
@@ -259,8 +267,12 @@ export class ScrollingBackground {
         const color = this._computeDepthColor(playerWorldY);
 
         this._gradientLayer.clear();
+        // Bottom 30% only — creates "depth haze" effect.
+        // Bg layers show through the upper 70% of the viewport.
+        const gradientHeight = Math.floor(viewportH * 0.3);
+        const startY = viewportH - gradientHeight;
         this._gradientLayer.fillStyle(color, 1);
-        this._gradientLayer.fillRect(0, 0, viewportW, viewportH);
+        this._gradientLayer.fillRect(0, startY, viewportW, gradientHeight);
     }
 
     /**

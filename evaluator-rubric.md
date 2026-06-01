@@ -12,7 +12,7 @@
 
 | Criterion | Score | Notes |
 |-----------|-------|-------|
-| **Build & Tests** | 5 | `npm test` 通过 ~730 个测试，0 失败 |
+| **Build & Tests** | 5 | `npm test` 通过 855 个测试，0 失败 |
 | **Game Loop** | 5 | BootScene→MenuScene→GameScene+UIScene→GameOverScene 完整 |
 | **Player Controls** | 5 | 方向键/鼠标/Shift 加速，死区+缓动正确实现 |
 | **Enemy AI** | 5 | WANDERING/CHASING/ATTACKING/FLEEING/FISHING 状态机 |
@@ -29,6 +29,11 @@
 | **Infinite Map + Zones** | 5 | 无限世界地图，区域检测，敌人等级范围自适应 |
 | **Observability** | 5 | DebugLogger + debug overlay + `window.__GAME_SCENE__` |
 | **Harness Completeness** | 5 | 所有 9 个 harness 文件存在且完整，3 个 docs 文件 |
+| **ScrollingWorld (4 phases)** | 5 | 20000×20000 世界 + 5 深度区 + 程序化装饰(feat-046~049) |
+| **DEBUG_API** | 5 | `window.__DEBUG_API__` 14 methods + 16 E2E tests |
+| **Type Effectiveness (feat-044)** | 5 | 2.0x/0.5x 双向 + 可变 sizeThreshold |
+| **Skill Synergy (feat-045)** | 5 | rush_bite + storm_slash,3s 队列窗口 |
+| **Architecture Refactor (feat-025~033)** | 5 | 8 系统提取 + DI + 回调 + reset() |
 
 ### Overall: 5.0 / 5
 
@@ -40,7 +45,7 @@
 |------|---------|---------|-------|
 | `AGENTS.md` | ✓ | Complete | 5 个子系统架构，启动规则，完成定义 |
 | `CLAUDE.md` | ✓ | Complete | 快速参考，关键命令，关键文件表 |
-| `feature_list.json` | ✓ | Complete | 40 个功能状态，含证据 |
+| `feature_list.json` | ✓ | Complete | 49 个功能状态，含证据 |
 | `init.sh` | ✓ | Complete | 5 步验证（install/test/config/harness），路径独立 |
 | `progress.md` | ✓ | Complete | 会话日志，系统提取历史 |
 | `session-handoff.md` | ✓ | Complete | 当前状态，决策记录，下一步 |
@@ -58,14 +63,15 @@
 
 ---
 
-## Feature Coverage（40 features）
+## Feature Coverage（49 features）
 
 | 范围 | 数量 | 状态 |
 |------|------|------|
-| feat-001 ~ feat-024（核心游戏功能） | 24 | 全部完成 |
-| feat-025 ~ feat-033（架构重构 + E2E） | 9 | 全部完成 |
-| feat-034 ~ feat-040（增强 + Bug 修复） | 7 | 全部完成 |
-| **合计** | **40** | **100% 完成** |
+| feat-001 ~ feat-024（核心游戏功能） | 24 | ✅ All completed |
+| feat-025 ~ feat-033（架构重构 + E2E） | 9 | ✅ All completed |
+| feat-034 ~ feat-040（增强 + Bug 修复） | 7 | ✅ All completed |
+| feat-041 ~ feat-049（无限地图 + 平衡 + 协同 + ScrollingWorld） | 9 | ✅ All completed |
+| **合计** | **49** | **100% 完成** |
 
 ---
 
@@ -100,10 +106,10 @@
 
 鱼吃鱼项目实现了完整的 Harness 工程体系：
 
-- **40 个功能**全部完成并通过测试
+- **49 个功能**全部完成并通过测试
 - **8 个系统**从 GameScene 提取为独立可测试模块
-- **~730 个单元测试**全部通过
-- **7 个 E2E 冒烟测试**覆盖核心游戏流程
+- **855 个单元测试**全部通过
+- **23 个 E2E 测试**（16 debug-api + 7 smoke）覆盖核心游戏流程
 - **完整 Harness 文件集合**：9 个顶层文件 + 3 个文档
 - **5 个子系统**（Instructions/State/Verification/Scope/Lifecycle）完整实施
 - **可观测性**：DebugLogger + 调试模式 + 浏览器 Console 接入

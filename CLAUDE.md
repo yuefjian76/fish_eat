@@ -21,18 +21,19 @@ git log --oneline -5         # 查看近期变更
 
 **鱼吃鱼** — Phaser.js 3.x HTML5 游戏。单人，俯视角，玩家控制一条鱼吃更小的鱼、升级、解锁技能、挑战 Boss。
 
-**技术栈**：Phaser.js 3.x · Arcade Physics · ES Modules · Jest · Playwright
+**技术栈**：Phaser.js 3.x · Arcade Physics · ES Modules · Jest（855 个测试） · Playwright（23 个 E2E 测试）
 
 ---
 
 ## 关键命令
 
 ```bash
-npm test                                              # 单元测试（当前 ~730 个）
+npm test                                              # 单元测试（当前 855 个）
 npm run test:watch                                    # 监听模式
 ./init.sh                                             # 完整验证（install + test + smoke）
 python3 -m http.server 8765                           # 启动本地 HTTP 服务器
 npx playwright test e2e/smoke.spec.js --project=chromium  # E2E 冒烟
+npx playwright test e2e/debug-api.spec.js --project=chromium  # E2E debug-api（16 个测试）
 ```
 
 ---
@@ -55,6 +56,9 @@ npx playwright test e2e/smoke.spec.js --project=chromium  # E2E 冒烟
 | `feature_list.json` | **功能状态真相来源** |
 | `progress.md` | 会话连续性日志 |
 | `session-handoff.md` | 跨会话交接文档 |
+| `e2e/debug-api.spec.js` | E2E debug-api 测试（16 用例） |
+| `e2e/smoke.spec.js` | E2E 冒烟测试（7 用例） |
+| `docs/PHASE_3_ROADMAP.md` | Phase 3 候选方向（下次 brainstorming 起点） |
 
 ---
 
@@ -140,9 +144,36 @@ logger.warn('Sprite missing, using fallback', { fishType });
 logger.error('Failed to load config', { file, error });
 ```
 
-调试模式（URL 加 `?debug=true`）：
-- 页面内显示 Debug Overlay
-- `window.__GAME_SCENE__` 暴露到 Console
+---
+
+## 调试模式
+
+URL 加 `?debug=true` 启用：
+
+- 页面内 Debug Overlay（Wave / HP / Score / Lv / Enemies）
+- `window.__GAME_SCENE__` 暴露游戏状态
+- `window.__DEBUG_API__` 暴露 14 个调试方法
+
+常用方法：
+
+```javascript
+__DEBUG_API__.help()           // 方法清单
+__DEBUG_API__.state.current    // 当前游戏状态（getter）
+__DEBUG_API__.state.detailed() // 详细状态（含敌鱼列表）
+__DEBUG_API__.level(n)         // 直接升到 n 级（测技能解锁）
+__DEBUG_API__.killAll()        // 清空敌鱼
+__DEBUG_API__.fullHealth()     // 满血
+__DEBUG_API__.maxExp()         // 当前等级经验溢出，触发升级
+__DEBUG_API__.restart()        // 重启场景
+__DEBUG_API__.eat(fishType)    // 在玩家位置生成并吃指定鱼
+__DEBUG_API__.watch(event, on) // 订阅事件
+```
+
+---
+
+## Phase 3 路线图
+
+49/49 features 全部完成后，下一阶段方向见 [`docs/PHASE_3_ROADMAP.md`](docs/PHASE_3_ROADMAP.md)。当前 5 个候选方向（P0 体验打磨 / P1 动作演出 / P1 群体 AI / P2 极限计时 / P2 无障碍），每次会话只选 1 个方向，通过 brainstorming 流程生成 spec → plan → 实现。
 
 ---
 

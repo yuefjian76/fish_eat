@@ -401,8 +401,11 @@ class GameScene extends Phaser.Scene {
         this.player.body.setCircle(hitRadius);
         this.player.body.setOffset(-hitRadius, -hitRadius);
         this.player.body.setBounce(0.3);
-        this.player.body.setCollideWorldBounds(true);
-
+        // NOTE: Deliberately NOT calling setCollideWorldBounds(true) here.
+        // The 20000x20000 physics world is kept (so projectiles/etc. stay
+        // bounded), but the player must be free to roam — the camera follows
+        // them to give the "infinite map" feel. Clamping the player at world
+        // edges defeats that UX.
         this.player.playerData = { ...playerConfig, fishType: this.fishType };
         this.player.isPlayer = true;
 
@@ -623,12 +626,15 @@ class GameScene extends Phaser.Scene {
             exp: Math.floor(baseFishConfig.exp * scaleFactor)
         };
 
-        // Spawn at world edges (beyond visible area)
+        // Spawn just outside the player's viewport (NOT the whole physics
+        // world), so enemies appear at the edge of what the camera renders
+        // rather than 10k units away where they get insta-despawned by
+        // DESPAWN_MARGIN.
         let x, y;
         const side = Phaser.Math.Between(0, 3);
         const spawnMargin = WORLD_CONFIG.SPAWN_MARGIN;
-        const halfW = WORLD_CONFIG.WIDTH / 2;
-        const halfH = WORLD_CONFIG.HEIGHT / 2;
+        const halfW = WORLD_CONFIG.VIEWPORT_W / 2;
+        const halfH = WORLD_CONFIG.VIEWPORT_H / 2;
         const variationRange = 2000;
 
         switch (side) {
@@ -1597,7 +1603,8 @@ class GameScene extends Phaser.Scene {
         this.player.body.setCircle(hitRadius);
         this.player.body.setOffset(-hitRadius, -hitRadius);
         this.player.body.setBounce(0.3);
-        this.player.body.setCollideWorldBounds(true);
+        // Same rationale as in createPlayer(): keep player free of world-bounds
+        // clamp so they can roam the camera-follow "infinite map".
         this.player.isPlayer = true;
 
         // Re-register collision overlaps with the new player object

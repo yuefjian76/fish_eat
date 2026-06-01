@@ -394,6 +394,7 @@ class GameScene extends Phaser.Scene {
 
         // Player breathing animation state
         this._playerBreathOffset = 0;
+        this._lastBreathY = 0;
 
         // Enable physics
         this.physics.world.enable(this.player);
@@ -947,10 +948,13 @@ class GameScene extends Phaser.Scene {
         }
 
         // Player breathing animation (gentle up-down float)
+        // Delta-based: subtract previous breath offset, add current — prevents drift accumulation.
+        // Math: player.y_t = baseY + sin(t * 0.003) * 2 (oscillates) instead of Σ sin(i * dt) * 2 (drifts).
         this._playerBreathOffset += delta * 0.003;
         const breathY = Math.sin(this._playerBreathOffset) * 2;
-        this._playerBaseY = this.player.y;
-        this.player.y = this._playerBaseY + breathY;
+        const prevBreathY = this._lastBreathY ?? 0;
+        this.player.y += breathY - prevBreathY;
+        this._lastBreathY = breathY;
 
         // Update player health bar position
         this.playerHealthBar.x = this.player.x;

@@ -14,9 +14,9 @@ export class ScrollingBackground {
     // 静态配置
     // =======================================================================
     static LAYER_CONFIG = {
-        bg:  { parallaxX: 0.08, parallaxY: 0, alpha: 0.55, depth: 1  },
-        mid: { parallaxX: 0.25, parallaxY: 0, alpha: 0.40, depth: 2  },
-        fg:  { parallaxX: 0.50, parallaxY: 0, alpha: 0.22, depth: 3  },
+        bg:  { parallaxX: 0.08, parallaxY: 0.05, alpha: 0.55, depth: 1  },
+        mid: { parallaxX: 0.25, parallaxY: 0.15, alpha: 0.40, depth: 2  },
+        fg:  { parallaxX: 0.50, parallaxY: 0.30, alpha: 0.22, depth: 3  },
     };
 
     static EDGE_WIDTH   = 120;   // 卷轴边缘宽度 px
@@ -196,27 +196,27 @@ export class ScrollingBackground {
 
         // BgLayer: 背景图，最慢视差
         const bgKey = themeImages.background;
-        this._tileLayers.bg = this.scene.add.image(512, 384, bgKey);
+        this._tileLayers.bg = this.scene.add.image(viewportW / 2, viewportH / 2, bgKey);
         this._tileLayers.bg.setDepth(1);
-        this._tileLayers.bg.setScrollFactor(ScrollingBackground.LAYER_CONFIG.bg.parallaxX, 0);
+        this._tileLayers.bg.setScrollFactor(ScrollingBackground.LAYER_CONFIG.bg.parallaxX, ScrollingBackground.LAYER_CONFIG.bg.parallaxY);
         this._tileLayers.bg.setAlpha(ScrollingBackground.LAYER_CONFIG.bg.alpha);
-        this._tileLayers.bg.setDisplaySize(viewportW * 2, viewportH);
+        this._tileLayers.bg.setDisplaySize(viewportW * 4, viewportH);
 
         // MidLayer: 中景图，中速视差
         const midKey = themeImages.midground || 'midground_undersea_theme';
-        this._tileLayers.mid = this.scene.add.image(512, 384, midKey);
+        this._tileLayers.mid = this.scene.add.image(viewportW / 2, viewportH / 2, midKey);
         this._tileLayers.mid.setDepth(2);
-        this._tileLayers.mid.setScrollFactor(ScrollingBackground.LAYER_CONFIG.mid.parallaxX, 0);
+        this._tileLayers.mid.setScrollFactor(ScrollingBackground.LAYER_CONFIG.mid.parallaxX, ScrollingBackground.LAYER_CONFIG.mid.parallaxY);
         this._tileLayers.mid.setAlpha(ScrollingBackground.LAYER_CONFIG.mid.alpha);
-        this._tileLayers.mid.setDisplaySize(viewportW * 2, viewportH);
+        this._tileLayers.mid.setDisplaySize(viewportW * 4, viewportH);
 
         // FgLayer: 前景图，快速视差
         const fgKey = themeImages.foreground || 'foreground_undersea_theme';
-        this._tileLayers.fg = this.scene.add.image(512, 384, fgKey);
+        this._tileLayers.fg = this.scene.add.image(viewportW / 2, viewportH / 2, fgKey);
         this._tileLayers.fg.setDepth(3);
-        this._tileLayers.fg.setScrollFactor(ScrollingBackground.LAYER_CONFIG.fg.parallaxX, 0);
+        this._tileLayers.fg.setScrollFactor(ScrollingBackground.LAYER_CONFIG.fg.parallaxX, ScrollingBackground.LAYER_CONFIG.fg.parallaxY);
         this._tileLayers.fg.setAlpha(ScrollingBackground.LAYER_CONFIG.fg.alpha);
-        this._tileLayers.fg.setDisplaySize(viewportW * 2, viewportH);
+        this._tileLayers.fg.setDisplaySize(viewportW * 4, viewportH);
     }
 
     _createDepthFog() {
@@ -264,18 +264,22 @@ export class ScrollingBackground {
     }
 
     /**
-     * 更新 3 层 TileSprite 的 tilePositionX，实现视差效果
-     * @param {number} cameraScrollX
+     * 更新 3 层视差层（no-op：Phaser scrollFactor 自动处理）
+     *
+     * 历史 Bug: 这里曾用 setPosition(viewportW/2 + scrollX*parallax, ...)
+     * 配合 setScrollFactor(parallax, 0). Phaser 公式
+     *   screenX = worldX - cameraScrollX * scrollFactorX
+     * 代入后两个 parallax 项相消，layer 永远在屏幕中央 512，
+     * 玩家移出 viewport 时背景不滚动。
+     *
+     * 修复后: 不再每帧 setPosition. Layer 在创建时被 setPosition 到
+     * 屏幕中心 + setScrollFactor(parallaxX, parallaxY), Phaser 在
+     * 绘制时按 camera 偏移自动实现视差。
+     *
+     * @param {number} cameraScrollX — 仅保留参数以保持调用点不变
      */
     _updateTileLayers(cameraScrollX) {
-        // 使用 setPosition 手动视差偏移（Image 对象非 TileSprite，setTilePosition 无效）
-        // parallax 越小，偏移越小，远景层几乎不动
-        for (const [key, cfg] of Object.entries(ScrollingBackground.LAYER_CONFIG)) {
-            const obj = this._tileLayers[key];
-            if (!obj) continue;
-            const offset = this._computeTileOffset(key, cameraScrollX);
-            obj.setPosition(offset.x, offset.y);
-        }
+        // Intentionally empty: Phaser's per-draw scrollFactor handles parallax.
     }
 
     /**

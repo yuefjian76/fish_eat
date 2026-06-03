@@ -22,6 +22,7 @@ import { AudioSystem } from '../systems/AudioSystem.js';
 import { AchievementSystem } from '../systems/AchievementSystem.js';
 import { DailyChallengeSystem } from '../systems/DailyChallengeSystem.js';
 import { CollisionSystem } from '../systems/CollisionSystem.js';
+import { AnimationFeedbackSystem } from '../systems/AnimationFeedbackSystem.js';
 import { WORLD_CONFIG } from '../constants/WorldConfig.js';
 import { logger } from '../systems/DebugLogger.js';
 
@@ -253,6 +254,9 @@ class GameScene extends Phaser.Scene {
             player: this.player,
             fishData: this.fishData
         });
+
+        // Initialize animation feedback system (levelUp/skillUse/eat effects)
+        this.feedbackSystem = new AnimationFeedbackSystem(this);
 
         // Create skill bar UI
         this.skillBar = new SkillBar(this, this.skillsData, this.skillSystem);
@@ -1634,6 +1638,9 @@ class GameScene extends Phaser.Scene {
 
         // Level-up visual effects: shockwave + level text popup
         this.playLevelUpEffects(oldX, oldY);
+
+        // Trigger data-driven levelUp animation (ring + "LEVEL UP!" + particles)
+        this.feedbackSystem?.trigger('levelUp', { level: this.level });
 
         // Play level-up sound
         if (this.audioSystem) this.audioSystem.play('level_up');

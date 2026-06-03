@@ -167,6 +167,9 @@ class BootScene extends Phaser.Scene {
         this.load.image('enemy_fish_big_2', 'src/assets/images/frames/enemy_fish_big_2.png');
         this.load.image('enemy_fish_big_3', 'src/assets/images/frames/enemy_fish_big_3.png');
         this.load.image('enemy_fish_big_4', 'src/assets/images/frames/enemy_fish_big_4.png');
+
+        // Load data-driven animation feedback config (levelUp / skillUse / eat)
+        this.load.json('animationFeedback', 'src/config/animation_feedback.json');
     }
 
     create() {

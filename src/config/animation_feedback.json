@@ -1,0 +1,55 @@
+{
+  "levelUp": {
+    "ring": {
+      "radius": [0, 200],
+      "duration": 800,
+      "alpha": [1, 0],
+      "colors": ["#FFD700", "#FFA500", "#FF4500"]
+    },
+    "text": {
+      "content": "LEVEL UP!",
+      "color": "#FFD700",
+      "fontSize": 48,
+      "yStart": 200,
+      "yEnd": 100,
+      "duration": 1200
+    },
+    "particles": {
+      "count": 8,
+      "colors": ["#FFD700", "#FF69B4", "#00CED1"],
+      "distance": 100,
+      "duration": 600
+    }
+  },
+  "skillUse": {
+    "flash": {
+      "duration": 300,
+      "alpha": 0.5,
+      "color": "#FFFFFF"
+    },
+    "text": {
+      "color": "#00FF00",
+      "fontSize": 28,
+      "yOffset": -50,
+      "duration": 600
+    },
+    "particles": {
+      "count": 8,
+      "distance": 60,
+      "duration": 400
+    }
+  },
+  "eat": {
+    "flash": {
+      "duration": 50,
+      "alpha": 0.2,
+      "color": "#FFFF00"
+    },
+    "particles": {
+      "count": 6,
+      "colors": ["#FFFF00", "#FFA500"],
+      "distance": 40,
+      "duration": 300
+    }
+  }
+}

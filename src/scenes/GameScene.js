@@ -1536,6 +1536,7 @@ class GameScene extends Phaser.Scene {
                     }
                 }
             }
+            this.feedbackSystem?.trigger('skillUse', { slot: 'Q', text: '撕咬', color: '#FF4444' });
         });
 
         // W key - Shield (defense)
@@ -1544,6 +1545,7 @@ class GameScene extends Phaser.Scene {
             if (result) {
                 this.skillBar.showFeedback('shield', result.success);
             }
+            this.feedbackSystem?.trigger('skillUse', { slot: 'W', text: '护盾', color: '#4444FF' });
         });
 
         // E key - Speed Up (buff)
@@ -1552,6 +1554,7 @@ class GameScene extends Phaser.Scene {
             if (result) {
                 this.skillBar.showFeedback('speed_up', result.success);
             }
+            this.feedbackSystem?.trigger('skillUse', { slot: 'E', text: '加速', color: '#44FF44' });
         });
 
         // R key - Heal
@@ -1560,6 +1563,7 @@ class GameScene extends Phaser.Scene {
             if (result) {
                 this.skillBar.showFeedback('heal', result.success);
             }
+            this.feedbackSystem?.trigger('skillUse', { slot: 'R', text: '治疗', color: '#FFFF44' });
         });
     }
 

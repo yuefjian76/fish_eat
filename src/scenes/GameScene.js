@@ -793,6 +793,9 @@ class GameScene extends Phaser.Scene {
             // Show floating EXP text
             this.floatingTextSystem.showExp(fish.x, fish.y, expResult.expGained);
 
+            // Trigger unified eat feedback (particles + micro screen flash)
+            this.feedbackSystem?.trigger('eat', { x: fish.x, y: fish.y, exp: expResult.expGained });
+
             // Track kill count
             this.killCount++;
             this.achievementSystem.checkFishEaten(this.killCount);

@@ -576,6 +576,16 @@
         "init.sh 通过"
       ],
       "evidence": "BackgroundExpansion.js 已删除；GameScene.js import ScrollingBackground + DecorationPool；init.sh 850 tests passed；E2E 验证: waveState=surge, backgroundSystem=ScrollingBackground, 无 JS Error（仅 favicon.ico 404）；ARCHITECTURE.md 和 PRODUCT.md 已更新"
+    },
+    {
+      "id": "feat-050",
+      "name": "Combat Feedback Animations (P0 Polish)",
+      "description": "Data-driven combat feedback animations: levelUp ring + text + particles, skillUse flash + text + particles, eat flash + particles. AnimationFeedbackSystem with animation_feedback.json config.",
+      "dependencies": [
+        "feat-038"
+      ],
+      "status": "completed",
+      "evidence": "AnimationFeedbackSystem.js + animation_feedback.json + 8 unit tests + 5 e2e tests, integrated in GameScene onLevelUp/setupSkillKeys (Q/W/E/R)/_handleCollisionResult. 863 unit + 33 e2e tests pass."
     }
   ]
 }

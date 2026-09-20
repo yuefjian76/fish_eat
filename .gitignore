@@ -5,6 +5,12 @@ worktrees/
 # Dependencies
 node_modules/
 
+# Test / coverage artifacts
+coverage/
+test-results/
+playwright-report/
+.playwright-mcp/
+
 # OS files
 .DS_Store
 Thumbs.db
@@ -13,3 +19,7 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+*.bak
+
+# Ad-hoc scratch output
+test_boot.txt

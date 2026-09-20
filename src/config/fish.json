@@ -109,21 +109,27 @@
     "sizeThresholdVsWeak": 1.2
   },
   "boss_squid": {
-    "baseHp": 100, "hpPerLevel": 100, "size": 200, "damage": 40,
-    "phases": 2, "boss": true, "exp": 500,
-    "triggerLevel": 5, "spawnAnimation": "rise_from_bottom",
+    "name": "大王乌贼",
+    "baseHp": 240, "hpPerLevel": 40, "size": 200, "speed": 130, "damage": 18,
+    "attackInterval": 1600, "visionRange": 2000, "attackRange": 80, "phases": 2, "boss": true, "exp": 500,
+    "triggerLevel": 5, "skills": ["tentacle_slap", "ink_blind"],
+    "spawnAnimation": "rise_from_bottom",
     "color": "#8B0000", "strongAgainst": [], "weakTo": []
   },
   "boss_shark_king": {
-    "baseHp": 150, "hpPerLevel": 150, "size": 250, "damage": 50,
-    "phases": 3, "boss": true, "exp": 800,
-    "triggerLevel": 10, "spawnAnimation": "charge_from_left",
+    "name": "鲨鱼之王",
+    "baseHp": 280, "hpPerLevel": 50, "size": 250, "speed": 150, "damage": 22,
+    "attackInterval": 1500, "visionRange": 2000, "attackRange": 85, "phases": 3, "boss": true, "exp": 800,
+    "triggerLevel": 8, "skills": ["dash", "summon", "stun"],
+    "spawnAnimation": "charge_from_left",
     "color": "#FFFFFF", "strongAgainst": [], "weakTo": []
   },
   "boss_sea_dragon": {
-    "baseHp": 200, "hpPerLevel": 200, "size": 300, "damage": 60,
-    "phases": 3, "boss": true, "exp": 1000,
-    "triggerLevel": 15, "spawnAnimation": "rise_from_bottom",
+    "name": "海龙",
+    "baseHp": 320, "hpPerLevel": 60, "size": 300, "speed": 120, "damage": 26,
+    "attackInterval": 1400, "visionRange": 2000, "attackRange": 90, "phases": 3, "boss": true, "exp": 1000,
+    "triggerLevel": 11, "skills": ["fire_breath", "earthquake", "summon"],
+    "spawnAnimation": "rise_from_bottom",
     "color": "#000080", "strongAgainst": [], "weakTo": []
   }
 }

@@ -1,8 +1,8 @@
 # 进度日志
 
-## 当前阶段：Phase 3 规划（53/53 features 完成）
+## 当前阶段：Phase 3 规划（54/54 features 完成）
 
-53/53 features 全部 completed，`./init.sh` 5 步全过，E2E 套件 49 用例全绿，`window.__DEBUG_API__` 已实现（16 个方法）。
+54/54 features 全部 completed，`./init.sh` 5 步全过，E2E 套件 56 用例全绿，`window.__DEBUG_API__` 已实现（17 个方法）。
 下一阶段方向见 [`docs/PHASE_3_ROADMAP.md`](docs/PHASE_3_ROADMAP.md)。
 
 ### 完成里程碑
@@ -16,9 +16,59 @@
 - ✅ feat-051：E2E 验证系统修复（统一 bootstrap，37 用例全绿）
 - ✅ feat-052：死亡演出系统（DeathSequenceSystem，15 单测 + 5 E2E）
 - ✅ feat-053：低血量警告强化（LowHealthWarningSystem，25 单测 + 7 E2E）
-- ✅ E2E Debug API：`window.__DEBUG_API__`（16 E2E tests，16 个方法）
+- ✅ E2E Debug API：`window.__DEBUG_API__`（16 E2E tests，17 个方法）
+- ✅ feat-054：Boss 战修复与节奏调整（配置驱动 + 12 项修复，36 单测 + 7 E2E）
 
-**单元测试**：906 个 | **E2E 测试**：49 个（10 个 spec 文件） | **完成度**：53/53
+**单元测试**：942 个（55 suites） | **E2E 测试**：56 个（11 个 spec 文件） | **完成度**：54/54
+
+---
+
+## 会话 — 2026-09-20（feat-054 Boss 战修复与节奏调整）
+
+### 已完成
+- ✅ 走完 harness 流程：spec → plan → 实现 → 验证 → 状态更新
+  - `docs/superpowers/specs/2026-09-20-feat-054-boss-fight-design.md`
+  - `docs/superpowers/plans/2026-09-20-feat-054-boss-fight-plan.md`
+- ✅ 按 roadmap 要求用 `__DEBUG_API__` **实跑** Boss 战，发现 Boss 战从未真正跑通，逐项定位并修复：
+
+| # | 根因 | 修复 |
+|---|------|------|
+| 1 | `GameScene.spawnBoss` 内联配置缺 `size`/`speed` → `body.setCircle(NaN)` → Boss 不可见不可交互 | 改为读 `fish.json` 单一来源 + `buildBossConfig()` |
+| 2 | `fish.json` 三只 Boss 缺 `name/damage/attackInterval/visionRange/attackRange/skills` | 补齐字段；HP 改 `baseHp 240/280/320` + `hpPerLevel 40/50/60` |
+| 3 | `BossEnemy.executeSkill` 伤害返回值无人接收 → Boss 打不到玩家 | 转发到 `scene.onEnemyAttack` |
+| 4 | `Enemy.attackPlayer` 用 `Math.log(size)` 且忽略 `fishConfig.damage` | Boss 走配置伤害；`size/speed` 缺失兜底 |
+| 5 | 接触伤害 `size/4` 且无节流（overlap 每帧触发） | `CollisionSystem.getContactDamage/Interval` + 敌人独立节流（1000ms） |
+| 6 | 「1v1 暂停刷怪」用的是自 feat-027 起就失效的死字段 `spawnTimer`；恢复刷怪用 `setInterval`（泄漏） | 删除死字段，改用 `_updateSpawning` 守卫 + `_handleBossDefeated()` |
+| 7 | `bossDefeated` 写入 `shark_king`/`sea_dragon`，读取 `sharkKing`/`seaDragon` → 记录等于没记 | 统一 `getBossKey()` / `BOSS_KEY_MAP` |
+| 8 | 海龙 `triggerLevel: 15` 而等级上限 11 → 永不可达 | 三只 Boss 触发等级改 5/8/11（有测试守门） |
+| 9 | `__DEBUG_API__.level(n)`/`maxExp()` 不同步 `GrowthSystem` → 无法复现 Boss 战 | 同步等级并补算跳级 HP |
+| 10 | 升级到偶数级抛 `transitionToNewTheme is not a function` → 整个游戏循环冻结 | 兼容 `setTheme`/`transitionToNewTheme` |
+| 11 | Boss 入场动画用绝对坐标（400/700/384），跟随相机后跑到屏幕外 | `BossAnimation._anchors()` 改相对玩家定位 |
+| 12 | 击败后 Boss 血条残留 | `_handleBossDefeated()` 统一收尾 |
+
+- ✅ 新增/扩展测试：`src/config/__tests__/bossConfig.test.js`（9）、`src/entities/__tests__/EnemyDamage.test.js`（6）、
+  `BossSystem.test.js`（→18）、`CollisionSystem.test.js`（→27）、`BossEnemy.test.js`（→22）、`e2e/boss-fight.spec.js`（7）
+- ✅ 新增 `__DEBUG_API__.boss(type)`（第 17 个方法）
+- ✅ 文档同步：ARCHITECTURE / PRODUCT / RELIABILITY / PHASE_3_ROADMAP / feature_list / AGENTS / CLAUDE /
+  quality-document / evaluator-rubric / session-handoff / 本文件
+
+### 实测数据（`?debug=true` + `__DEBUG_API__`）
+- `level(5)` → 大王乌贼 240 HP / 18 伤害 / 1600ms 攻击间隔
+- **走位打法**：Q 撕咬（范围 95 输出、退到 320 躲近战）→ 10 次撕咬、**27.3s 击杀**，玩家几乎不掉血、`bossDefeated.squid=true`
+- **站桩贴身**：约 25s 玩家阵亡（Boss 剩 15 血）→ 证明"必须走位"的节奏成立
+- 血条同帧刷新 240 → 140
+- 截图 `/tmp/boss-0-warning.png`、`/tmp/boss-1-entrance.png`、`/tmp/boss-2-fight.png`、`/tmp/boss-3-damaged.png`
+
+### 验证
+- `npm test` → **942 passed / 55 suites**（1 skipped）
+- `npx playwright test --project=chromium` → **56 passed**
+- `--repeat-each=2` → **112 passed，0 flaky**
+- `./init.sh` → 5/5
+
+### 给下一个 agent 的坑位提醒
+> **实体/战斗类功能必须先用 `__DEBUG_API__` 实跑看数值**。本轮 12 个根因里有 9 个是"配置缺字段 → NaN"
+> 这类**静态代码审查看不出来、只有运行时坐标/血量打印才暴露**的问题：`Number.isFinite(boss.x)` 与
+> `boss.body.radius` 是最快的探针。RNG 之外不要相信"代码看起来对"。
 
 ---
 

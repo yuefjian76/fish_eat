@@ -1,7 +1,7 @@
 # Quality Document — 鱼吃鱼 (Fish Eat Fish)
 
 > **Harness Subsystem**: State — authoritative quality record for the project.
-> Updated: 2026-06-01 (harness state sync session)
+> Updated: 2026-09-20 (feat-054 Boss 战修复)
 
 ---
 
@@ -13,7 +13,7 @@
 
 | Dimension | Grade | Evidence |
 |-----------|-------|----------|
-| Build & Compile | A | `npm test`: 906 passed, 0 failed; `init.sh` all 5 steps pass |
+| Build & Compile | A | `npm test`: 942 passed, 0 failed; `init.sh` all 5 steps pass |
 | Game Loop | A | Scene flow BootScene→MenuScene→GameScene+UIScene→GameOverScene complete |
 | Player Controls | A | Keyboard / mouse / touch with dead zone and easing; PlayerControlSystem extracted |
 | Enemy AI | A | State machine WANDERING/CHASING/ATTACKING/FLEEING; 5 special behaviors |
@@ -33,7 +33,7 @@
 | ScrollingWorld | A | 4 阶段全部完成(feat-046~049),20000×20000 世界,5 深度区,程序化装饰 | 
 | ScrollingBackground | A | 3 层视差 + DepthFog + ScrollEdge + BubblePool |
 | DecorationPool + Prng | A | mulberry32 确定性 PRNG,200 上限,chunk 复用 |
-| DEBUG_API | A | 16 调试方法,16 E2E 测试,仅 `?debug=true` 暴露 |
+| DEBUG_API | A | 17 调试方法,16 E2E 测试,仅 `?debug=true` 暴露 |
 | Skill Synergy | A | rush_bite / storm_slash,3s 队列窗口,FloatingText 反馈 |
 
 ---
@@ -51,7 +51,8 @@
 | E2E Verification Fix | feat-051 | 1 | ✅ completed |
 | Death Sequence (P0) | feat-052 | 1 | ✅ completed |
 | Low Health Warning (P0) | feat-053 | 1 | ✅ completed |
-| **Total** | | **53** | **100%** |
+| Boss Fight (P0) | feat-054 | 1 | ✅ completed |
+| **Total** | | **54** | **100%** |
 
 ---
 
@@ -108,8 +109,8 @@
 
 ### Build
 ```
-npm test        → 906 tests passed, 0 failed, 53 suites
-npx playwright test --project=chromium  → 49 passed, 0 failed
+npm test        → 942 tests passed, 0 failed, 55 suites
+npx playwright test --project=chromium  → 56 passed, 0 failed
 ./init.sh       → All 5 steps pass (install / test / syntax / JSON / harness files)
 ```
 
@@ -151,9 +152,9 @@ npx playwright test --project=chromium  → 49 passed, 0 failed
 |----------|--------|
 | `clean-state-checklist.md` | All 40+ checks pass |
 | `evaluator-rubric.md` | 5.0/5 overall score |
-| `feature_list.json` | 53/53 features at status "completed" |
-| `npm test` | 906 passed, 0 failed |
-| `npx playwright test --project=chromium` | 49 passed, 0 failed（`--repeat-each=2` → 98，0 flaky） |
+| `feature_list.json` | 54/54 features at status "completed" |
+| `npm test` | 942 passed, 0 failed |
+| `npx playwright test --project=chromium` | 56 passed, 0 failed（`--repeat-each=2` → 112，0 flaky） |
 | `./init.sh` | All 5 steps pass |
 
 ---
@@ -162,7 +163,7 @@ npx playwright test --project=chromium  → 49 passed, 0 failed
 
 | Item | Severity | Status |
 |------|----------|--------|
-| GameScene now 2132 LOC | Medium | 已超出 <2000 目标，后续新功能按需继续提取系统 |
+| GameScene now 2470 LOC | Medium | 已超出 <2000 目标，后续新功能按需继续提取系统 |
 | PNG transparency issues | Low | Documented fallback exists, non-blocking |
 | E2E tests need running browser | Info | `playwright.config.mjs` webServer 自动拉起；引导统一走 `e2e/helpers/game.js` |
 | node_modules/coverage tracked in git | Medium | 待清理（`.git` 142MB），见 session-handoff.md Repo Hygiene |
@@ -181,5 +182,6 @@ npx playwright test --project=chromium  → 49 passed, 0 failed
 | 2026-06-04 | feat-050 战斗反馈动画 — 863 tests |
 | 2026-09-19 | feat-052 死亡演出（DeathSequenceSystem，15 单测 + 5 E2E）；878 tests / 42 E2E |
 | 2026-09-19 | feat-053 低血量警告强化（LowHealthWarningSystem，25 单测 + 7 E2E）；906 tests / 49 E2E |
+| 2026-09-20 | feat-054 Boss 战修复与节奏（BossSystem/实体/碰撞修复，36 单测 + 7 E2E）；942 tests / 56 E2E |
 | 2026-09-19 | feat-051 E2E 验证系统修复 — 真实失败 7 例 + 1 处假通过全部修复；37 E2E 全绿，repeat×2 无 flaky |
 | **2026-05-30** | **Harness infrastructure rewrite — 5-subsystem docs; init.sh portability fix; evaluator-rubric rewrite** |

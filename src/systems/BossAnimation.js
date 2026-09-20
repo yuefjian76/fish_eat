@@ -25,11 +25,41 @@ export class BossAnimation {
         }
     }
 
+    /**
+     * Entrance positions are relative to the player, not to the 1024x768 design
+     * canvas: the camera follows the player across an infinite scrolling world,
+     * so absolute coordinates would play the animation somewhere off screen.
+     * The 400/700/384 constants remain as a fallback for scenes without a player.
+     */
+    _anchors(boss) {
+        const graphics = boss.graphics;
+        const player = this.scene.player;
+        if (player && Number.isFinite(player.x) && Number.isFinite(player.y)) {
+            return {
+                riseX: graphics.x || player.x + 200,
+                riseStartY: player.y + 240,
+                riseEndY: player.y - 80,
+                chargeStartX: player.x - 420,
+                chargeStartY: graphics.y || player.y,
+                chargeEndX: player.x + 180,
+            };
+        }
+        return {
+            riseX: graphics.x || 400,
+            riseStartY: 700,
+            riseEndY: 384,
+            chargeStartX: -100,
+            chargeStartY: graphics.y || 384,
+            chargeEndX: 400,
+        };
+    }
+
     playRiseFromBottom(boss) {
         const graphics = boss.graphics;
+        const a = this._anchors(boss);
 
-        // Start from below screen
-        graphics.setPosition(graphics.x || 400, 700);
+        // Start below the player
+        graphics.setPosition(a.riseX, a.riseStartY);
 
         // Screen shake
         if (this.scene.cameras && this.scene.cameras.main) {
@@ -39,7 +69,7 @@ export class BossAnimation {
         // Rise up animation
         this.scene.tweens.add({
             targets: graphics,
-            y: 384,
+            y: a.riseEndY,
             duration: 2000,
             ease: 'Sine.easeInOut'
         });
@@ -47,14 +77,15 @@ export class BossAnimation {
 
     playChargeFromLeft(boss) {
         const graphics = boss.graphics;
+        const a = this._anchors(boss);
 
         // Start off screen left
-        graphics.setPosition(-100, graphics.y || 384);
+        graphics.setPosition(a.chargeStartX, a.chargeStartY);
 
         // Charge across screen
         this.scene.tweens.add({
             targets: graphics,
-            x: 400,
+            x: a.chargeEndX,
             duration: 1500,
             ease: 'Quad.easeOut'
         });

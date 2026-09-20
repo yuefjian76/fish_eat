@@ -56,9 +56,14 @@ gameLogger.info('Game started', { difficulty: 'normal' });
 - 死亡演出阶段切换（phase: hitStop/impact/fadeOut — `Death sequence phase`）
 - 进入结算页（survivalTime — `Game over transition`）
 - 低血量警告进入/退出（state, hpRatio — `Low health warning`）
+- Boss 预警/登场/击败（bossType, name, hp, damage, attackInterval, playerLevel, durationMs — `Boss warning` / `Boss spawned` / `Boss defeated`）
 
 **DeathSequenceSystem:**（纯逻辑，由 GameScene 打日志）
 - 阶段推进只在 `update()` 返回 `phaseChanged: true` 时记录，避免每帧刷屏
+
+**BossSystem:**（纯逻辑/编排，由 GameScene 打日志）
+- 预警与登场、击败各打一条 `INFO`；战斗期间血条刷新不单独打日志
+- `spawnBoss()` 对未知类型打 `WARN` 并返回 null（不再静默失败）
 
 **LowHealthWarningSystem:**（纯逻辑，由 GameScene 打日志）
 - 进入/退出警告区（level: `INFO`，`Low health warning` + state: enter/exit, hpRatio）— 只在状态翻转时记录

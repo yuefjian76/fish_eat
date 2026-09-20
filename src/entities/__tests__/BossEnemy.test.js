@@ -1,4 +1,6 @@
 import { jest } from '@jest/globals';
+import { buildBossConfig } from '../../systems/BossSystem.js';
+import { BossEnemy } from '../BossEnemy.js';
 
 // Test BossEnemy methods directly by creating instances with manually set properties
 // This avoids complex ES module mocking issues
@@ -397,42 +399,68 @@ describe('BossEnemy', () => {
     });
 
     describe('HP scaling formula', () => {
-        test('calculates scaled HP correctly', () => {
-            // Formula: baseHp + (playerLevel * hpPerLevel)
-            const baseHp = 100;
-            const hpPerLevel = 100;
-            const playerLevel = 5;
-
-            const scaledHp = baseHp + (playerLevel * hpPerLevel);
-
-            expect(scaledHp).toBe(600);
+        test('uses the HP pre-computed by BossSystem.buildBossConfig', () => {
+            const config = buildBossConfig({ baseHp: 240, hpPerLevel: 40, triggerLevel: 5, size: 200 }, 5);
+            expect(config.hp).toBe(240);
         });
 
-        test('boss squid HP at level 5', () => {
-            const config = { baseHp: 100, hpPerLevel: 100 };
-            const playerLevel = 5;
-
-            const scaledHp = config.baseHp + (playerLevel * config.hpPerLevel);
-
-            expect(scaledHp).toBe(600);
+        test('HP grows when the player out-levelled the trigger level', () => {
+            expect(buildBossConfig({ baseHp: 280, hpPerLevel: 50, triggerLevel: 8 }, 10).hp).toBe(380);
         });
 
-        test('boss shark king HP at level 10', () => {
-            const config = { baseHp: 150, hpPerLevel: 150 };
-            const playerLevel = 10;
-
-            const scaledHp = config.baseHp + (playerLevel * config.hpPerLevel);
-
-            expect(scaledHp).toBe(1650);
+        test('defaults damage/attackInterval so a boss can never deal NaN', () => {
+            const config = buildBossConfig({ baseHp: 100 }, 3);
+            expect(config.damage).toBe(30);
+            expect(config.attackInterval).toBe(1500);
         });
 
-        test('boss sea dragon HP at level 15', () => {
-            const config = { baseHp: 200, hpPerLevel: 200 };
-            const playerLevel = 15;
-
-            const scaledHp = config.baseHp + (playerLevel * config.hpPerLevel);
-
-            expect(scaledHp).toBe(3200);
-        });
     });
+
+describe('BossEnemy.executeSkill damage forwarding (feat-054)', () => {
+    /** hand-rolled boss stub: executeSkill only needs these members */
+    function makeBoss({ skill, attackResult = 18 }) {
+        const boss = {
+            scene: { onEnemyAttack: jest.fn() },
+            attackPlayer: jest.fn(() => attackResult),
+            _inkBlindTimer: 0,
+            _inkBlindDuration: 3000,
+            _stunTimer: 0,
+            _stunDuration: 1500,
+            getCurrentSkill: () => skill,
+        };
+        boss.executeSkill = BossEnemy.prototype.executeSkill.bind(boss);
+        return boss;
+    }
+
+    test('a basic attack forwards its damage to the scene', () => {
+        const boss = makeBoss({ skill: 'tentacle_slap' });
+
+        const damage = boss.executeSkill({});
+
+        expect(damage).toBe(18);
+        expect(boss.scene.onEnemyAttack).toHaveBeenCalledWith(boss, 18);
+    });
+
+    test('every attack skill forwards damage', () => {
+        for (const skill of ['tentacle_slap', 'dash', 'fire_breath']) {
+            const boss = makeBoss({ skill });
+            boss.executeSkill({});
+            expect(boss.scene.onEnemyAttack).toHaveBeenCalledTimes(1);
+        }
+    });
+
+    test('no damage is forwarded while on cooldown (attackPlayer returns 0)', () => {
+        const boss = makeBoss({ skill: 'dash', attackResult: 0 });
+
+        expect(boss.executeSkill({})).toBe(0);
+        expect(boss.scene.onEnemyAttack).not.toHaveBeenCalled();
+    });
+
+    test('utility skills do not forward damage', () => {
+        const boss = makeBoss({ skill: 'ink_blind' });
+        boss.executeSkill({});
+
+        expect(boss.scene.onEnemyAttack).not.toHaveBeenCalled();
+    });
+});
 });

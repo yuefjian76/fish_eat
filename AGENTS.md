@@ -118,7 +118,7 @@ docs/
 # 标准验证（必须通过）
 ./init.sh
 
-# E2E 全量（49 个用例，自动拉起 webServer）
+# E2E 全量（56 个用例，自动拉起 webServer）
 npx playwright test --project=chromium
 
 # 单独运行
@@ -133,7 +133,7 @@ python3 -m http.server 8765 &                      # 启动本地服务器
 
 - [ ] 目标行为已实现，在浏览器中手动验证
 - [ ] 单元测试通过（`npm test` 全绿）
-- [ ] E2E 全量测试通过（49 个测试全部通过；`npx playwright test --project=chromium`）
+- [ ] E2E 全量测试通过（56 个测试全部通过；`npx playwright test --project=chromium`）
 - [ ] 运行时无 JavaScript 错误（浏览器 Console 无 Error）
 - [ ] `feature_list.json` 中状态更新为 `completed`，并记录证据
 - [ ] 相关 `docs/` 文档已更新
@@ -141,7 +141,7 @@ python3 -m http.server 8765 &                      # 启动本地服务器
 
 ### E2E 验证范围
 
-E2E 测试（10 个 spec，49 用例）覆盖：
+E2E 测试（11 个 spec，56 用例）覆盖：
 
 - 游戏页面正常加载（无 JS 错误）
 - Phaser Canvas 正常渲染
@@ -300,7 +300,7 @@ window.__GAME_SCENE__.level                   // 玩家等级
 
 启用: URL 加 `?debug=true`,会同时暴露 `window.__GAME_SCENE__` 和 `window.__DEBUG_API__`。
 
-`__DEBUG_API__` 包含 16 个方法,用于 E2E 测试和手动调试:
+`__DEBUG_API__` 包含 17 个方法,用于 E2E 测试和手动调试:
 - `state()` / `level(n)` / `skill(slot)` / `eat(fishType)` / `watch(event, on)`
 - `spawn(...)` / `killAll()` / `fullHealth()` / `maxExp()` / `kill()` / `restart()`
 - `help()` 等
@@ -336,7 +336,7 @@ fish_eat/
 │   ├── constants/         # 全局常量（DepthLayers/WorldConfig）
 │   └── ui/                # UI 组件（SkillBar）
 ├── tests/                 # 测试文件
-├── e2e/                   # E2E 测试(Playwright: 10 spec / 49 用例)
+├── e2e/                   # E2E 测试(Playwright: 11 spec / 56 用例)
 │   └── helpers/game.js    # 统一引导(openGame/dismissLogin/clickStartButton/startGame)
 └── __mocks__/             # Jest mock 文件
 ```

@@ -14,14 +14,14 @@ import { BackgroundSystem } from '../systems/BackgroundSystem.js';
 import { ScrollingBackground } from '../systems/ScrollingBackground.js';
 import { DecorationPool } from '../systems/DecorationPool.js';
 import { MapExpansionSystem } from '../systems/MapExpansionSystem.js';
-import { BossSystem } from '../systems/BossSystem.js';
+import { BossSystem, buildBossConfig, getBossKey } from '../systems/BossSystem.js';
 import { BossAnimation } from '../systems/BossAnimation.js';
 import { SkillBar } from '../ui/SkillBar.js';
 import { ComboSystem } from '../systems/ComboSystem.js';
 import { AudioSystem } from '../systems/AudioSystem.js';
 import { AchievementSystem } from '../systems/AchievementSystem.js';
 import { DailyChallengeSystem } from '../systems/DailyChallengeSystem.js';
-import { CollisionSystem } from '../systems/CollisionSystem.js';
+import { CollisionSystem, getContactDamageInterval } from '../systems/CollisionSystem.js';
 import { AnimationFeedbackSystem } from '../systems/AnimationFeedbackSystem.js';
 import { DeathSequenceSystem } from '../systems/DeathSequenceSystem.js';
 import { LowHealthWarningSystem } from '../systems/LowHealthWarningSystem.js';
@@ -66,6 +66,7 @@ class GameScene extends Phaser.Scene {
         this.doubleRewardsActive = false;
         // Boss system
         this.bossSystem = new BossSystem(this);
+        this._bossFightStartTime = null;
         this.bossDefeated = { squid: false, sharkKing: false, seaDragon: false };
     }
 
@@ -81,7 +82,6 @@ class GameScene extends Phaser.Scene {
         this.healthRegenRate = 0.005; // 0.5% of max HP per second (slower regen)
         this.difficulty = (data && data.difficulty) || 'easy';
         this.fishType = (data && data.fishType) || 'clownfish';
-        this.spawnTimer = null;
         // Death sequence state (reset every time the scene starts)
         this._isDying = false;
         this._deathPayload = null;
@@ -695,64 +695,121 @@ class GameScene extends Phaser.Scene {
     }
 
     /**
-     * Check if boss should spawn based on player level
+     * Check if a boss should spawn after a level up.
+     *
+     * Gates are data-driven (fish.json `triggerLevel`) and use `>=` so a boss is
+     * never skipped if the player levels past the exact threshold mid-frame.
+     * Only one boss is queued at a time; the fight has to end before the next one.
      */
     checkBossSpawn() {
         const level = this.growthSystem.getLevel();
 
-        // Boss spawn thresholds from design
-        if (level === 5 && !this.bossDefeated.squid) {
-            this.scene.get('UIScene').showBossWarning('squid');
-            this.time.delayedCall(3000, () => this.spawnBoss('boss_squid', 400, 700));
-        } else if (level === 10 && !this.bossDefeated.sharkKing) {
-            this.scene.get('UIScene').showBossWarning('sharkKing');
-            this.time.delayedCall(3000, () => this.spawnBoss('boss_shark_king', -100, 384));
-        } else if (level === 15 && !this.bossDefeated.seaDragon) {
-            this.scene.get('UIScene').showBossWarning('seaDragon');
-            this.time.delayedCall(3000, () => this.spawnBoss('boss_sea_dragon', 400, 700));
+        for (const type of this.getBossTypes()) {
+            const bossData = this.fishData[type];
+            const key = getBossKey(type);
+            const triggerLevel = Number.isFinite(bossData.triggerLevel) ? bossData.triggerLevel : 1;
+
+            if (this.bossDefeated[key]) continue;
+            if (level < triggerLevel) continue;
+            if (this.bossSystem.isInBossFight()) continue;
+
+            const uiScene = this.scene.get('UIScene');
+            if (uiScene && uiScene.showBossWarning) {
+                uiScene.showBossWarning(key);
+            }
+            logger.info('Boss warning', { bossType: type, name: bossData.name, playerLevel: level });
+
+            this.time.delayedCall(3000, () => this.spawnBoss(type));
+            return;
         }
     }
 
+    /** Boss types declared in fish.json, ordered by the level they appear at. */
+    getBossTypes() {
+        return Object.keys(this.fishData || {})
+            .filter((type) => this.fishData[type]?.boss)
+            .sort((a, b) => (this.fishData[a].triggerLevel || 0) - (this.fishData[b].triggerLevel || 0));
+    }
+
     /**
-     * Spawn a boss enemy
+     * Spawn a boss next to the player.
+     *
+     * All stats come from fish.json (single source of truth). The old inline copy
+     * was missing `size`, which made the physics body NaN and the boss invisible.
+     *
+     * @param {string} type - boss fish key, e.g. 'boss_squid'
+     * @returns {BossEnemy|null}
      */
-    spawnBoss(type, x, y) {
-        // Boss configs
-        const bossConfigs = {
-            'boss_squid': { baseHp: 100, hpPerLevel: 100, phases: 2, damage: 40, skills: ['tentacle_slap', 'ink_blind'] },
-            'boss_shark_king': { baseHp: 150, hpPerLevel: 150, phases: 3, damage: 50, skills: ['dash', 'summon', 'stun'] },
-            'boss_sea_dragon': { baseHp: 200, hpPerLevel: 200, phases: 3, damage: 60, skills: ['fire_breath', 'earthquake', 'summon'] }
-        };
-
-        const config = bossConfigs[type];
-        if (!config) return;
-
-        // Get player level for HP scaling
-        const playerLevel = this.growthSystem.getLevel();
-
-        // Create boss
-        const boss = new BossEnemy(this, x, y, type, config, playerLevel);
-
-        // Add boss to enemies array
-        this.enemies.push(boss);
-
-        // Trigger boss fight (1v1 mode)
-        this.bossSystem.triggerBossFight(boss);
-
-        // Play entrance animation
-        const animType = type === 'boss_shark_king' ? 'charge_from_left' : 'rise_from_bottom';
-        this.bossAnimation = new BossAnimation(this);
-        this.bossAnimation.play(animType, boss);
-
-        // Pause normal enemy spawning
-        if (this.spawnTimer) {
-            this.spawnTimer.paused = true;
+    spawnBoss(type, x = null, y = null) {
+        const bossData = this.fishData?.[type];
+        if (!bossData || !bossData.boss) {
+            logger.warn(`spawnBoss: unknown boss type "${type}"`);
+            return null;
         }
 
-        // Show boss UI
+        const playerLevel = this.growthSystem.getLevel();
+        const config = buildBossConfig(bossData, playerLevel);
+
+        const spawnX = Number.isFinite(x) ? x : (this.player?.x ?? 512) + 260;
+        const spawnY = Number.isFinite(y) ? y : (this.player?.y ?? 384);
+
+        const boss = new BossEnemy(this, spawnX, spawnY, type, config, playerLevel);
+        this.enemies.push(boss);
+
+        this.bossSystem.triggerBossFight(boss);
+        this._bossFightStartTime = this.time.now;
+
+        this.bossAnimation = new BossAnimation(this);
+        this.bossAnimation.play(bossData.spawnAnimation || 'rise_from_bottom', boss);
+
+        // Spawning stays paused while bossSystem.isInBossFight() is true
+        // (see _updateSpawning) — no timer juggling needed here.
+
         const uiScene = this.scene.get('UIScene');
         if (uiScene && uiScene.showBossHealthBar) {
-            uiScene.showBossHealthBar('深海霸主', boss.maxHp || 500);
+            uiScene.showBossHealthBar(boss.displayName, boss.maxHp);
+        }
+
+        logger.info('Boss spawned', {
+            bossType: type,
+            name: boss.displayName,
+            hp: boss.maxHp,
+            damage: boss.fishConfig.damage,
+            attackInterval: boss.attackCooldown,
+            playerLevel,
+        });
+
+        return boss;
+    }
+
+    /**
+     * Boss HP reached 0: record progress, end the fight and clean up.
+     * Spawning resumes on its own — _updateSpawning only gates on
+     * bossSystem.isInBossFight(), so the next spawn interval fires normally.
+     */
+    _handleBossDefeated(boss) {
+        const key = getBossKey(boss.bossType);
+        const durationMs = Number.isFinite(this._bossFightStartTime)
+            ? Math.max(0, Math.round(this.time.now - this._bossFightStartTime))
+            : null;
+
+        this.bossDefeated[key] = true;
+        this.bossSystem.endBossFight();
+        this._bossFightStartTime = null;
+
+        if (boss.healthBar) boss.healthBar.destroy();
+        if (boss.graphics) boss.graphics.destroy();
+
+        const bossIndex = this.enemies.indexOf(boss);
+        if (bossIndex !== -1) {
+            this.enemies.splice(bossIndex, 1);
+        }
+
+        logger.info('Boss defeated', { bossType: boss.bossType, name: boss.displayName, durationMs });
+
+        const uiScene = this.scene.get('UIScene');
+        if (uiScene && uiScene.hideBossHealthBar) {
+            uiScene.hideBossHealthBar();
         }
     }
 
@@ -846,6 +903,15 @@ class GameScene extends Phaser.Scene {
         } else if (result.type === 'damaged') {
             // Check if player is spawn-invincible
             if (this._spawnInvincible) return;
+
+            // Overlap callbacks fire every overlapping frame; rate-limit contact
+            // damage per fish so touching a big fish cannot drain HP at 60 fps.
+            const now = this.time.now;
+            const lastHit = fish.getData ? fish.getData('lastContactDamageAt') : undefined;
+            if (Number.isFinite(lastHit) && now - lastHit < getContactDamageInterval(fish.fishData)) {
+                return;
+            }
+            if (fish.setData) fish.setData('lastContactDamageAt', now);
 
             const damage = result.damage;
             logger.debug(`Damage dealt to player: ${damage} (fishSize=${fishSize})`);
@@ -1258,57 +1324,21 @@ class GameScene extends Phaser.Scene {
         const survivalSeconds = Math.floor((Date.now() - this.gameStartTime) / 1000);
         this.achievementSystem.checkSurvivalTime(survivalSeconds);
 
-        // Update boss health bar position
+        // Boss fight: keep the on-screen bar in sync with the boss HP
         if (this.bossSystem.isInBossFight()) {
             const boss = this.bossSystem.getCurrentBoss();
             if (boss && boss.graphics) {
                 boss.healthBar.x = boss.graphics.x;
-                boss.healthBar.y = boss.graphics.y - (boss.bossConfig?.size || 100) - 20;
+                boss.healthBar.y = boss.graphics.y - (boss.fishConfig?.size || 100) - 20;
+
+                const uiScene = this.scene.get('UIScene');
+                if (uiScene && uiScene.updateBossHealth) {
+                    uiScene.updateBossHealth(Math.max(0, boss.hp), boss.maxHp);
+                }
 
                 // Check if boss is defeated (HP <= 0)
                 if (boss.hp <= 0) {
-                    const bossTypeKey = boss.bossType.replace('boss_', '');
-                    this.bossDefeated[bossTypeKey] = true;
-                    this.bossSystem.endBossFight();
-
-                    // Resume normal enemy spawning with gradual recovery (5 fish over 3s)
-                    if (this.spawnTimer) {
-                        this.spawnTimer.paused = false;
-                        // Immediately spawn a few fish, then resume normal rate
-                        let recovered = 0;
-                        const recoverInterval = setInterval(() => {
-                            if (recovered >= 5) {
-                                clearInterval(recoverInterval);
-                                return;
-                            }
-                            if (this.enemies.length < this.enemyCountMax) {
-                                this._doSpawnEnemy();
-                                recovered++;
-                            }
-                        }, 600);
-                    }
-
-                    // Clean up boss visuals
-                    if (boss.healthBar) {
-                        boss.healthBar.destroy();
-                    }
-                    if (boss.graphics) {
-                        boss.graphics.destroy();
-                    }
-
-                    // Remove boss from enemies array
-                    const bossIndex = this.enemies.indexOf(boss);
-                    if (bossIndex !== -1) {
-                        this.enemies.splice(bossIndex, 1);
-                    }
-
-                    logger.info(`Boss defeated: ${boss.bossType}`);
-
-                    // Hide boss health bar
-                    const uiScene = this.scene.get('UIScene');
-                    if (uiScene && uiScene.hideBossHealthBar) {
-                        uiScene.hideBossHealthBar();
-                    }
+                    this._handleBossDefeated(boss);
                 }
             }
         }
@@ -1324,15 +1354,20 @@ class GameScene extends Phaser.Scene {
         // Wave spawn system
         this.waveSystem.update(delta);
 
-        // Spawn fish based on wave interval
-        this._spawnTimer += delta;
-        if (this._spawnTimer >= this.waveSystem.getSpawnInterval()) {
+        // Spawn fish based on wave interval.
+        // Boss fights are 1v1: no new fish while a boss is alive (feat-054).
+        if (this.bossSystem.isInBossFight()) {
             this._spawnTimer = 0;
-            // Highlander challenge: only 1 enemy allowed
-            if (this.dailyChallenge?.id === 'highlander' && this.enemies.length >= 1) {
-                // Skip spawning
-            } else {
-                this._doSpawnEnemy();
+        } else {
+            this._spawnTimer += delta;
+            if (this._spawnTimer >= this.waveSystem.getSpawnInterval()) {
+                this._spawnTimer = 0;
+                // Highlander challenge: only 1 enemy allowed
+                if (this.dailyChallenge?.id === 'highlander' && this.enemies.length >= 1) {
+                    // Skip spawning
+                } else {
+                    this._doSpawnEnemy();
+                }
             }
         }
 
@@ -1430,10 +1465,31 @@ class GameScene extends Phaser.Scene {
                 if (isNaN(parsed)) {
                     return { error: `level must be integer, got: ${n}` };
                 }
+                // GrowthSystem is the source of truth for the level (checkBossSpawn
+                // reads it), so sync it — previously this only set GameScene.level and
+                // boss fights could never be reproduced from the console (feat-054).
                 const clamped = Math.max(1, Math.min(15, parsed));
+                const gs = self.growthSystem;
+                const prevLevel = self.level;
+                if (gs) {
+                    gs.currentLevel = clamped;
+                    gs.currentExp = gs.getExpForLevel(clamped) || 0;
+                }
                 self.level = clamped;
+                // onLevelUp() applies one +20 HP step; top up the skipped levels so a
+                // jump lands on the same HP as levelling normally (challenge HP
+                // modifiers stay applied because we scale relatively).
+                const hpPerLevel = 20;
+                if (clamped - prevLevel > 1) {
+                    self.maxHp = Math.floor(self.maxHp) + hpPerLevel * (clamped - prevLevel - 1);
+                }
                 self.onLevelUp();
-                return { success: true, level: clamped };
+                return {
+                    success: true,
+                    level: self.level,
+                    growthLevel: gs ? gs.getLevel() : null,
+                    maxHp: self.maxHp,
+                };
             },
 
             restart() {
@@ -1547,6 +1603,24 @@ class GameScene extends Phaser.Scene {
             },
 
             // === Test Helpers ===
+            boss(type) {
+                const bossTypes = self.getBossTypes();
+                const target = type || bossTypes[0];
+                if (!bossTypes.includes(target)) {
+                    return { success: false, error: `Unknown boss: ${type}`, available: bossTypes };
+                }
+                const boss = self.spawnBoss(target);
+                if (!boss) return { success: false, error: 'spawnBoss returned null' };
+                return {
+                    success: true,
+                    bossType: boss.bossType,
+                    name: boss.displayName,
+                    hp: boss.hp,
+                    maxHp: boss.maxHp,
+                    damage: boss.fishConfig.damage,
+                };
+            },
+
             spawn(type, count) {
                 if (!type || count <= 0) {
                     return { spawned: 0, failed: 1, reason: 'Invalid parameters: spawn(type, count)' };
@@ -1585,18 +1659,35 @@ class GameScene extends Phaser.Scene {
             },
 
             maxExp() {
-                const nextLevelExp = self.growthSystem?.getExpForLevel(self.level + 1) || 100;
+                const gs = self.growthSystem;
+                const nextLevelExp = gs?.getExpForLevel((gs.currentLevel || 1) + 1) || 100;
                 const targetExp = nextLevelExp - 1;
-                const prevLevel = self.level;
+                const prevLevel = gs ? gs.getLevel() : self.level;
+
+                // Write into GrowthSystem (the source of truth), then add 1 exp so the
+                // normal level-up path runs — previously this only set GameScene.exp,
+                // which nothing read, so the player never actually levelled (feat-054).
+                if (gs) {
+                    gs.currentExp = targetExp;
+                }
                 self.exp = targetExp;
-                const leveledUp = self.growthSystem?.addExperience(0, self.time?.now, self.luckSystem);
-                const newLevel = self.growthSystem?.getLevel() || self.level;
+
+                const result = gs?.addExperience(1, self.time?.now, self.luckSystem);
+                const newLevel = gs ? gs.getLevel() : self.level;
+                if (newLevel > prevLevel) {
+                    // Mirror the real level-up path: sync the scene level first, then run
+                    // onLevelUp() (player rebuild, skills, achievements, boss check).
+                    self.level = newLevel;
+                    self.onLevelUp();
+                }
+
                 return {
                     success: true,
                     exp: targetExp,
                     nextLevelAt: nextLevelExp,
                     leveledUp: newLevel > prevLevel,
-                    newLevel: newLevel
+                    newLevel: newLevel,
+                    expGained: result?.expGained ?? 0,
                 };
             },
 
@@ -1635,6 +1726,7 @@ class GameScene extends Phaser.Scene {
                     'eat("fishType") — Auto-eat target fish type (validates size first)',
                     'watch("hp", "score", ...) — Real-time monitoring (Ctrl+C to stop)',
                     'unwatch() — Stop watching',
+                    'boss("boss_squid") — Spawn a boss (defaults to the first one)',
                     'spawn("shark", 3) — Spawn 3 sharks',
                     'killAll() — Remove all enemies (excludes bosses)',
                     'fullHealth() — Restore HP to maxHp',
@@ -1922,14 +2014,26 @@ class GameScene extends Phaser.Scene {
         // Check for boss spawn
         this.checkBossSpawn();
 
-        // Theme transition every 2 levels (random theme)
+        // Theme transition every 2 levels
         // NOTE: Do NOT replace backgroundSystem instance here — it would downgrade
         // BackgroundExpansion (chunk/zone support) to plain BackgroundSystem.
-        // transitionToNewTheme() handles the visual swap in-place.
+        // The swap is applied in place through whichever API the instance exposes:
+        // ScrollingBackground has setTheme(), the legacy BackgroundSystem has
+        // transitionToNewTheme(). Calling the missing one threw inside the level-up
+        // path and froze the whole game loop on the first even level (feat-054).
         if (this.level % 2 === 0 && this.backgroundSystem) {
-            const nextTheme = this.backgroundSystem.getNextTheme();
-            this.backgroundSystem.transitionToNewTheme(nextTheme, 1500);
-            logger.info('Theme transition triggered', { to: nextTheme, level: this.level });
+            const nextTheme = typeof this.backgroundSystem.getNextTheme === 'function'
+                ? this.backgroundSystem.getNextTheme()
+                : null;
+
+            if (nextTheme) {
+                if (typeof this.backgroundSystem.setTheme === 'function') {
+                    this.backgroundSystem.setTheme(nextTheme, 1500);
+                } else if (typeof this.backgroundSystem.transitionToNewTheme === 'function') {
+                    this.backgroundSystem.transitionToNewTheme(nextTheme, 1500);
+                }
+                logger.info('Theme transition triggered', { to: nextTheme, level: this.level });
+            }
         }
     }
 

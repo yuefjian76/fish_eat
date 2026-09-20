@@ -19,7 +19,12 @@
 
 > **进展更新 (2026-09-19 第三轮)**：P0 体验打磨第二项落地 —— **feat-053 低血量警告强化**
 > （LowHealthWarningSystem：红色暗角 → critical 脉冲 + `危险` 文字 + 心跳音；纯逻辑 + 数据驱动 + 16 个 `__DEBUG_API__` 方法）。
-> P0 剩余候选：**Boss 战节奏调整**、**数值平衡实测**（都需要用 `__DEBUG_API__` 实际跑起来找手感问题）。
+> P0 剩余候选：**Boss 战节奏调整**（已由 feat-054 完成）、**数值平衡实测**（仍需用 `__DEBUG_API__` 实跑）。
+
+> **进展更新 (2026-09-20 第四轮)**：P0 第三项落地 —— **feat-054 Boss 战修复与节奏调整**。
+> 用 `__DEBUG_API__` 实跑发现 Boss 战从未真正跑通（配置缺 `size` 导致坐标 NaN、伤害链路断裂、战斗期间照常刷怪、
+> 升级到偶数级会因背景系统 API 不匹配直接崩溃）。修复后实测：走位打法 27.3s 击杀 5 级乌贼（10 次撕咬），
+> 站桩约 25s 被反杀。**P0 剩余：数值平衡实测**（敌人刷新/升级曲线/技能数值的整局手感）。
 
 ### P0: 体验打磨(用 `__DEBUG_API__` 跑游戏找手感问题)
 
@@ -97,6 +102,7 @@
 | E2E 验证修复 | feat-051(helpers/game.js + smoke 重写) | ✅ completed |
 | 死亡演出 | feat-052(DeathSequenceSystem) | ✅ completed |
 | 低血量警告强化 | feat-053(LowHealthWarningSystem) | ✅ completed |
+| Boss 战修复与节奏 | feat-054(BossSystem + fish.json) | ✅ completed |
 | 无障碍 | (尚未实现,仍 P2) | 🔜 pending |
 
 ---

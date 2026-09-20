@@ -1,16 +1,22 @@
 import { Enemy } from './Enemy.js';
 import { logger } from '../systems/DebugLogger.js';
 
+/** Phase skills that are plain melee attacks and run on the boss attack cadence. */
+const BASIC_ATTACK_SKILLS = new Set(['tentacle_slap', 'dash', 'fire_breath']);
+
 export class BossEnemy extends Enemy {
     constructor(scene, x, y, bossType, config, playerLevel = 1) {
-        // Calculate HP based on player level
-        const scaledHp = config.baseHp + (playerLevel * config.hpPerLevel);
+        // HP comes pre-computed from BossSystem.calculateBossHp() (GameScene passes
+        // it in); fall back to baseHp so a bare config still produces a finite value.
+        const scaledHp = Number.isFinite(config.hp)
+            ? config.hp
+            : (Number.isFinite(config.baseHp) ? config.baseHp : 100);
 
         // Create scaled config
         const scaledConfig = {
             ...config,
             hp: scaledHp,
-            damage: config.damage || 30
+            damage: Number.isFinite(config.damage) ? config.damage : 30
         };
 
         super(scene, x, y, scaledConfig, bossType, 1.0);
@@ -20,6 +26,12 @@ export class BossEnemy extends Enemy {
         this.phases = config.phases || 2;
         this.phase = 1;
         this.bossConfig = config;
+        this.displayName = config.name || 'BOSS';
+
+        // Bosses use their own attack cadence instead of the aiLevel-derived one
+        if (Number.isFinite(config.attackInterval)) {
+            this.attackCooldown = Math.max(200, config.attackInterval);
+        }
 
         // Skills per phase
         this.skills = config.skills || ['attack'];
@@ -30,7 +42,9 @@ export class BossEnemy extends Enemy {
         this._inkBlindTimer = 0;
         this._inkBlindDuration = 3000; // ms
         this._skillCooldown = 0;
-        this._skillCooldownTime = 5000; // ms between skill uses
+        // Utility skills (summon/stun/ink) keep their own slow cadence; basic attacks
+        // use the boss attack interval so the fight actually applies pressure.
+        this._skillCooldownTime = Number.isFinite(config.skillInterval) ? config.skillInterval : 5000;
 
         // Phase transition callback
         this.onPhaseChange = null;
@@ -63,7 +77,9 @@ export class BossEnemy extends Enemy {
 
         // Try to execute skill when off cooldown and in attack range
         if (this._skillCooldown <= 0 && this.isPlayerInAttackRange(player)) {
-            this._skillCooldown = this._skillCooldownTime;
+            const skill = this.getCurrentSkill();
+            const isBasicAttack = BASIC_ATTACK_SKILLS.has(skill);
+            this._skillCooldown = isBasicAttack ? this.attackCooldown : this._skillCooldownTime;
             this.executeSkill(player);
         }
     }
@@ -114,8 +130,16 @@ export class BossEnemy extends Enemy {
         switch (skill) {
             case 'tentacle_slap':
             case 'dash':
-            case 'fire_breath':
-                return this.attackPlayer(player);
+            case 'fire_breath': {
+                // Forward the hit to the scene: the base Enemy class calls
+                // scene.onEnemyAttack() for its melee, but this override dropped the
+                // return value, so bosses dealt no damage at all (feat-054).
+                const damage = this.attackPlayer(player);
+                if (damage > 0 && typeof this.scene?.onEnemyAttack === 'function') {
+                    this.scene.onEnemyAttack(this, damage);
+                }
+                return damage;
+            }
             case 'ink_blind':
                 // Apply ink blind to player (reduce hit chance) for 3s
                 this._inkBlindTimer = this._inkBlindDuration;

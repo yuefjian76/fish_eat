@@ -649,6 +649,33 @@
       ],
       "evidence": "LowHealthWarningSystem.js（25 单测）+ low_health.json + AudioSystem.play('heartbeat')（+3 单测）+ UIScene.updateLowHealthWarning（暗角/危险文字）+ GameScene 集成 + __DEBUG_API__.damage(n) + e2e/low-health.spec.js（7 用例）。npx playwright test --project=chromium --repeat-each=2 → 98 passed（0 flaky）；npm test → 906 passed / 53 suites。像素采样（redness = r-(g+b)/2，左边缘）：满血 -169.5 → 25% 血量 -90.0 → 22% -68.5 → 12%（critical）-50.0，画面中心保持 ~155 不变（未被泛白）。截图 /tmp/lh-0-full.png、/tmp/lh-1-warn.png、/tmp/lh-2-critical.png。",
       "completedAt": "2026-09-19"
+    },
+    {
+      "id": "feat-054",
+      "name": "Boss 战修复与节奏调整（P0 体验打磨）",
+      "description": "按 roadmap 要求用 __DEBUG_API__ 实跑 Boss 战，发现 Boss 战从未真正跑通并逐项修复。(1) GameScene.spawnBoss 的内联配置缺 size → FishFactory/物理体 NaN → Boss 不可见、不可交互，改为读 fish.json 单一来源 + buildBossConfig()；(2) Enemy.attackPlayer 对 Boss 使用配置伤害（原 Math.log(size) 在 size 缺失时算出 NaN，且忽略 bossConfig.damage）；(3) BossEnemy.executeSkill 的伤害返回值无人接收（普通鱼走 scene.onEnemyAttack）→ 改为转发；(4) 基础攻击走 Boss 自己的 attackInterval，功能技能保持 5s 节奏；(5) 战斗期间真正停止刷怪（原 this.spawnTimer 自 feat-027 起就是死字段）+ 删掉 setInterval 泄漏 + 击败后用统一 key 记录进度；(6) Boss 视距/攻击距离可配置（visionRange 2000 保证追击，attackRange 80~90 形成走位窗口）；(7) Boss 触发等级与 11 级上限对齐（5/8/11，原海龙 15 级永不可达）并用 >= 判定；(8) 血条显示各自名字并实时刷新（原硬编码“深海霸主”且从不更新）；(9) 接触伤害按配置值 + 每个敌人独立间隔节流（原 size/4 且无节流）；(10) __DEBUG_API__ 的 level(n)/maxExp() 同步 GrowthSystem 并新增 boss(type)；(11) 顺手修掉升级到偶数级时 backgroundSystem.transitionToNewTheme 不存在导致整个游戏循环冻结的崩溃（ScrollingBackground 只有 setTheme）。",
+      "dependencies": [
+        "feat-038",
+        "feat-046"
+      ],
+      "status": "completed",
+      "definition_of_done": [
+        "buildBossConfig()/calculateBossHp() 纯逻辑并通过单元测试（含缺失 size 的兜底）",
+        "fish.json 三只 Boss 字段完整（name/size/speed/damage/attackInterval/visionRange/attackRange/skills/triggerLevel），有配置完整性测试守门",
+        "Boss 生成后坐标有限且落在相机视口内（E2E 回归 B1）",
+        "Boss 战期间不再刷怪，击败后恢复刷怪（E2E 回归 B3）",
+        "Boss 伤害不再 NaN 且能真正打到玩家（单测 + E2E）",
+        "bossDefeated 用统一 key 记录，code/测试一致（E2E 回归 B5）",
+        "Boss 血条显示配置里的名字（E2E 回归 B7）",
+        "level(5) 同步 GrowthSystem 并触发 Boss 预警（E2E 回归 B8）",
+        "升级到偶数级不再抛错（E2E 回归：maxExp() 连续升级 + level(6)）",
+        "e2e/boss-fight.spec.js 7 个用例全过；全量 E2E --repeat-each=2 → 112 passed（0 flaky）",
+        "npx playwright test 全量 56 用例通过；npm test → 942 passed 无回归",
+        "浏览器截图确认 Boss 可见、血条名字正确、血量实时刷新",
+        "实测量化节奏：走位打法 27.3s 击杀 5 级乌贼（10 次撕咬、玩家几乎不掉血），站桩约 25s 被反杀"
+      ],
+      "evidence": "新增：src/config/__tests__/bossConfig.test.js（9 用例）、src/entities/__tests__/EnemyDamage.test.js（6 用例）、e2e/boss-fight.spec.js（7 用例）；改动：BossSystem（buildBossConfig/calculateBossHp/getBossKey）、BossEnemy（HP 来源/攻击节奏/伤害转发）、Enemy（Boss 伤害、speed/visionRange/attackRange 兜底与覆盖）、CollisionSystem（getContactDamage/getContactDamageInterval）、BossAnimation（相对玩家定位）、GameScene（spawnBoss/checkBossSpawn/_handleBossDefeated/刷怪守卫/接触伤害节流/主题切换崩溃/调试 API）、fish.json、UIScene(血条)。验证：npm test → 942 passed / 55 suites（1 skipped）；全量 E2E → 56 passed，--repeat-each=2 → 112 passed（0 flaky）；./init.sh 5/5。实测（level(5) → 乌贼）：走位打法 10 次撕咬、27.3s 击杀 bossDefeated.squid=true；站桩贴身约 25s 玩家阵亡；血条 240 → 140 实时刷新。截图 /tmp/boss-0-warning.png、/tmp/boss-1-entrance.png、/tmp/boss-2-fight.png、/tmp/boss-3-damaged.png。",
+      "completedAt": "2026-09-20"
     }
   ]
 }

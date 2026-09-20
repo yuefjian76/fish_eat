@@ -54,15 +54,23 @@ export class Enemy {
 
         // AI State - adjusted by aiLevel
         this.state = Enemy.STATE.WANDERING;
-        this.visionRange = Math.floor(200 * aiLevel);
-        this.attackRange = Math.floor(50 * aiLevel);
+        // Config can override the aiLevel-derived defaults: bosses need a long
+        // vision so they actually engage instead of wandering off screen, and a
+        // reach wide enough to threaten a player attacking from skill range.
+        this.visionRange = Number.isFinite(fishConfig.visionRange)
+            ? fishConfig.visionRange
+            : Math.floor(200 * aiLevel);
+        this.attackRange = Number.isFinite(fishConfig.attackRange)
+            ? fishConfig.attackRange
+            : Math.floor(50 * aiLevel);
         this.attackCooldown = Math.floor(800 / aiLevel); // Higher AI = faster attacks
         this.lastAttackTime = 0;
         this.wanderTimer = 0;
         this.wanderInterval = Math.floor(2000 / aiLevel); // Higher AI = more active
 
         // Movement - adjusted by aiLevel
-        this.baseSpeed = fishConfig.speed;
+        // A missing speed turns every moveTo() into a NaN velocity; default it.
+        this.baseSpeed = Number.isFinite(fishConfig.speed) ? fishConfig.speed : 100;
         this.chaseSpeedMultiplier = 1.5 * aiLevel;
         this.speedMultiplier = 1.0; // For enrage mechanic
 
@@ -290,10 +298,19 @@ export class Enemy {
             }
         }
 
+        // Bosses deal their configured damage: they are hand-tuned encounters, and
+        // the size-based formula both ignored fishConfig.damage and produced NaN
+        // (Math.log(undefined)) whenever a boss config had no size (feat-054).
+        if (this.fishConfig.boss) {
+            const configured = Number.isFinite(this.fishConfig.damage) ? this.fishConfig.damage : 30;
+            return Math.max(1, Math.floor(configured * typeMultiplier));
+        }
+
         // Deal damage based on fish size AND level - logarithmic scale for balanced gameplay
         // Same level enemies have consistent damage, high level enemies hit much harder
         // Level 1: base damage, Level 2: ~1.5x, Level 3: ~2x, Level 4+: ~2.5x+
-        const sizeDamage = 2 + Math.floor(Math.log(this.fishConfig.size) * 3);
+        const size = Number.isFinite(this.fishConfig.size) ? this.fishConfig.size : 30;
+        const sizeDamage = 2 + Math.floor(Math.log(size) * 3);
         const levelMultiplier = 1 + ((this.aiLevel || 1) - 1) * 0.5; // 50% more damage per level
         const damage = Math.max(5, Math.min(Math.floor(sizeDamage * levelMultiplier * typeMultiplier), 30));
         return damage;

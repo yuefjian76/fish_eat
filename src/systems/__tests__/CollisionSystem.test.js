@@ -1,4 +1,4 @@
-import { CollisionSystem } from '../CollisionSystem.js';
+import { CollisionSystem, getContactDamage, getContactDamageInterval } from '../CollisionSystem.js';
 
 // Mock player
 const createMockPlayer = (size = 30) => ({
@@ -372,4 +372,39 @@ describe('CollisionSystem - expGain multiplied by type advantage', () => {
         );
         expect(result.expGain).toBe(20);
     });
+
+describe('contact damage helpers (feat-054)', () => {
+    describe('getContactDamage', () => {
+        test('bosses use their configured damage, not size/4', () => {
+            // size 200 would give 50, which made the fight unwinnable
+            expect(getContactDamage({ boss: true, damage: 18, size: 200 }, 200)).toBe(18);
+            expect(getContactDamage({ boss: true, damage: 26, size: 300 }, 300)).toBe(26);
+        });
+
+        test('normal fish keep the size-based formula', () => {
+            expect(getContactDamage({ size: 60 }, 60)).toBe(15);
+            expect(getContactDamage({}, 45)).toBe(11);
+        });
+
+        test('boss without a damage value falls back to size/4', () => {
+            expect(getContactDamage({ boss: true, size: 200 }, 200)).toBe(50);
+        });
+    });
+
+    describe('getContactDamageInterval', () => {
+        test('prefers an explicit interval', () => {
+            expect(getContactDamageInterval({ contactDamageInterval: 250 })).toBe(250);
+        });
+
+        test('bosses reuse their attack interval', () => {
+            expect(getContactDamageInterval({ boss: true, attackInterval: 1600 })).toBe(1600);
+        });
+
+        test('defaults to 1000ms so overlaps cannot drain HP per frame', () => {
+            expect(getContactDamageInterval({})).toBe(1000);
+            expect(getContactDamageInterval(undefined)).toBe(1000);
+            expect(getContactDamageInterval({ boss: true })).toBe(1000);
+        });
+    });
+});
 });

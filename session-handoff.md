@@ -9,20 +9,68 @@
 
 | Dimension | Status |
 |-----------|--------|
-| Features | ✅ feat-001 ~ feat-053 completed (53/53) |
-| Unit tests | ✅ 906 passing, 0 failed (1 skipped), 53 suites |
-| E2E tests | ✅ 49 passing, 10 spec 文件（`npx playwright test --project=chromium`，webServer 自动拉起） |
+| Features | ✅ feat-001 ~ feat-054 completed (54/54) |
+| Unit tests | ✅ 942 passing, 0 failed (1 skipped), 55 suites |
+| E2E tests | ✅ 56 passing, 11 spec 文件（`npx playwright test --project=chromium`，webServer 自动拉起） |
 | `./init.sh` | ✅ All 5 steps pass |
-| E2E | ✅ 49/49 全绿；`--repeat-each=2` → 98/98 无 flaky |
+| E2E | ✅ 56/56 全绿；`--repeat-each=2` → 112/112 无 flaky |
 | Harness files | ✅ All present (AGENTS/CLAUDE/feature_list/progress/session-handoff/quality/evaluator-rubric/clean-state-checklist/init.sh) |
 | Docs | ✅ ARCHITECTURE.md / PRODUCT.md / RELIABILITY.md / PHASE_3_ROADMAP.md all current |
-| Active feature | None — Phase 3 剩余 P0：Boss 战节奏 / 数值平衡实测 |
+| Active feature | None — Phase 3 剩余 P0：仅「数值平衡实测」；P1 候选：群体 AI（flocking） |
 | Blocking issues | None |
 | Repo hygiene | ✅ `node_modules`/`coverage`/`.playwright-mcp`/`test-results` 已从索引移除（5466 文件，768 tracked），`.gitignore` 已补全；⚠️ `.git` 仍 142MB（历史重写 `git filter-repo` 待决策，见下） |
 
 ---
 
 ## What Was Accomplished (2026-05-30)
+
+### feat-054 Boss 战修复与节奏调整（2026-09-20 最新）
+
+按 roadmap 要求用 `__DEBUG_API__` **实跑** Boss 战，结论是 **Boss 战从未真正跑通过**（此前只验证了「触发了预警」）。
+本轮定位并修掉 12 个根因，Boss 战现在可稳定打完。
+
+**改动文件**
+
+| 文件 | 变更 |
+|------|------|
+| `src/config/fish.json` | 三只 Boss 补 `name/speed/damage/attackInterval/visionRange/attackRange/skills`；HP 改 `baseHp 240/280/320` + `hpPerLevel 40/50/60`；`triggerLevel` 5/8/11 |
+| `src/systems/BossSystem.js` | 新增 `buildBossConfig()` / `calculateBossHp()` / `getBossKey()` / `BOSS_KEY_MAP` |
+| `src/entities/BossEnemy.js` | HP/名字/攻击节奏取自配置；`executeSkill` 伤害转发到 `scene.onEnemyAttack` |
+| `src/entities/Enemy.js` | Boss 用 `fishConfig.damage`；`size`/`speed` 兜底；`visionRange`/`attackRange` 支持覆盖 |
+| `src/systems/CollisionSystem.js` | `getContactDamage()`（Boss 用配置值）/`getContactDamageInterval()`（默认 1000ms） |
+| `src/systems/BossAnimation.js` | `_anchors()` 改相对玩家定位（绝对坐标会被相机跟随甩出屏幕） |
+| `src/scenes/GameScene.js` | `spawnBoss` 读 `fish.json`；`checkBossSpawn` 用 `>=`+`getBossTypes()`；新增 `_handleBossDefeated()`；`_updateSpawning` Boss 战守卫；接触伤害节流；主题切换 `setTheme`/`transitionToNewTheme` 兼容；删死字段 `spawnTimer`；调试 API `level(n)`/`maxExp()` 同步 `GrowthSystem` + 新增 `boss(type)` |
+| `e2e/boss-fight.spec.js`（新） | 7 用例：可见性 / 1v1 不刷怪 / 击败恢复刷怪 / level(5) 触发 / 偶数级不崩 / 血条名字 / Boss 会伤害玩家 |
+
+**12 个根因（按危害排序）**
+
+1. `spawnBoss` 内联配置缺 `size`/`speed` → `body.setCircle(NaN)` → **Boss 完全不可见、不可交互**（"Boss 战跑通"的第一因）
+2. 升级到**偶数级**抛 `transitionToNewTheme is not a function` → 整个游戏循环冻结（`ScrollingBackground` 只有 `setTheme()`）——意味着"打 Boss 时升级"必然崩游戏
+3. `BossEnemy.executeSkill` 的伤害返回值无人接收 → Boss 技能打不到玩家
+4. `Enemy.attackPlayer` 用 `Math.log(size)`（size 缺失即 NaN）且忽略 `fishConfig.damage`
+5. 接触伤害固定 `size/4` 且**无节流**（overlap 每帧触发）→ 一次贴身瞬间掉几百血
+6. 「1v1 暂停刷怪」依赖自 feat-027 起就失效的死字段 `spawnTimer`；恢复刷怪用 `setInterval`（泄漏）
+7. `bossDefeated` 写入 `shark_king`/`sea_dragon`、读取 `sharkKing`/`seaDragon` → 记录等于没记
+8. 海龙 `triggerLevel: 15` 而等级上限 11 → 第三只 Boss 永不可达
+9. `__DEBUG_API__.level(n)`/`maxExp()` 不同步 `GrowthSystem` → 无法复现 Boss 战（调试工具自身有 bug）
+10. Boss 入场动画用绝对坐标，跟随相机后跑到屏幕外（feat-052 同款坑）
+11. 击败后血条残留
+12. `fish.json` 三只 Boss 缺 `name` → 血条无名
+
+**实测节奏数据**
+
+- `level(5)` → 大王乌贼 240 HP / 18 伤害 / 1600ms 间隔
+- 走位打法（Q 范围 95 输出、退到 320 躲近战）：10 次撕咬、**27.3s 击杀**，玩家几乎不掉血
+- 站桩贴身：约 **25s 玩家阵亡**（Boss 剩 15 血）→ 走位窗口是节奏设计的核心（`attackRange` < Q 射程）
+- 截图：`/tmp/boss-0-warning.png`、`/tmp/boss-1-entrance.png`、`/tmp/boss-2-fight.png`、`/tmp/boss-3-damaged.png`
+
+**给下一个 agent 的坑位提醒**
+
+> 实体/战斗类改动必须先 `__DEBUG_API__` 实跑到运行时。本轮 9/12 个根因是「配置缺字段 → NaN」，
+> 静态审查看不出来。最快探针：`Number.isFinite(boss.x)` + `boss.body.radius`。
+> 另外 E2E 断言"Boss 存在"过了，但 Boss 肉眼不可见 —— **可见性仍要人工看截图**（延续 feat-053 的教训）。
+
+---
 
 ### feat-052 死亡演出系统（2026-09-19）
 
@@ -117,7 +165,7 @@
 
 | 剩余问题 | 现状 | 建议 |
 |------|------|------|
-| `GameScene.js` 体量 | 2132 行 | 后续新功能按需继续提取系统 |
+| `GameScene.js` 体量 | 2470 行 | 后续新功能按需继续提取系统 |
 | 未跟踪设计文档 | `docs/superpowers/{specs,plans}/2026-06-0*.md` 共 4 个（feat-050/051 设计+计划） | 按仓库惯例应入库 |
 
 ### ScrollingWorld Implementation (feat-046 ~ feat-049)
@@ -182,15 +230,19 @@
 | feat-051 | E2E 验证系统修复 | 1 | ✅ completed |
 | feat-052 | 死亡演出系统 | 1 | ✅ completed |
 | feat-053 | 低血量警告强化 | 1 | ✅ completed |
-| **Total** | | **53** | **53 ✅ / 0 ⏳** |
+| feat-054 | Boss 战修复与节奏调整 | 1 | ✅ completed |
+| **Total** | | **54** | **54 ✅ / 0 ⏳** |
 
 ---
 
 ## Next Phase Direction
 
-53/53 features complete。Next phase candidates in [`docs/PHASE_3_ROADMAP.md`](docs/PHASE_3_ROADMAP.md)(P0 体验打磨 / P1 动作演出 / P1 群体 AI / P2 极限计时 / P2 无障碍)。
-P0 已完成 feat-050(反馈动画)、feat-052(死亡演出)、feat-053(低血量警告)；剩余 P0 候选：Boss 战节奏、数值平衡实测。
-建议下一步从 P0 剩余项或 P1 群体 AI(flocking) 选 1 个，走 brainstorming → spec → plan。
+54/54 features complete。Next phase candidates in [`docs/PHASE_3_ROADMAP.md`](docs/PHASE_3_ROADMAP.md)(P0 体验打磨 / P1 动作演出 / P1 群体 AI / P2 极限计时 / P2 无障碍)。
+
+P0 已完成 feat-050(反馈动画)、feat-052(死亡演出)、feat-053(低血量警告)、feat-054(Boss 战修复与节奏)。
+**P0 仅剩「数值平衡实测」**——注意它与 feat-054 已产出的量化数据高度重叠（乌贼 27.3s 走位击杀 vs 25s 站桩阵亡），
+下一轮很可能只需：把同一套 `__DEBUG_API__` 实测法跑遍三只 Boss + 各技能，产出平衡表并微调 `fish.json`/`skills.json`。
+若不满足于收尾，P1 群体 AI(flocking) 是下一个独立特性，走 brainstorming → spec → plan。
 
 ---
 
@@ -209,10 +261,12 @@ P0 已完成 feat-050(反馈动画)、feat-052(死亡演出)、feat-053(低血�
 
 | Check | Command | Result |
 |-------|---------|--------|
-| All unit tests | `npm test` / `./init.sh` | 906 passed, 0 failed (53 suites) |
-| E2E 全量 | `npx playwright test --project=chromium` | 49 passed, 0 failed |
-| E2E 稳定性 | `npx playwright test --project=chromium --repeat-each=2` | 98 passed, 0 flaky |
-| 低血量警告视觉 | 人工截图 + 像素采样 | 满血无红光→25% 红光可见→critical 脉冲+文字，中心不泛白 |
+| All unit tests | `npm test` / `./init.sh` | 942 passed, 0 failed (55 suites) |
+| E2E 全量 | `npx playwright test --project=chromium` | 56 passed, 0 failed |
+| E2E 稳定性 | `npx playwright test --project=chromium --repeat-each=2` | 112 passed, 0 flaky |
+| Boss 战可见性 | `__DEBUG_API__.boss('squid')` + 坐标探针 + 截图 | Boss 坐标有限、落在视口内，乌贼肉眼可见，血条名字「大王乌贼」 |
+| Boss 战节奏 | `__DEBUG_API__` 实测 | 乌贼 240 HP：走位 10 次撕咬 27.3s 击杀；站桩约 25s 阵亡 |
+| Boss 击败记录 | `__DEBUG_API__.state()` | `bossDefeated.squid = true`（此前 key 不一致恒为 false） |
 | 死亡演出视觉 | 人工截图 | 镜头推进 + 文字居中 + 玩家淡出 + 结算页正常，Console 无 Error |
 | 低血量警告视觉 | 人工截图 | 25% 红光可见不挡视野、critical 脉冲 + 危险文字，Console 无 Error |
 | Syntax check | `node --check src/scenes/GameScene.js` | Pass |
@@ -229,7 +283,7 @@ cat progress.md       # review history
 cat docs/PHASE_3_ROADMAP.md   # Phase 3 candidates
 
 # Step 2: Choose work
-# Option A: Phase 3 P0 剩余（Boss 战节奏 / 数值平衡实测）
+# Option A: P0 收尾 —— 数值平衡实测（三只 Boss + 技能 TTK/掉落/难度曲线，产出平衡表）
 # Option B: P1 群体 AI（Enemy Flocking：separation/alignment/cohesion）
 
 # Step 3: Implement + verify + update docs

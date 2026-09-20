@@ -78,6 +78,7 @@ BootScene → MenuScene → GameScene + UIScene → GameOverScene
 | `HealthRegenSystem` | `systems/HealthRegenSystem.js` | 脱战回血 | - |
 | `DeathSequenceSystem` | `systems/DeathSequenceSystem.js` | 死亡演出时序状态机（纯逻辑，feat-052） | `start()`, `update(delta)`, `getPhase()`, `reset()` |
 | `LowHealthWarningSystem` | `systems/LowHealthWarningSystem.js` | 低血量警告强度曲线（纯逻辑，feat-053） | `update(hpRatio, delta)`, `getHeartbeatCount()`, `reset()` |
+| `BossSystem` | `systems/BossSystem.js` | Boss 状态机 + 数值/进度 key（纯逻辑，feat-054） | `calculateBossHp(config, lv)`, `buildBossConfig(data, lv)`, `getBossKey(type)`, `triggerBossFight/endBossFight` |
 
 ### Death Sequence (feat-052)
 
@@ -130,6 +131,36 @@ GameScene._updateLowHealthWarning(delta)        ← 每帧调用，转成副作�
   运行时只 `setAlpha()`，不重建 Graphics。
 - 数据分层：`src/config/low_health.json`（阈值/曲线/脉冲/心跳/文字）→ `LowHealthWarningSystem`（纯逻辑）
   → `GameScene`（副作用）→ `UIScene`（渲染）。系统本身不引用任何 Phaser API。
+
+### Boss Fight (feat-054)
+
+每只 Boss 一场 1v1：升级到触发等级 → 3s 预警 → 入场动画 → 战斗期间停止刷怪 → 击败后恢复。
+
+```
+checkBossSpawn()                    ← 每次升级调用，条件 level >= triggerLevel && !defeated
+   └── UIScene.showBossWarning(key) → 3s 预警
+          └── spawnBoss(type)
+                 ├── buildBossConfig(fish.json 条目, playerLevel)   ← 数值单一来源
+                 ├── new BossEnemy(...) + BossAnimation.play(spawnAnimation)
+                 ├── bossSystem.triggerBossFight(boss)              ← 现有敌鱼 FLEEING
+                 └── UIScene.showBossHealthBar(name, maxHp)
+
+_updateSpawning()                   ← bossSystem.isInBossFight() 为真时不刷怪
+_updateBossFight()                  ← 血条跟随 + 实时 updateBossHealth(hp, maxHp)
+   └── boss.hp <= 0 → _handleBossDefeated()  → 记录 bossDefeated[key] + endBossFight()
+```
+
+| Boss | 触发等级 | HP | 伤害 | 攻击间隔 | 技能（按阶段） |
+|------|---------|----|------|---------|---------------|
+| 大王乌贼 `boss_squid` | 5 | 240 | 18 | 1600ms | tentacle_slap → ink_blind |
+| 鲨鱼之王 `boss_shark_king` | 8 | 280 | 22 | 1500ms | dash → summon → stun |
+| 海龙 `boss_sea_dragon` | 11 | 320 | 26 | 1400ms | fire_breath → earthquake → summon |
+
+- 全部数值在 `src/config/fish.json` 的 Boss 条目里（`GameScene` 不再内联副本）。
+- `visionRange: 2000` 保证 Boss 一定追击玩家；`attackRange` 略小于玩家 Q 技能的实际射程（100 + 目标体积 20），
+  形成「贴身攻击会被反打、保持距离可以安全输出」的走位窗口。
+- HP 公式 `baseHp + hpPerLevel * max(0, playerLevel - triggerLevel)`：在触发等级正好是 `baseHp`。
+- 触发器比较用 `>=`，因此不会因为某次升级的时序问题永久错过 Boss。
 
 ### System Communication Pattern
 

@@ -15,6 +15,35 @@
  *   // In game loop:
  *   collisionSystem.update(delta);
  */
+/**
+ * Damage dealt when a bigger fish touches the player.
+ *
+ * Bosses use their configured damage (18/22/26) — the size-based fallback gave the
+ * size-200 squid 50 damage per touch, which made the fight unwinnable (feat-054).
+ */
+export function getContactDamage(fishData, fishSize) {
+    if (fishData?.boss && Number.isFinite(fishData.damage)) {
+        return Math.max(1, Math.floor(fishData.damage));
+    }
+    return Math.floor(fishSize / 4);
+}
+
+/**
+ * Minimum time between two contact hits from the *same* fish.
+ *
+ * Phaser's overlap callback fires on every overlapping frame, so without this the
+ * player could lose health at frame rate. Bosses reuse their attack cadence.
+ */
+export function getContactDamageInterval(fishData) {
+    if (Number.isFinite(fishData?.contactDamageInterval)) {
+        return fishData.contactDamageInterval;
+    }
+    if (fishData?.boss && Number.isFinite(fishData.attackInterval)) {
+        return fishData.attackInterval;
+    }
+    return 1000;
+}
+
 export class CollisionSystem {
     /**
      * @param {object} config - Configuration object
@@ -110,12 +139,11 @@ export class CollisionSystem {
         }
         // Fish is larger than player
         else if (fishSize > playerSize * sizeThreshold) {
-            // Take damage
             return {
                 type: 'damaged',
                 fish,
                 canEat: false,
-                damage: Math.floor(fishSize / 4)
+                damage: getContactDamage(fish.fishData, fishSize)
             };
         }
 

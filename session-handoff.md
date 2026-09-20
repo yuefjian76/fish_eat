@@ -9,14 +9,14 @@
 
 | Dimension | Status |
 |-----------|--------|
-| Features | ✅ feat-001 ~ feat-054 completed (54/54) |
-| Unit tests | ✅ 942 passing, 0 failed (1 skipped), 55 suites |
-| E2E tests | ✅ 56 passing, 11 spec 文件（`npx playwright test --project=chromium`，webServer 自动拉起） |
+| Features | ✅ feat-001 ~ feat-055 completed (55/55) |
+| Unit tests | ✅ 981 passing, 0 failed (1 skipped), 56 suites |
+| E2E tests | ✅ 63 passing, 12 spec 文件（`npx playwright test --project=chromium`，webServer 自动拉起） |
 | `./init.sh` | ✅ All 5 steps pass |
-| E2E | ✅ 56/56 全绿；`--repeat-each=2` → 112/112 无 flaky |
+| E2E | ✅ 63/63 全绿；`--repeat-each=2` → 126/126 无 flaky |
 | Harness files | ✅ All present (AGENTS/CLAUDE/feature_list/progress/session-handoff/quality/evaluator-rubric/clean-state-checklist/init.sh) |
 | Docs | ✅ ARCHITECTURE.md / PRODUCT.md / RELIABILITY.md / PHASE_3_ROADMAP.md all current |
-| Active feature | None — Phase 3 剩余 P0：仅「数值平衡实测」；P1 候选：群体 AI（flocking） |
+| Active feature | None — **P0 体验打磨全部完成**；下一阶段候选：P1 动作演出 / P1 群体 AI / P2 极限计时 |
 | Blocking issues | None |
 | Repo hygiene | ✅ `node_modules`/`coverage`/`.playwright-mcp`/`test-results` 已从索引移除（5466 文件，768 tracked），`.gitignore` 已补全；⚠️ `.git` 仍 142MB（历史重写 `git filter-repo` 待决策，见下） |
 
@@ -24,7 +24,68 @@
 
 ## What Was Accomplished (2026-05-30)
 
-### feat-054 Boss 战修复与节奏调整（2026-09-20 最新）
+### feat-055 数值平衡实测与难度曲线修复（2026-09-20 最新）
+
+P0「体验打磨」最后一项。**先实测再改数**：写了两支探针（逐级食物链采样 + 120s 自动游玩），
+发现并修掉 8 项问题，其中两项是结构性的。
+
+**8 个根因**
+
+| # | 问题 | 实测证据 |
+|---|------|---------|
+| **B1** | 玩家体型每级 ×1.5 **复利**（Lv11 = 57.7×），而最大普通敌鱼仅 120、Boss 仅 200/250/300 | Lv4 之后全部普通敌鱼可吃，接触伤害（要求敌鱼比玩家大 1.2×）永不触发 → 游戏失去失败可能 |
+| **B2** | 敌人等级被 `zones.json` 浅海区间钉死在 `[1,3]` | 玩家 Lv≥4 时 `levelDiff` 恒为负 → 缩放公式失效，敌人尺寸几乎不随玩家成长 |
+| **B3** | 刷怪权重表没有 `mutant_shark` / `giant_jellyfish` | 13 种鱼里 2 种永不出现（死内容） |
+| **B4** | Boss 体型固定 200/250/300 | 满级玩家（1729）比最终 Boss 还大 → 可以"吃掉"Boss |
+| **B5** | `__DEBUG_API__.spawn()` 把 `1` 当 `fishType`，且固定生成在世界左上角 | 无法在任意位置做战斗实测 |
+| **B6** | **难度加成被乘进 `size`**（`_getDifficultyMultiplier` 随时长最多 +30%） | Lv1 唯一可吃的 `shrimp`(22) 在 ~16s 后越过 1.2 倍判定 → **开局成长死锁**（探针 60s 未升到 2 级） |
+| **B7** | **Lv3~6 的刷怪表里一条威胁鱼都没有** | 改前 Lv3 实测：11 可吃 / 1 中立 / **0 威胁** |
+| **B8** | 早期抓鱼依赖冲刺（虾速 280 > 玩家 200） | 未冲刺的探针 120s 只吃到 2 条虾 |
+
+**核心设计决策：`size` 与"耐久"分职**
+
+| 量 | 决定因素 | 影响的字段 |
+|----|---------|-----------|
+| `enemyScale` | **只**跟玩家体型（`sqrt(玩家体型 / Lv1 体型)`） | `size` |
+| `toughness` | 敌人等级差 + 存活时间 + 深渊加成 | `hp` / `exp` / `speed` |
+
+`size` 决定"能不能吃"，一旦被时间难度放大，玩家的食物来源会随年代自动消失（B6）。
+难度爬升改由 hp/exp/speed 承担 —— 敌人变肉、给更多经验，但食物链判定稳定。
+
+**改动文件**
+
+| 文件 | 变更 |
+|------|------|
+| `src/systems/BalanceCurve.js`（新） | 成长表 / 体型 / `getEnemyScale` / `pickEnemyLevel` / `getSpawnWeights` / `capContactDamage` |
+| `src/config/levels.json` | 新增 `sizeGrowth`（10 项，Lv11 累计 9.4×） |
+| `src/scenes/GameScene.js` | 成长曲线数据化（支持跳级补偿）；尺寸/耐久分职；敌人等级跟随玩家；权重委托 BalanceCurve；Boss 尺寸缩放；接触伤害上限；`spawn()` 修复；`state.detailed().player` 增 `baseSize/expectedSize/enemyScale` |
+| `src/systems/BossSystem.js` | `buildBossConfig(data, level, sizeScale)` |
+| `src/systems/CollisionSystem.js` | 导出 `DEFAULT_SIZE_THRESHOLD`（判定口径单一来源） |
+| `src/systems/SpawnSystem.js` | 权重表委托 BalanceCurve |
+| `src/systems/__tests__/EnemyLevelDist.test.js` | 重写：改为直测真实实现（原文件内联副本与实现早已不一致） |
+| `e2e/balance.spec.js`（新） | 7 用例 |
+
+**改前 / 改后（同一 120s 探针）**
+
+| 指标 | 改前 | 改后 |
+|------|------|------|
+| 存活 | 60s 内阵亡 | **跑满 120s**（HP 28/100） |
+| Lv1 可吃鱼 | 1~5，且随时间归零 | 4 → 16，稳定 |
+| Lv1 虾尺寸 | 24..32 且持续上涨 | 恒定 22 |
+| Lv3 食物链 | 11 / 1 / 0 | 10 / 2 / 2（mutant_shark 119） |
+| Lv9 食物链 | 全部可吃 | 3 / 0 / 2（giant_jellyfish 332） |
+| Lv11 体型 | 1729（57.7×） | **273（9.1×）** |
+
+**给下一个 agent 的坑位提醒**
+
+> **`size` 是"物理规则"字段，`hp/exp` 才是"难度"字段。** 任何想"让游戏更难"的乘数都不该乘进 `size`：
+> 它会把玩家的食物变成威胁，让游戏在某个时间点**悄悄**失去可玩性（没有任何报错，只是再也吃不到东西）。
+> 判定口径统一取 `CollisionSystem.DEFAULT_SIZE_THRESHOLD`，不要各写一份 1.2。
+> 另外：**探针必须在出生保护（`_spawnInvincible`，3s）结束后再结算伤害**，否则会误判"接触伤害无效"。
+
+---
+
+### feat-054 Boss 战修复与节奏调整（2026-09-20）
 
 按 roadmap 要求用 `__DEBUG_API__` **实跑** Boss 战，结论是 **Boss 战从未真正跑通过**（此前只验证了「触发了预警」）。
 本轮定位并修掉 12 个根因，Boss 战现在可稳定打完。
@@ -231,18 +292,21 @@
 | feat-052 | 死亡演出系统 | 1 | ✅ completed |
 | feat-053 | 低血量警告强化 | 1 | ✅ completed |
 | feat-054 | Boss 战修复与节奏调整 | 1 | ✅ completed |
-| **Total** | | **54** | **54 ✅ / 0 ⏳** |
+| feat-055 | 数值平衡实测与难度曲线修复 | 1 | ✅ completed |
+| **Total** | | **55** | **55 ✅ / 0 ⏳** |
 
 ---
 
 ## Next Phase Direction
 
-54/54 features complete。Next phase candidates in [`docs/PHASE_3_ROADMAP.md`](docs/PHASE_3_ROADMAP.md)(P0 体验打磨 / P1 动作演出 / P1 群体 AI / P2 极限计时 / P2 无障碍)。
+55/55 features complete。**P0 体验打磨全部完成**（feat-050 反馈动画 / feat-052 死亡演出 / feat-053 低血量警告 /
+feat-054 Boss 战修复 / feat-055 数值平衡实测）。Next phase candidates in [`docs/PHASE_3_ROADMAP.md`](docs/PHASE_3_ROADMAP.md)。
 
-P0 已完成 feat-050(反馈动画)、feat-052(死亡演出)、feat-053(低血量警告)、feat-054(Boss 战修复与节奏)。
-**P0 仅剩「数值平衡实测」**——注意它与 feat-054 已产出的量化数据高度重叠（乌贼 27.3s 走位击杀 vs 25s 站桩阵亡），
-下一轮很可能只需：把同一套 `__DEBUG_API__` 实测法跑遍三只 Boss + 各技能，产出平衡表并微调 `fish.json`/`skills.json`。
-若不满足于收尾，P1 群体 AI(flocking) 是下一个独立特性，走 brainstorming → spec → plan。
+建议下一轮从 P1 选 1 个独立特性走 brainstorming → spec → plan：
+- **P1 动作演出系统（AnimationDirector）**：数据驱动编排受击/死亡/升级/技能/Boss 阶段镜头与粒子
+- **P1 群体 AI（Enemy Flocking）**：separation/alignment/cohesion + 可关闭 flag
+
+若继续做数值，spec 第 8 节列了三项已测量但未修的遗留问题（敌人总数无上限 / Lv1 抓鱼难度 / 技能与掉落细调）。
 
 ---
 
@@ -261,9 +325,12 @@ P0 已完成 feat-050(反馈动画)、feat-052(死亡演出)、feat-053(低血�
 
 | Check | Command | Result |
 |-------|---------|--------|
-| All unit tests | `npm test` / `./init.sh` | 942 passed, 0 failed (55 suites) |
-| E2E 全量 | `npx playwright test --project=chromium` | 56 passed, 0 failed |
-| E2E 稳定性 | `npx playwright test --project=chromium --repeat-each=2` | 112 passed, 0 flaky |
+| All unit tests | `npm test` / `./init.sh` | 981 passed, 0 failed (56 suites) |
+| E2E 全量 | `npx playwright test --project=chromium` | 63 passed, 0 failed |
+| E2E 稳定性 | `npx playwright test --project=chromium --repeat-each=2` | 126 passed, 0 flaky |
+| 平衡曲线不变量 | `npm test -- BalanceCurve` | Lv1~11 逐级断言"可吃权重 > 0.25 且威胁权重 > 0.03"全过 |
+| 食物链实测 | 逐级采样探针（level(n) + 12s 自然刷怪） | Lv1 3/3/7、Lv3 10/2/2、Lv9 3/0/2、Lv11 7/2/4（可吃/中立/威胁） |
+| 手感实测 | 120s 自动游玩探针 | 改前 60s 内阵亡 → 改后跑满 120s（HP 28/100） |
 | Boss 战可见性 | `__DEBUG_API__.boss('squid')` + 坐标探针 + 截图 | Boss 坐标有限、落在视口内，乌贼肉眼可见，血条名字「大王乌贼」 |
 | Boss 战节奏 | `__DEBUG_API__` 实测 | 乌贼 240 HP：走位 10 次撕咬 27.3s 击杀；站桩约 25s 阵亡 |
 | Boss 击败记录 | `__DEBUG_API__.state()` | `bossDefeated.squid = true`（此前 key 不一致恒为 false） |
@@ -283,8 +350,9 @@ cat progress.md       # review history
 cat docs/PHASE_3_ROADMAP.md   # Phase 3 candidates
 
 # Step 2: Choose work
-# Option A: P0 收尾 —— 数值平衡实测（三只 Boss + 技能 TTK/掉落/难度曲线，产出平衡表）
+# Option A: P1 动作演出系统（AnimationDirector，数据驱动编排）
 # Option B: P1 群体 AI（Enemy Flocking：separation/alignment/cohesion）
+# Option C: 数值遗留项（见 feat-055 spec 第 8 节：敌人总数上限 / Lv1 抓鱼难度 / 技能与掉落细调）
 
 # Step 3: Implement + verify + update docs
 ```

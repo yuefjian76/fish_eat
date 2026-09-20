@@ -1,3 +1,5 @@
+import { getSpawnWeights } from './BalanceCurve.js';
+
 /**
  * SpawnSystem - Enemy fish spawning with wave-based interval
  *
@@ -124,10 +126,8 @@ export class SpawnSystem {
      * @returns {object} Weight map
      */
     _getSpawnWeights(level) {
-        if (level <= 3) return { clownfish: 0.4, shrimp: 0.35, shark: 0.15, jellyfish: 0.1 };
-        if (level <= 6) return { clownfish: 0.2, shrimp: 0.2, shark: 0.2, jellyfish: 0.15, seahorse: 0.15, octopus: 0.1 };
-        if (level <= 10) return { clownfish: 0.1, shrimp: 0.1, shark: 0.15, anglerfish: 0.15, jellyfish: 0.1, seahorse: 0.15, octopus: 0.15, eel: 0.1 };
-        return { shark: 0.2, anglerfish: 0.2, jellyfish: 0.15, seahorse: 0.1, octopus: 0.15, eel: 0.2 };
+        // 单一来源在 BalanceCurve（feat-055），与 GameScene 共用同一张表。
+        return getSpawnWeights(level);
     }
 
     /**

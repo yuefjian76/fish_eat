@@ -256,3 +256,40 @@ __GAME_SCENE__.growthSystem.addExp(100)
 - [ ] 错误使用 ERROR 级别，并包含上下文数据
 - [ ] 日志格式为 JSON，包含 timestamp、level、service、message、data
 - [ ] 新功能上线前在 Playwright MCP 中验证 Console 无 Error
+
+---
+
+## 平衡实测方法（feat-055）
+
+数值类的改动**必须先实跑量化再改数**。可复用的两种探针：
+
+### 1. 逐级食物链采样（判断难度曲线是否塌陷）
+
+```bash
+# 在浏览器里：level(n) 跳到目标等级，结束该等级触发的 Boss 战（Boss 战 1v1 不刷怪），
+# 等 12s 让自然刷怪积累，然后统计 state.detailed().enemies 的 size 分布
+```
+
+分类口径与游戏判定一致（`CollisionSystem.DEFAULT_SIZE_THRESHOLD = 1.2`）：
+
+- `playerSize > enemySize × 1.2` → 可吃
+- `enemySize > playerSize × 1.2` → 威胁
+- 其余 → 中立
+
+### 2. 自动游玩（判断手感）
+
+用 `cameras.main.scrollX/scrollY` 把世界坐标换算成屏幕坐标，再 `page.mouse.move()`
+操控玩家自动觅食（鼠标是 `PlayerControlSystem` 的第二种操控方式），
+每 10s 采样 `__DEBUG_API__.state`，记录 Lv / HP / 体型 / 敌人分档。
+
+> 注意：探针必须在 `_spawnInvincible`（出生保护 3s）结束后才开始结算伤害，
+> 否则会误判"接触伤害无效"。
+
+### 关键结论（写进测试的不变量）
+
+| 不变量 | 位置 |
+|--------|------|
+| 任意等级都有可吃与威胁档 | `BalanceCurve.test.js` 逐级断言 |
+| 难度加成不得改变 `size`（只影响 hp/exp/speed） | `e2e/balance.spec.js`（虾永远可吃） |
+| 接触伤害 ≤ 25% 最大生命 | `BalanceCurve.test.js` + `e2e/balance.spec.js` |
+| `__DEBUG_API__.level(n)` 的体型 = 真实成长曲线 | `e2e/balance.spec.js`（`expectedSize` 比对） |

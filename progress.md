@@ -1,8 +1,8 @@
 # 进度日志
 
-## 当前阶段：Phase 3 规划（54/54 features 完成）
+## 当前阶段：Phase 3 规划（55/55 features 完成，P0 体验打磨全部完成）
 
-54/54 features 全部 completed，`./init.sh` 5 步全过，E2E 套件 56 用例全绿，`window.__DEBUG_API__` 已实现（17 个方法）。
+55/55 features 全部 completed，`./init.sh` 5 步全过，E2E 套件 63 用例全绿，`window.__DEBUG_API__` 已实现（17 个方法）。
 下一阶段方向见 [`docs/PHASE_3_ROADMAP.md`](docs/PHASE_3_ROADMAP.md)。
 
 ### 完成里程碑
@@ -18,8 +18,66 @@
 - ✅ feat-053：低血量警告强化（LowHealthWarningSystem，25 单测 + 7 E2E）
 - ✅ E2E Debug API：`window.__DEBUG_API__`（16 E2E tests，17 个方法）
 - ✅ feat-054：Boss 战修复与节奏调整（配置驱动 + 12 项修复，36 单测 + 7 E2E）
+- ✅ feat-055：数值平衡实测与难度曲线修复（BalanceCurve + 8 项修复，35 单测 + 7 E2E）
 
-**单元测试**：942 个（55 suites） | **E2E 测试**：56 个（11 个 spec 文件） | **完成度**：54/54
+**单元测试**：981 个（56 suites） | **E2E 测试**：63 个（12 个 spec 文件） | **完成度**：55/55
+
+---
+
+## 会话 — 2026-09-20 第二轮（feat-055 数值平衡实测与难度曲线修复）
+
+### 已完成
+- ✅ 走完 harness 流程：spec → plan → 实现 → 验证 → 状态更新
+  - `docs/superpowers/specs/2026-09-20-feat-055-balance-tuning-design.md`
+  - `docs/superpowers/plans/2026-09-20-feat-055-balance-tuning-plan.md`
+- ✅ 先实测再改数：写了两支探针（逐级食物链采样 / 120s 自动游玩），发现 8 项问题：
+
+| # | 问题 | 证据 |
+|---|------|------|
+| B1 | 玩家体型每级 ×1.5 **复利**（Lv11 = 57.7×），最大普通敌鱼仅 120 | Lv4 之后全部敌鱼可吃，接触伤害永不触发 |
+| B2 | 敌人等级被浅海区间钉死 `[1,3]` | `levelDiff` 恒为负 → 缩放公式失效 |
+| B3 | 刷怪表没有 `mutant_shark` / `giant_jellyfish` | 13 种鱼里 2 种永不出现 |
+| B4 | Boss 体型固定 200/250/300 | 满级玩家比最终 Boss 还大，可以"吃掉"Boss |
+| B5 | `__DEBUG_API__.spawn()` 把 `1` 当 fishType，且生成在世界角落 | 无法做战斗实测 |
+| B6 | **难度加成被乘进 `size`** | Lv1 唯一可吃的虾在 ~16s 后越过判定 → **开局成长死锁**（实测 60s 未升级） |
+| B7 | **Lv3~6 的刷怪表里一条威胁鱼都没有** | 实测 Lv3：11 可吃 / 1 中立 / **0 威胁** |
+| B8 | 早期抓鱼依赖冲刺（虾 280 > 玩家 200） | 未冲刺的探针 120s 只吃到 2 条虾 |
+
+- ✅ 新增纯模块 `src/systems/BalanceCurve.js`（成长表 / 体型 / 敌人缩放 / 等级分布 / 刷怪权重 / 接触伤害上限）+ 35 单测
+- ✅ `levels.json` 新增 `sizeGrowth`：Lv11 累计 **9.4×**（30 → 273），旧值 57.7×
+- ✅ **尺寸与耐久分职**：`size` 只跟玩家体型（开方），`hp/exp/speed` 才吃难度加成 —— 修掉成长死锁
+- ✅ 刷怪表每段都留威胁位；敌人等级区间改为「区域 ∪ 玩家等级邻域」；Boss 尺寸随玩家缩放
+- ✅ 接触伤害上限 = 玩家 maxHp 的 25%
+- ✅ `__DEBUG_API__.spawn()` 修复 + `state.detailed().player` 增加 `baseSize/expectedSize/enemyScale`
+- ✅ 重写 `EnemyLevelDist.test.js`（原文件内联了一份与实现不一致的分布副本 —— "文档测试会说谎"）
+- ✅ 新增 `e2e/balance.spec.js`（7 用例）；文档同步：ARCHITECTURE / PRODUCT / RELIABILITY / PHASE_3_ROADMAP /
+  feature_list / quality-document / evaluator-rubric / session-handoff / 本文件
+
+### 实测对比（同一探针 120s）
+| 指标 | 改前 | 改后 |
+|------|------|------|
+| 存活 | 60s 内阵亡 | 跑满 120s（HP 28/100） |
+| Lv1 可吃鱼 | 1~5，且随时间归零 | 4 → 16，稳定 |
+| Lv1 虾尺寸 | 24..32 且持续上涨 | 恒定 22 |
+| Lv3 食物链 | 11 / 1 / 0（可吃/中立/威胁） | 10 / 2 / 2 |
+| Lv11 体型 | 1729（57.7×） | 273（9.1×） |
+
+### 验证
+- `npm test` → **981 passed / 56 suites**（1 skipped）
+- `npx playwright test --project=chromium` → **63 passed**
+- `--repeat-each=2` → **126 passed，0 flaky**
+- `./init.sh` → 5/5
+
+### 本轮未做（已写入 spec 第 8 节）
+- 敌人总数无上限（剔除半径 2000 → 4000×4000 区域，是视口的 20 倍；直接加人数上限会让屏幕瞬间空掉）
+- Lv1 抓小鱼的难度（与冲刺机制的设计意图耦合）
+- 技能数值 / 掉落 / 商店经济细调
+
+### 给下一个 agent 的坑位提醒
+> **`size` 是"物理规则"字段，`hp/exp` 才是"难度"字段**。任何想"让游戏更难"的乘数
+> （时间难度、挑战模式除外）都不应该乘进 `size`：它会把玩家的食物变成威胁，
+> 让游戏在某一个时间点悄悄失去可玩性。判定口径统一取
+> `CollisionSystem.DEFAULT_SIZE_THRESHOLD`，不要各写一份 1.2。
 
 ---
 

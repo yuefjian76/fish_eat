@@ -118,7 +118,7 @@ docs/
 # 标准验证（必须通过）
 ./init.sh
 
-# E2E 全量（56 个用例，自动拉起 webServer）
+# E2E 全量（63 个用例，自动拉起 webServer）
 npx playwright test --project=chromium
 
 # 单独运行
@@ -133,7 +133,7 @@ python3 -m http.server 8765 &                      # 启动本地服务器
 
 - [ ] 目标行为已实现，在浏览器中手动验证
 - [ ] 单元测试通过（`npm test` 全绿）
-- [ ] E2E 全量测试通过（56 个测试全部通过；`npx playwright test --project=chromium`）
+- [ ] E2E 全量测试通过（63 个测试全部通过；`npx playwright test --project=chromium`）
 - [ ] 运行时无 JavaScript 错误（浏览器 Console 无 Error）
 - [ ] `feature_list.json` 中状态更新为 `completed`，并记录证据
 - [ ] 相关 `docs/` 文档已更新
@@ -141,7 +141,7 @@ python3 -m http.server 8765 &                      # 启动本地服务器
 
 ### E2E 验证范围
 
-E2E 测试（11 个 spec，56 用例）覆盖：
+E2E 测试（12 个 spec，63 用例）覆盖：
 
 - 游戏页面正常加载（无 JS 错误）
 - Phaser Canvas 正常渲染
@@ -150,7 +150,7 @@ E2E 测试（11 个 spec，56 用例）覆盖：
 - 玩家对象存在于场景中
 - Debug overlay 在 `?debug=true` 模式下显示
 - `window.__GAME_SCENE__` 暴露正常
-- 视差/深度雾/呼吸动画/刷怪/战斗反馈等回归用例
+- 视差/深度雾/呼吸动画/刷怪/战斗反馈/Boss 战/数值平衡等回归用例
 
 > ⚠️ 新写 spec 必须复用 `e2e/helpers/game.js`（处理登录浮层 + 按 canvas 比例计算「开始游戏」坐标）。
 > 禁止硬编码 `page.mouse.click(640, 520)`：canvas 在页面中居中，硬编码坐标会落在按钮热区边缘导致随机失败。
@@ -336,7 +336,7 @@ fish_eat/
 │   ├── constants/         # 全局常量（DepthLayers/WorldConfig）
 │   └── ui/                # UI 组件（SkillBar）
 ├── tests/                 # 测试文件
-├── e2e/                   # E2E 测试(Playwright: 11 spec / 56 用例)
+├── e2e/                   # E2E 测试(Playwright: 12 spec / 63 用例)
 │   └── helpers/game.js    # 统一引导(openGame/dismissLogin/clickStartButton/startGame)
 └── __mocks__/             # Jest mock 文件
 ```

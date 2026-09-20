@@ -23,10 +23,16 @@ export function getBossKey(bossType) {
  * GameScene passes the result straight to BossEnemy. Defaults exist so a boss can
  * never end up with an undefined `size` — that produced NaN physics bodies and an
  * invisible, untouchable boss before feat-054.
+ *
+ * `sizeScale` 让 Boss 随玩家体型一起长大（feat-055）：不缩放时满级玩家会比
+ * 最终 Boss 还大，Boss 会被"一口吃掉"。
  */
-export function buildBossConfig(bossData = {}, playerLevel = 1) {
+export function buildBossConfig(bossData = {}, playerLevel = 1, sizeScale = 1) {
+    const scale = Number.isFinite(sizeScale) && sizeScale > 0 ? sizeScale : 1;
+    const baseSize = Number.isFinite(bossData.size) ? bossData.size : 120;
     return {
         ...bossData,
+        size: Math.floor(baseSize * scale),
         hp: calculateBossHp(bossData, playerLevel),
         damage: Number.isFinite(bossData.damage) ? bossData.damage : 30,
         attackInterval: Number.isFinite(bossData.attackInterval) ? bossData.attackInterval : 1500,

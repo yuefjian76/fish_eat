@@ -93,8 +93,10 @@ describe('SpawnSystem', () => {
                 fishData: mockFishData
             });
             const weights = ss._getSpawnWeights(2);
-            expect(weights.clownfish).toBe(0.4);
-            expect(weights.shrimp).toBe(0.35);
+            // 开局以小鱼为主，但保留一个"威胁位"（feat-055：此前 Lv3~6 一条威胁鱼都没有）
+            expect(weights.clownfish).toBeCloseTo(0.35, 5);
+            expect(weights.shrimp).toBeCloseTo(0.3, 5);
+            expect(weights.mutant_shark).toBeGreaterThan(0);
         });
 
         test('level 4-6 returns mid weights', () => {
@@ -104,8 +106,9 @@ describe('SpawnSystem', () => {
                 fishData: mockFishData
             });
             const weights = ss._getSpawnWeights(5);
-            expect(weights.clownfish).toBe(0.2);
-            expect(weights.shrimp).toBe(0.2);
+            expect(weights.clownfish).toBeCloseTo(0.15, 5);
+            expect(weights.shrimp).toBeCloseTo(0.15, 5);
+            expect(weights.mutant_shark).toBeGreaterThan(0);
         });
 
         test('level 7-10 returns late weights', () => {
@@ -115,8 +118,8 @@ describe('SpawnSystem', () => {
                 fishData: mockFishData
             });
             const weights = ss._getSpawnWeights(9);
-            expect(weights.clownfish).toBe(0.1);
             expect(weights.anglerfish).toBe(0.15);
+            expect(weights.eel).toBe(0.1);
         });
 
         test('level 11+ returns endgame weights', () => {
@@ -127,7 +130,18 @@ describe('SpawnSystem', () => {
             });
             const weights = ss._getSpawnWeights(12);
             expect(weights.shark).toBe(0.2);
-            expect(weights.anglerfish).toBe(0.2);
+            // feat-055：大型鱼承担"威胁"位，权重更高
+            expect(weights.giant_jellyfish).toBe(0.2);
+            expect(weights.mutant_shark).toBe(0.15);
+        });
+
+        test('weights always sum to 1 (feat-055 表调整后仍成立)', () => {
+            const ws = new MockWaveSystem(1000);
+            const ss = new SpawnSystem({ waveSystem: ws, fishData: mockFishData });
+            for (let lv = 1; lv <= 15; lv++) {
+                const sum = Object.values(ss._getSpawnWeights(lv)).reduce((a, b) => a + b, 0);
+                expect(sum).toBeCloseTo(1.0, 5);
+            }
         });
     });
 

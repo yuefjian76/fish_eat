@@ -25,6 +25,14 @@ import { CollisionSystem, getContactDamageInterval } from '../systems/CollisionS
 import { AnimationFeedbackSystem } from '../systems/AnimationFeedbackSystem.js';
 import { DeathSequenceSystem } from '../systems/DeathSequenceSystem.js';
 import { LowHealthWarningSystem } from '../systems/LowHealthWarningSystem.js';
+import {
+    getPlayerSizeMultipliers,
+    getPlayerSizeAtLevel,
+    getEnemyScale,
+    getSpawnWeights,
+    pickEnemyLevel,
+    capContactDamage,
+} from '../systems/BalanceCurve.js';
 import { WORLD_CONFIG } from '../constants/WorldConfig.js';
 import { logger } from '../systems/DebugLogger.js';
 
@@ -429,6 +437,10 @@ class GameScene extends Phaser.Scene {
         this.player.playerData = { ...playerConfig, fishType: this.fishType };
         this.player.isPlayer = true;
 
+        // BalanceCurve 的基准：Lv1 体型（敌人缩放与成长曲线都以它为参照）
+        this._playerBaseSize = playerConfig.size;
+        this._playerSizeLevel = this.level;
+
         // Set HP - based on fish type, increased by level
         this.maxHp = playerConfig.hp + (this.level - 1) * 10;
         this.hp = this.maxHp;
@@ -485,28 +497,10 @@ class GameScene extends Phaser.Scene {
      * @returns {number} Enemy level
      */
     calculateEnemyLevel(playerLevel) {
-        // 使用区域等级范围（如果可用）
-        const [zoneMin, zoneMax] = this._currentEnemyLevelRange || [1, 3];
-
-        // Clamp playerLevel to zone bounds to prevent inverted ranges
-        const clampedLevel = Phaser.Math.Clamp(playerLevel, zoneMin, zoneMax);
-
+        // 区间与分布都在 BalanceCurve 里（纯函数，可确定性测试）。
+        // 区域只负责"主题"，不再把敌人等级钉死在出生点的浅海区间 [1,3]。
         const survivalMinutes = Math.floor((Date.now() - this.gameStartTime) / 60000);
-        const bonusRoll = Math.min(survivalMinutes * 0.05, 0.2);
-
-        const roll = Math.random() - bonusRoll;
-        if (roll < 0.70) {
-            // 70% same level (within zone range, centered on player level)
-            const sameMin = Math.max(zoneMin, clampedLevel - 1);
-            const sameMax = Math.min(zoneMax, clampedLevel + 1);
-            return Phaser.Math.Between(sameMin, sameMax);
-        } else if (roll < 0.88) {
-            // 18% slightly higher (clampedLevel+1 to zoneMax)
-            return Phaser.Math.Between(Math.min(clampedLevel + 1, zoneMax), zoneMax);
-        } else {
-            // 12% boss-tier (only in deep/abyss)
-            return Phaser.Math.Between(clampedLevel + 2, zoneMax);
-        }
+        return pickEnemyLevel(this._currentEnemyLevelRange, playerLevel, { survivalMinutes });
     }
 
     /**
@@ -591,10 +585,32 @@ class GameScene extends Phaser.Scene {
      * Early levels: mostly clownfish/shrimp; later levels unlock tougher fish.
      */
     _getSpawnWeights(level) {
-        if (level <= 3) return { clownfish: 0.4, shrimp: 0.35, shark: 0.15, jellyfish: 0.1 };
-        if (level <= 6) return { clownfish: 0.2, shrimp: 0.2, shark: 0.2, jellyfish: 0.15, seahorse: 0.15, octopus: 0.1 };
-        if (level <= 10) return { clownfish: 0.1, shrimp: 0.1, shark: 0.15, anglerfish: 0.15, jellyfish: 0.1, seahorse: 0.15, octopus: 0.15, eel: 0.1 };
-        return { shark: 0.2, anglerfish: 0.2, jellyfish: 0.15, seahorse: 0.1, octopus: 0.15, eel: 0.2 };
+        // 单一来源在 BalanceCurve（feat-055）。旧表里没有 mutant_shark /
+        // giant_jellyfish，这两条鱼永远不会出现。
+        return getSpawnWeights(level);
+    }
+
+    /**
+     * 当前等级进入时所应用的体型成长倍率（levels.json `sizeGrowth`）。
+     * @param {number} level - 进入的等级
+     * @returns {number} 倍率
+     */
+    _getSizeGrowthFactor(level) {
+        const mults = getPlayerSizeMultipliers(this.levelsData);
+        const idx = Math.max(0, Math.min(level - 2, mults.length - 1));
+        return mults.length ? mults[idx] : 1.5;
+    }
+
+    /**
+     * 敌人尺寸缩放系数：按玩家体型相对 Lv1 基准开方增长（feat-055）。
+     * @returns {number}
+     */
+    _getEnemyScale() {
+        const baseSize = Number.isFinite(this._playerBaseSize)
+            ? this._playerBaseSize
+            : (this.fishData?.[this.fishType]?.size ?? 30);
+        const playerSize = this.player?.playerData?.size ?? baseSize;
+        return getEnemyScale(baseSize, playerSize);
     }
 
     /**
@@ -631,19 +647,28 @@ class GameScene extends Phaser.Scene {
         // Calculate enemy level based on distribution
         const enemyLevel = this.calculateEnemyLevel(this.level);
 
-        // Scale fish config based on enemy level + progressive difficulty
+        // ── 尺寸与"耐久"分开缩放（feat-055）──────────────────────────────
+        //
+        // size 决定"能不能吃 / 会不会被吃"，所以它只能跟着**玩家体型**走。
+        // 旧公式把「敌人等级差 + 存活时间难度」也乘进了 size，后果是开局 20 秒后
+        // 唯一可吃的虾被放大到吃不下 —— 玩家再也无法成长（实测：Lv1 卡死 60s）。
+        //
+        // hp / exp / speed 才是难度旋钮（随等级差与存活时间爬升），
+        // 它们变大只是"更肉、经验更多"，不会改变食物链的判定。
         const levelDiff = enemyLevel - this.level;
         const difficultyMult = this._getDifficultyMultiplier();
         const inAbyss = this.mapExpansion?.getCurrentZone()?.id === 'abyss';
         const abyssBonus = inAbyss ? 1.1 : 1.0;
-        const scaleFactor = (1 + Math.max(0, levelDiff) * 0.15) * difficultyMult * abyssBonus;
+        const eliteBonus = 1 + Math.max(0, levelDiff) * 0.15;
+        const toughness = eliteBonus * difficultyMult * abyssBonus;
+        const enemyScale = this._getEnemyScale();
 
         const fishConfig = {
             ...baseFishConfig,
-            hp: Math.floor(baseFishConfig.hp * scaleFactor),
-            size: Math.floor(baseFishConfig.size * scaleFactor * (this._challengeEnemySizeMultiplier || 1)),
-            speed: Math.floor(baseFishConfig.speed * scaleFactor * (this._challengeEnemySpeedMultiplier || 1)),
-            exp: Math.floor(baseFishConfig.exp * scaleFactor)
+            hp: Math.floor(baseFishConfig.hp * toughness),
+            size: Math.floor(baseFishConfig.size * enemyScale * (this._challengeEnemySizeMultiplier || 1)),
+            speed: Math.floor(baseFishConfig.speed * eliteBonus * (this._challengeEnemySpeedMultiplier || 1)),
+            exp: Math.floor(baseFishConfig.exp * toughness)
         };
 
         // Spawn just outside the player's viewport (NOT the whole physics
@@ -748,7 +773,9 @@ class GameScene extends Phaser.Scene {
         }
 
         const playerLevel = this.growthSystem.getLevel();
-        const config = buildBossConfig(bossData, playerLevel);
+        // Boss 也要跟着玩家长大，否则满级玩家（体型 282）比最终 Boss（300）还大，
+        // 会被"一口吃掉"（feat-055）。
+        const config = buildBossConfig(bossData, playerLevel, this._getEnemyScale());
 
         const spawnX = Number.isFinite(x) ? x : (this.player?.x ?? 512) + 260;
         const spawnY = Number.isFinite(y) ? y : (this.player?.y ?? 384);
@@ -913,8 +940,10 @@ class GameScene extends Phaser.Scene {
             }
             if (fish.setData) fish.setData('lastContactDamageAt', now);
 
-            const damage = result.damage;
-            logger.debug(`Damage dealt to player: ${damage} (fishSize=${fishSize})`);
+            // 敌人尺寸随玩家成长后，体型差带来的 size/4 伤害会接近半血；
+            // 按最大生命比例收敛，避免"贴一下就没"（feat-055）。
+            const damage = capContactDamage(result.damage, this.maxHp);
+            logger.debug(`Damage dealt to player: ${damage} (raw=${result.damage}, fishSize=${fishSize})`);
             this.outOfCombatTimer = 0;
             this.hp -= damage;
             if (this.hp < 0) this.hp = 0;
@@ -1452,6 +1481,11 @@ class GameScene extends Phaser.Scene {
                             x: self.player?.x || 0,
                             y: self.player?.y || 0,
                             size: self.player?.playerData?.size || 0,
+                            baseSize: self._playerBaseSize || 0,
+                            expectedSize: getPlayerSizeAtLevel(
+                                self._playerBaseSize || 30, self.level, self.levelsData
+                            ),
+                            enemyScale: self._getEnemyScale(),
                         },
                         combo: self.comboSystem?.getComboMultiplier?.() || 1,
                         elapsedMs: self.time?.now || 0,
@@ -1629,11 +1663,22 @@ class GameScene extends Phaser.Scene {
                 if (!fishConfig) {
                     return { spawned: 0, failed: count, reason: `Invalid fish type: ${type}` };
                 }
+                // 修复两处缺陷（feat-055）：
+                //  1) 旧代码把 `1` 当 fishType 传给 Enemy（纹理回退成程序化绘制、
+                //     graphics.fishType 变成数字），现在传真正的类型字符串；
+                //  2) 旧代码固定生成在世界左上角 (0..800, 0..600)，玩家一旦离开
+                //     出生点就完全无法做战斗实测，现在生成在玩家周围 300~600px。
+                const spawned = [];
                 for (let i = 0; i < count; i++) {
-                    const enemy = new Enemy(self, Math.random() * 800, Math.random() * 600, fishConfig, 1);
+                    const angle = (Math.PI * 2 * i) / count + Math.random() * 0.6;
+                    const dist = 300 + Math.random() * 300;
+                    const x = (self.player?.x ?? 512) + Math.cos(angle) * dist;
+                    const y = (self.player?.y ?? 384) + Math.sin(angle) * dist;
+                    const enemy = new Enemy(self, x, y, fishConfig, type, self.aiLevel);
                     self.enemies.push(enemy);
+                    spawned.push({ type, x: Math.round(x), y: Math.round(y) });
                 }
-                return { spawned: count, failed: 0 };
+                return { spawned: count, failed: 0, enemies: spawned };
             },
 
             killAll() {
@@ -1905,7 +1950,15 @@ class GameScene extends Phaser.Scene {
         const oldX = oldPlayer.x;
         const oldY = oldPlayer.y;
         const oldPlayerData = { ...oldPlayer.playerData };
-        oldPlayerData.size = Math.floor(oldPlayerData.size * 1.5);
+        // 体型成长改由 levels.json `sizeGrowth` 驱动（feat-055）。
+        // 旧实现写死 ×1.5 复利，Lv11 达 57.7×，使 Lv4 之后所有普通敌鱼都可吃，
+        // 接触伤害永远无法触发 —— 难度曲线在中期塌陷。
+        // 逐级相乘可正确补偿调试 API 的跳级调用（level(n) 只调一次 onLevelUp）。
+        const growthFrom = Number.isFinite(this._playerSizeLevel) ? this._playerSizeLevel : this.level - 1;
+        for (let lv = growthFrom + 1; lv <= this.level; lv++) {
+            oldPlayerData.size = Math.floor(oldPlayerData.size * this._getSizeGrowthFactor(lv));
+        }
+        this._playerSizeLevel = this.level;
 
         // Increase max HP per level (+20 HP per level)
         const hpPerLevel = 20;

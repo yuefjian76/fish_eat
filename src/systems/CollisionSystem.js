@@ -21,6 +21,12 @@
  * Bosses use their configured damage (18/22/26) — the size-based fallback gave the
  * size-200 squid 50 damage per touch, which made the fight unwinnable (feat-054).
  */
+/**
+ * 默认体型判定阈值：玩家体型 > 敌鱼体型 × 阈值 才能吃掉对方。
+ * 导出以便 BalanceCurve 的平衡断言与实际判定共用同一来源。
+ */
+export const DEFAULT_SIZE_THRESHOLD = 1.2;
+
 export function getContactDamage(fishData, fishSize) {
     if (fishData?.boss && Number.isFinite(fishData.damage)) {
         return Math.max(1, Math.floor(fishData.damage));
@@ -106,7 +112,7 @@ export class CollisionSystem {
         const playerStrongAgainstFish = playerData?.strongAgainst?.includes(fishType) ?? false;
 
         // Determine size threshold based on type relationship
-        let sizeThreshold = 1.2;
+        let sizeThreshold = DEFAULT_SIZE_THRESHOLD;
         let damageMultiplier = 1.0;
 
         if (fishStrongAgainstPlayer) {

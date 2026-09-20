@@ -78,6 +78,7 @@ BootScene → MenuScene → GameScene + UIScene → GameOverScene
 | `HealthRegenSystem` | `systems/HealthRegenSystem.js` | 脱战回血 | - |
 | `DeathSequenceSystem` | `systems/DeathSequenceSystem.js` | 死亡演出时序状态机（纯逻辑，feat-052） | `start()`, `update(delta)`, `getPhase()`, `reset()` |
 | `LowHealthWarningSystem` | `systems/LowHealthWarningSystem.js` | 低血量警告强度曲线（纯逻辑，feat-053） | `update(hpRatio, delta)`, `getHeartbeatCount()`, `reset()` |
+| `BalanceCurve` | `systems/BalanceCurve.js` | 平衡曲线纯函数：成长表 / 敌人缩放 / 敌人等级分布 / 刷怪权重 / 接触伤害上限（纯逻辑，feat-055） | `getPlayerSizeMultipliers`, `getPlayerSizeAtLevel`, `getEnemyScale`, `pickEnemyLevel`, `getSpawnWeights`, `capContactDamage` |
 | `BossSystem` | `systems/BossSystem.js` | Boss 状态机 + 数值/进度 key（纯逻辑，feat-054） | `calculateBossHp(config, lv)`, `buildBossConfig(data, lv)`, `getBossKey(type)`, `triggerBossFight/endBossFight` |
 
 ### Death Sequence (feat-052)
@@ -338,3 +339,42 @@ if (Math.random() < driftBottleChance) → DriftBottle effect
 
 - `BackgroundExpansion.js` — 已删除，功能由 ScrollingBackground 替代
 - `BackgroundSystem.js` — 仅保留 `THEME_CONFIG` 静态数据，主题切换功能保留
+
+---
+
+## 难度曲线与食物链（feat-055）
+
+### 单一来源
+
+`BalanceCurve`（纯函数，无 Phaser 依赖）集中定义"玩家成长 ↔ 敌人成长"的关系，
+`GameScene` / `SpawnSystem` / `CollisionSystem` 都从它取值，避免同一套公式散落多处。
+
+```
+levels.json(sizeGrowth)  →  getPlayerSizeMultipliers / getPlayerSizeAtLevel
+                                      │
+                                      ▼
+                         getEnemyScale(baseSize, playerSize)      ← 尺寸：开方增长
+                                      │
+   zones.json(enemyLevelRange) ─→ pickEnemyLevel(...)             ← 等级：区域 ∪ 玩家邻域
+                                      │
+                                      ▼
+   GameScene._doSpawnEnemy:  size = 基础 × enemyScale
+                             hp/exp/speed = 基础 × toughness(等级差 × 存活时间 × 深渊)
+```
+
+### 两个必须分职的量
+
+| 量 | 决定因素 | 影响的字段 | 为什么不能混 |
+|----|---------|-----------|-------------|
+| `enemyScale` | **只**跟玩家体型（`sqrt(玩家体型 / Lv1 体型)`） | `size` | `size` 决定"能不能吃"。若随存活时间上涨，玩家的食物来源会随时间自动消失（feat-055 实测：Lv1 卡死 60s 无法升级） |
+| `toughness` | 敌人等级差 + 存活时间 + 深渊加成 | `hp` / `exp` / `speed` | 难度爬升应该表现为"更肉 / 更多经验"，而不是"再也吃不到" |
+
+### 食物链不变量
+
+任意等级都必须同时存在：
+
+- **可吃**（`playerSize > fishSize × 1.2`，权重 > 0.25）
+- **威胁**（`fishSize > playerSize × 1.2`，权重 > 0.03）
+
+由 `src/systems/__tests__/BalanceCurve.test.js` 逐级断言（Lv1~Lv11）。
+刷怪权重表因此必须在**每个等级段**都保留威胁位（Lv1~3 起就有 `mutant_shark`）。

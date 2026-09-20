@@ -21,18 +21,18 @@ git log --oneline -5         # 查看近期变更
 
 **鱼吃鱼** — Phaser.js 3.x HTML5 游戏。单人，俯视角，玩家控制一条鱼吃更小的鱼、升级、解锁技能、挑战 Boss。
 
-**技术栈**：Phaser.js 3.x · Arcade Physics · ES Modules · Jest（942 个测试） · Playwright（56 个 E2E 测试）
+**技术栈**：Phaser.js 3.x · Arcade Physics · ES Modules · Jest（981 个测试） · Playwright（63 个 E2E 测试）
 
 ---
 
 ## 关键命令
 
 ```bash
-npm test                                              # 单元测试（当前 942 个）
+npm test                                              # 单元测试（当前 981 个）
 npm run test:watch                                    # 监听模式
 ./init.sh                                             # 完整验证（install + test + smoke）
 python3 -m http.server 8765                           # 启动本地 HTTP 服务器
-npx playwright test --project=chromium                 # E2E 全量（56 个，自动拉起 webServer）
+npx playwright test --project=chromium                 # E2E 全量（63 个，自动拉起 webServer）
 npx playwright test e2e/smoke.spec.js --project=chromium  # E2E 冒烟
 npx playwright test e2e/debug-api.spec.js --project=chromium  # E2E debug-api（16 个测试）
 ```
@@ -180,7 +180,7 @@ __DEBUG_API__.watch(event, on) // 订阅事件
 
 ## Phase 3 路线图
 
-54/54 features 全部完成后，下一阶段方向见 [`docs/PHASE_3_ROADMAP.md`](docs/PHASE_3_ROADMAP.md)。当前 5 个候选方向（P0 体验打磨 / P1 动作演出 / P1 群体 AI / P2 极限计时 / P2 无障碍），每次会话只选 1 个方向，通过 brainstorming 流程生成 spec → plan → 实现。
+55/55 features 全部完成后（**P0 体验打磨已全部落地**），下一阶段方向见 [`docs/PHASE_3_ROADMAP.md`](docs/PHASE_3_ROADMAP.md)。候选方向：P1 动作演出（AnimationDirector）/ P1 群体 AI（Flocking）/ P2 极限计时 / P2 无障碍，每次会话只选 1 个方向，通过 brainstorming 流程生成 spec → plan → 实现。
 
 ---
 

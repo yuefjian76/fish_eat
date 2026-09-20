@@ -1,7 +1,7 @@
 # Quality Document — 鱼吃鱼 (Fish Eat Fish)
 
 > **Harness Subsystem**: State — authoritative quality record for the project.
-> Updated: 2026-09-20 (feat-054 Boss 战修复)
+> Updated: 2026-09-20 (feat-055 数值平衡实测)
 
 ---
 
@@ -13,7 +13,7 @@
 
 | Dimension | Grade | Evidence |
 |-----------|-------|----------|
-| Build & Compile | A | `npm test`: 942 passed, 0 failed; `init.sh` all 5 steps pass |
+| Build & Compile | A | `npm test`: 981 passed, 0 failed; `init.sh` all 5 steps pass |
 | Game Loop | A | Scene flow BootScene→MenuScene→GameScene+UIScene→GameOverScene complete |
 | Player Controls | A | Keyboard / mouse / touch with dead zone and easing; PlayerControlSystem extracted |
 | Enemy AI | A | State machine WANDERING/CHASING/ATTACKING/FLEEING; 5 special behaviors |
@@ -34,6 +34,7 @@
 | ScrollingBackground | A | 3 层视差 + DepthFog + ScrollEdge + BubblePool |
 | DecorationPool + Prng | A | mulberry32 确定性 PRNG,200 上限,chunk 复用 |
 | DEBUG_API | A | 17 调试方法,16 E2E 测试,仅 `?debug=true` 暴露 |
+| BalanceCurve | A | 成长曲线 / 敌人缩放 / 等级分布 / 刷怪权重 / 接触伤害上限,逐级食物链不变量测试(feat-055) |
 | Skill Synergy | A | rush_bite / storm_slash,3s 队列窗口,FloatingText 反馈 |
 
 ---
@@ -163,11 +164,11 @@ npx playwright test --project=chromium  → 56 passed, 0 failed
 
 | Item | Severity | Status |
 |------|----------|--------|
-| GameScene now 2470 LOC | Medium | 已超出 <2000 目标，后续新功能按需继续提取系统 |
+| GameScene now 2497 LOC | Medium | 已超出 <2000 目标，后续新功能按需继续提取系统 |
 | PNG transparency issues | Low | Documented fallback exists, non-blocking |
 | E2E tests need running browser | Info | `playwright.config.mjs` webServer 自动拉起；引导统一走 `e2e/helpers/game.js` |
 | node_modules/coverage tracked in git | Medium | 待清理（`.git` 142MB），见 session-handoff.md Repo Hygiene |
-| Phase 3 features not started | Info | Optional enhancements; no blockers |
+| 敌人总数无上限 | Low | Lv1 60s 累积 49 条；剔除半径 2000 对应 4000×4000 区域（视口 20 倍），需先重定义剔除半径才能加人数上限 |
 
 ---
 
@@ -183,5 +184,6 @@ npx playwright test --project=chromium  → 56 passed, 0 failed
 | 2026-09-19 | feat-052 死亡演出（DeathSequenceSystem，15 单测 + 5 E2E）；878 tests / 42 E2E |
 | 2026-09-19 | feat-053 低血量警告强化（LowHealthWarningSystem，25 单测 + 7 E2E）；906 tests / 49 E2E |
 | 2026-09-20 | feat-054 Boss 战修复与节奏（BossSystem/实体/碰撞修复，36 单测 + 7 E2E）；942 tests / 56 E2E |
+| 2026-09-20 | feat-055 数值平衡实测（BalanceCurve + 难度曲线修复，35 单测 + 7 E2E）；981 tests / 63 E2E |
 | 2026-09-19 | feat-051 E2E 验证系统修复 — 真实失败 7 例 + 1 处假通过全部修复；37 E2E 全绿，repeat×2 无 flaky |
 | **2026-05-30** | **Harness infrastructure rewrite — 5-subsystem docs; init.sh portability fix; evaluator-rubric rewrite** |

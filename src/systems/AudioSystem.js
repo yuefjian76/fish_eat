@@ -51,7 +51,7 @@ export class AudioSystem {
 
     /**
      * Play a synthesized sound
-     * @param {'eat'|'eat_big'|'hurt'|'level_up'|'skill'|'collect'} type
+     * @param {'eat'|'eat_big'|'hurt'|'level_up'|'skill'|'collect'|'heartbeat'} type
      */
     play(type) {
         if (!this.enabled || !this.ctx) return;
@@ -68,6 +68,7 @@ export class AudioSystem {
             case 'level_up':  return this._playLevelUp();
             case 'skill':     return this._playSkill();
             case 'collect':   return this._playCollect();
+            case 'heartbeat': return this._playHeartbeat();
         }
     }
 
@@ -275,6 +276,37 @@ export class AudioSystem {
 
         osc.start(now);
         osc.stop(now + 0.15);
+    }
+
+    /**
+     * Low-health heartbeat: two low sine "thumps" (lub-dub).
+     * Deliberately quiet and short so it reads as tension, not as an alarm,
+     * and never masks the BGM.
+     */
+    _playHeartbeat() {
+        const now = this.ctx.currentTime;
+
+        const thump = (offset, gainScale) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(62, now + offset);
+            osc.frequency.exponentialRampToValueAtTime(38, now + offset + 0.12);
+
+            const peak = this.volume * 0.45 * gainScale;
+            gain.gain.setValueAtTime(0.0001, now + offset);
+            gain.gain.exponentialRampToValueAtTime(peak, now + offset + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.18);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now + offset);
+            osc.stop(now + offset + 0.2);
+        };
+
+        thump(0, 1);      // lub
+        thump(0.16, 0.7); // dub
     }
 
     _playHurt() {

@@ -76,6 +76,60 @@ BootScene → MenuScene → GameScene + UIScene → GameOverScene
 | `RangedAttackSystem` | `systems/RangedAttackSystem.js` | 炮弹碰撞 | `onHit(enemy, damage)` |
 | `PlayerControlSystem` | `systems/PlayerControlSystem.js` | 键盘/鼠标输入 | - |
 | `HealthRegenSystem` | `systems/HealthRegenSystem.js` | 脱战回血 | - |
+| `DeathSequenceSystem` | `systems/DeathSequenceSystem.js` | 死亡演出时序状态机（纯逻辑，feat-052） | `start()`, `update(delta)`, `getPhase()`, `reset()` |
+| `LowHealthWarningSystem` | `systems/LowHealthWarningSystem.js` | 低血量警告强度曲线（纯逻辑，feat-053） | `update(hpRatio, delta)`, `getHeartbeatCount()`, `reset()` |
+
+### Death Sequence (feat-052)
+
+玩家血量归零不再硬切结算页，而是由 `DeathSequenceSystem` 驱动 1.35s 演出：
+
+```
+_triggerGameOver()            ← 唯一死亡入口（重入保护 _isDying）
+   ├── _buildGameOverPayload()  结算数据在死亡瞬间快照
+   ├── physics.world.pause()    冻结世界，死后不会被继续攻击
+   └── deathSequence.start()
+
+update() → _isDying ? _updateDeathSequence(delta) : <正常游戏逻辑>
+   │
+   ├── hitStop  (150ms)  白闪 + 震屏
+   ├── impact   (700ms)  镜头推进 1.0→1.3、玩家淡出、粒子、"GAME OVER"
+   └── fadeOut  (500ms)  镜头淡出至黑 → scene.start('GameOverScene', payload)
+```
+
+分层：`src/config/death_sequence.json`（数据）→ `DeathSequenceSystem`（纯逻辑，可单测）
+→ `GameScene`（把 phase 映射成 Phaser 副作用）。`DeathSequenceSystem` 不引用任何 Phaser API。
+
+> ⚠️ 相机 zoom 会影响 `scrollFactor(0)` 对象的屏幕位置。需要"贴屏"的元素
+> （debug overlay、GAME OVER 文字）用世界坐标锚定：overlay 用 `camera.worldView` 左上角，
+> 居中文字用 `camera.midPoint`。
+
+### Low Health Warning (feat-053)
+
+血量低于阈值后 UIScene 叠加红色暗角，进入 critical 后追加脉冲、`危险` 文字与心跳音：
+
+```
+LowHealthWarningSystem.update(hpRatio, delta)   ← 纯逻辑，无 Phaser 依赖
+   └── 返回 { active, alpha, critical, severity, pulsePeriod,
+              showText, textAlpha, text, heartbeatDue, entered, exited }
+
+GameScene._updateLowHealthWarning(delta)        ← 每帧调用，转成副作用
+   ├── entered/exited → logger.info('Low health warning')
+   ├── heartbeatDue  → AudioSystem.play('heartbeat') + logger.debug('Low health heartbeat')
+   └── UIScene.updateLowHealthWarning(state)    ← 只改 alpha / visible，不重建几何
+```
+
+| 血量比例 | 表现 |
+|---------|------|
+| `ratio >= 0.30` | 静默（vignette 隐藏、alpha 0） |
+| `0.18 < ratio < 0.30` | 静态红色暗角，强度随危险度上升 |
+| `ratio <= 0.18` | 追加三角波脉冲、`危险` 文字、心跳音（间隔 1200ms → 500ms 随危险度插值） |
+
+- 强度曲线：`alpha = maxVignetteAlpha * (severity ** alphaExponent)`，`alphaExponent = 0.5`
+  让「刚进入警告区」的暗角就有可感强度（纯线性在 25% 血量时 alpha 仅 0.13，实战中几乎看不见）。
+- 暗角几何在 `UIScene._drawVignetteStrips()` 里**只画一次**（四条边缘渐变条，厚度 = 短边的 14%），
+  运行时只 `setAlpha()`，不重建 Graphics。
+- 数据分层：`src/config/low_health.json`（阈值/曲线/脉冲/心跳/文字）→ `LowHealthWarningSystem`（纯逻辑）
+  → `GameScene`（副作用）→ `UIScene`（渲染）。系统本身不引用任何 Phaser API。
 
 ### System Communication Pattern
 

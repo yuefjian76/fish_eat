@@ -13,7 +13,7 @@
 
 | Dimension | Grade | Evidence |
 |-----------|-------|----------|
-| Build & Compile | A | `npm test`: 855 passed, 0 failed; `init.sh` all 5 steps pass |
+| Build & Compile | A | `npm test`: 906 passed, 0 failed; `init.sh` all 5 steps pass |
 | Game Loop | A | Scene flow BootScene→MenuScene→GameScene+UIScene→GameOverScene complete |
 | Player Controls | A | Keyboard / mouse / touch with dead zone and easing; PlayerControlSystem extracted |
 | Enemy AI | A | State machine WANDERING/CHASING/ATTACKING/FLEEING; 5 special behaviors |
@@ -33,7 +33,7 @@
 | ScrollingWorld | A | 4 阶段全部完成(feat-046~049),20000×20000 世界,5 深度区,程序化装饰 | 
 | ScrollingBackground | A | 3 层视差 + DepthFog + ScrollEdge + BubblePool |
 | DecorationPool + Prng | A | mulberry32 确定性 PRNG,200 上限,chunk 复用 |
-| DEBUG_API | A | 14 调试方法,16 E2E 测试,仅 `?debug=true` 暴露 |
+| DEBUG_API | A | 16 调试方法,16 E2E 测试,仅 `?debug=true` 暴露 |
 | Skill Synergy | A | rush_bite / storm_slash,3s 队列窗口,FloatingText 反馈 |
 
 ---
@@ -47,7 +47,11 @@
 | Enhancements | feat-034 – feat-040 | 7 | ✅ All completed |
 | Type Effectiveness + Synergy | feat-041 – feat-045 | 5 | ✅ All completed |
 | ScrollingWorld | feat-046 – feat-049 | 4 | ✅ All completed |
-| **Total** | | **49** | **100%** |
+| Combat Feedback Animations | feat-050 | 1 | ✅ completed |
+| E2E Verification Fix | feat-051 | 1 | ✅ completed |
+| Death Sequence (P0) | feat-052 | 1 | ✅ completed |
+| Low Health Warning (P0) | feat-053 | 1 | ✅ completed |
+| **Total** | | **53** | **100%** |
 
 ---
 
@@ -104,7 +108,8 @@
 
 ### Build
 ```
-npm test        → 855 tests passed, 0 failed, 44+ suites
+npm test        → 906 tests passed, 0 failed, 53 suites
+npx playwright test --project=chromium  → 49 passed, 0 failed
 ./init.sh       → All 5 steps pass (install / test / syntax / JSON / harness files)
 ```
 
@@ -146,8 +151,9 @@ npm test        → 855 tests passed, 0 failed, 44+ suites
 |----------|--------|
 | `clean-state-checklist.md` | All 40+ checks pass |
 | `evaluator-rubric.md` | 5.0/5 overall score |
-| `feature_list.json` | 49/49 features at status "completed" |
-| `npm test` | 855 passed, 0 failed |
+| `feature_list.json` | 53/53 features at status "completed" |
+| `npm test` | 906 passed, 0 failed |
+| `npx playwright test --project=chromium` | 49 passed, 0 failed（`--repeat-each=2` → 98，0 flaky） |
 | `./init.sh` | All 5 steps pass |
 
 ---
@@ -156,9 +162,10 @@ npm test        → 855 tests passed, 0 failed, 44+ suites
 
 | Item | Severity | Status |
 |------|----------|--------|
-| GameScene still ~1600 LOC | Low | Acceptable — target was <2000 after extractions ✅ |
+| GameScene now 2132 LOC | Medium | 已超出 <2000 目标，后续新功能按需继续提取系统 |
 | PNG transparency issues | Low | Documented fallback exists, non-blocking |
-| E2E tests need running browser | Info | Playwright MCP required; documented in AGENTS.md |
+| E2E tests need running browser | Info | `playwright.config.mjs` webServer 自动拉起；引导统一走 `e2e/helpers/game.js` |
+| node_modules/coverage tracked in git | Medium | 待清理（`.git` 142MB），见 session-handoff.md Repo Hygiene |
 | Phase 3 features not started | Info | Optional enhancements; no blockers |
 
 ---
@@ -171,4 +178,8 @@ npm test        → 855 tests passed, 0 failed, 44+ suites
 | 2026-05-23 | Architecture refactor complete — 8 systems extracted; 718 tests pass |
 | 2026-05-24 | All 40 features completed; ~730 tests; init.sh passes |
 | 2026-06-01 | Harness state sync — 49/49 features, 855 tests, E2E debug-api (16 tests), PHASE_3_ROADMAP |
+| 2026-06-04 | feat-050 战斗反馈动画 — 863 tests |
+| 2026-09-19 | feat-052 死亡演出（DeathSequenceSystem，15 单测 + 5 E2E）；878 tests / 42 E2E |
+| 2026-09-19 | feat-053 低血量警告强化（LowHealthWarningSystem，25 单测 + 7 E2E）；906 tests / 49 E2E |
+| 2026-09-19 | feat-051 E2E 验证系统修复 — 真实失败 7 例 + 1 处假通过全部修复；37 E2E 全绿，repeat×2 无 flaky |
 | **2026-05-30** | **Harness infrastructure rewrite — 5-subsystem docs; init.sh portability fix; evaluator-rubric rewrite** |

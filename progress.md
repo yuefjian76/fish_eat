@@ -1,8 +1,8 @@
 # 进度日志
 
-## 当前阶段：Phase 3 规划（49/49 features 完成）
+## 当前阶段：Phase 3 规划（53/53 features 完成）
 
-49/49 features 全部 completed，`./init.sh` 5 步全过，`window.__DEBUG_API__` 已实现。
+53/53 features 全部 completed，`./init.sh` 5 步全过，E2E 套件 49 用例全绿，`window.__DEBUG_API__` 已实现（16 个方法）。
 下一阶段方向见 [`docs/PHASE_3_ROADMAP.md`](docs/PHASE_3_ROADMAP.md)。
 
 ### 完成里程碑
@@ -12,9 +12,133 @@
 - ✅ feat-034 ~ feat-040：增强功能（7 个）
 - ✅ feat-041 ~ feat-045：类型相克 + 技能协同（5 个）
 - ✅ feat-046 ~ feat-049：ScrollingWorld（4 个）
-- ✅ E2E Debug API：`window.__DEBUG_API__`（16 E2E tests）
+- ✅ feat-050：战斗反馈动画（AnimationFeedbackSystem）
+- ✅ feat-051：E2E 验证系统修复（统一 bootstrap，37 用例全绿）
+- ✅ feat-052：死亡演出系统（DeathSequenceSystem，15 单测 + 5 E2E）
+- ✅ feat-053：低血量警告强化（LowHealthWarningSystem，25 单测 + 7 E2E）
+- ✅ E2E Debug API：`window.__DEBUG_API__`（16 E2E tests，16 个方法）
 
-**单元测试**：855 个 | **E2E 测试**：23 个（16 debug-api + 7 smoke） | **完成度**：49/49
+**单元测试**：906 个 | **E2E 测试**：49 个（10 个 spec 文件） | **完成度**：53/53
+
+---
+
+## 会话 — 2026-09-19（feat-053 低血量警告强化）
+
+### 已完成
+- ✅ 走完 harness 流程：spec → plan → 实现 → 验证 → 状态更新
+  - `docs/superpowers/specs/2026-09-19-feat-053-low-health-warning-design.md`
+  - `docs/superpowers/plans/2026-09-19-feat-053-low-health-warning-plan.md`
+- ✅ `src/config/low_health.json`：阈值 0.3 / 强度曲线（alphaExponent 0.5）/ 脉冲 / 心跳 / 危险文字数据驱动
+- ✅ `src/systems/LowHealthWarningSystem.js`：纯逻辑状态机（无 Phaser 依赖），25 单测
+- ✅ `AudioSystem.play('heartbeat')`：双次低频心跳合成音 + 3 单测
+- ✅ `UIScene`：`_drawVignetteStrips()` 一次性绘制四条边缘渐变（厚度=短边 14%），运行时只改 alpha/visible；
+  新增 `dangerText`（"危险"）；移除旧的 tween 脉冲与脏标记逻辑
+- ✅ `GameScene`：`_updateLowHealthWarning(delta)` 每帧推送 + 状态翻转打日志；`_clearLowHealthWarning()` 在死亡演出前清空
+- ✅ `__DEBUG_API__.damage(n)`（第 16 个方法，扣到 0 走正常死亡流程）
+- ✅ `e2e/low-health.spec.js` 7 用例；`init.sh` Step 4 增加 `low_health.json` 校验
+- ✅ 文档同步：ARCHITECTURE / PRODUCT / RELIABILITY / PHASE_3_ROADMAP / feature_list / AGENTS / CLAUDE /
+  quality-document / session-handoff / 本文件
+
+### 过程中发现并修复的问题（E2E 未覆盖，靠截图发现）
+1. **25% 血量时警告几乎不可见** — 线性强度曲线 alpha 仅 0.13 → 改为 `severity ** 0.5`（开方），25% 时约 0.33。
+2. **暗角边缘色带生硬** — 写死 60px 条带太窄 → 改为按短边 14% 自适应。
+
+### 验证证据
+- `npm test` → 906 passed / 0 failed（53 suites）
+- `npx playwright test --project=chromium` → 49 passed；`--repeat-each=2` → 98 passed，0 flaky
+- `./init.sh` → 5/5 steps pass
+- 像素采样（redness = r-(g+b)/2，左边缘）：满血 -169.5 → 25% -90.0 → 22% -68.5 → 12% -50.0；画面中心稳定 ~155（不泛白）
+
+### 下一步
+- P0 剩余：Boss 战节奏调整、数值平衡实测（用 `__DEBUG_API__` 实跑找手感问题）
+- 或 P1：Enemy Flocking 群体 AI
+
+---
+
+## 会话 — 2026-09-19（feat-052 死亡演出）
+
+### 已完成
+- ✅ 走完 harness 流程：brainstorming → spec → plan → 实现 → 验证 → 状态更新
+  - `docs/superpowers/specs/2026-09-19-feat-052-death-sequence-design.md`
+  - `docs/superpowers/plans/2026-09-19-feat-052-death-sequence-plan.md`
+- ✅ `src/config/death_sequence.json`：hitStop/impact/fadeOut 数据驱动
+- ✅ `src/systems/DeathSequenceSystem.js`：纯状态机（无 Phaser 依赖）+ 15 个单元测试（TDD，先 RED 后 GREEN）
+- ✅ `GameScene` 集成：`_triggerGameOver()` 统一死亡入口，替换两处重复 `scene.start('GameOverScene')`；`_buildGameOverPayload()` 在死亡瞬间快照结算数据；`_isDying` 重入保护 + 物理世界冻结；`onEnemyAttack` / `_handleCollisionResult` 加守卫
+- ✅ `__DEBUG_API__.kill()`（第 15 个调试方法），便于 E2E 稳定触发死亡
+- ✅ `e2e/death-sequence.spec.js`：5 个用例（冻结/HP、镜头推进、结算数据定格、重入保护、GAME OVER 文字在视口内）
+
+### 过程中发现并修复的隐藏缺陷
+1. **"GAME OVER" 文字完全不显示**：`setScrollFactor(0)` + 相机 zoom 组合会让世界坐标 (512,384) 落到视口外。改为按 `camera.midPoint` 世界坐标锚定并每帧居中。
+2. **debug overlay 被 zoom 推出屏幕**：同类问题，改为按 `camera.worldView` 左上角锚定（zoom=1 时行为不变）。
+3. 上述第 1 条 E2E 无法自动发现，是**人工看截图**才抓到的 → 补了 `worldView.contains()` 断言，防回归。
+
+### 验证证据
+- `npm test` → **878 passed**（+15 新单测），0 failed
+- `npx playwright test --project=chromium` → **42 passed**
+- `--repeat-each=2` → **84 passed**，0 flaky
+- 截图：`/tmp/death-1-impact.png`（GAME OVER 居中 + 玩家淡出 + zoom 1.3）、`/tmp/death-3-gameover.png`（结算页正常）
+- Console 无 Error
+
+### 文件改动
+- 新增 `src/systems/DeathSequenceSystem.js`、`src/systems/__tests__/DeathSequenceSystem.test.js`、`src/config/death_sequence.json`、`e2e/death-sequence.spec.js`
+- 修改 `src/scenes/GameScene.js`（死亡流程 + debug API + debug overlay 锚定）
+- 文档 `ARCHITECTURE.md` / `PRODUCT.md` / `RELIABILITY.md` / `PHASE_3_ROADMAP.md` / `CLAUDE.md` / `AGENTS.md` / `quality-document.md` / `session-handoff.md`
+
+---
+
+## 会话 — 2026-09-19（项目体检 + E2E 验证系统修复）
+
+### 背景
+会话开始时声称「49/49 完成、E2E 全过」，实测发现 E2E 套件 **37 个失败**（沙箱内为环境限制，沙箱外复现为 7 个真实失败）。
+
+### 已完成
+- ✅ 盘点项目真实状态：单元测试 863 passed / 51 features completed / E2E 实测 30 passed + 7 failed
+- ✅ 定位失败根因（两类）：
+  1. `smoke.spec.js` 假设「加载后直接进 GameScene」，未处理登录页 → `__GAME_SCENE__` 为 undefined；其中 HP 断言因 `undefined === undefined` **假通过**
+  2. 其余 spec 硬编码 `page.mouse.click(640, 520)`，默认视口下 canvas 居中（top=-24），该坐标正好落在「开始游戏」按钮热区边缘 → 首个用例随机失败
+- ✅ 新增 `e2e/helpers/game.js`：`openGame / dismissLogin / clickStartButton / startGame / waitForGameScene / waitForDebugApi`
+  - 用 `waitFor({state:'visible'})` 替代不等待的 `isVisible()`（原写法在按钮渲染前会立即返回 false）
+  - 开始按钮坐标按 canvas bounding box × 设计比例换算，视口无关
+- ✅ 6 个 spec 移除本地 `startGame`/`delay` 副本，统一 import helper
+- ✅ `smoke.spec.js` 重写为 8 用例，全部走真实流程；断言补齐类型校验，消除假通过
+- ✅ `wave` 断言改用 `waveSystem.getState()`（`_waveState` 已在 feat-026 重构中移除）
+- ✅ `playwright.config.mjs` 增加 `webServer`，`npx playwright test` 可独立运行
+
+### 验证证据
+- `npx playwright test --project=chromium` → **37 passed**
+- `npx playwright test --project=chromium --repeat-each=2` → **74 passed**（0 failed / 0 flaky）
+- `npm test` → 863 passed，无回归
+
+### 文件改动
+- `e2e/helpers/game.js`（新建）
+- `e2e/smoke.spec.js`（重写，7 → 8 用例）
+- `e2e/debug-api.spec.js` / `breathing.spec.js` / `scrolling-bg.spec.js` / `scrolling-visual.spec.js` / `spawn-and-map.spec.js` / `diagnose-scrolling.spec.js`（改用 helper）
+- `e2e/game-loads.spec.js` / `animation-feedback.spec.js`（改用 helper 的坐标换算）
+- `playwright.config.mjs`（webServer）
+- `feature_list.json`（新增 feat-051）
+
+### 下一步（仓库卫生已在本会话完成，见下）
+- Phase 3 功能方向从 `docs/PHASE_3_ROADMAP.md` 选 1 个（建议 P0 死亡演出：当前血量归零是硬切 GameOverScene）
+- `.git` 142MB 需重写历史才能真正瘦身，未执行，待决策
+
+---
+
+## 会话 — 2026-09-19（仓库卫生清理）
+
+### 已完成
+- ✅ 从 git 索引移除 5466 个文件：`node_modules`(5378) / `coverage`(34) / `.playwright-mcp`(47) / `test-results`(.last-run.json)
+- ✅ `.gitignore` 补齐：`coverage/` `test-results/` `playwright-report/` `.playwright-mcp/` `*.bak` `test_boot.txt`
+- ✅ 删除遗留文件：4 × `.DS_Store`、`src/scenes/BootScene.js.bak`、`test_boot.txt`、`docs/.SCROLLING_WORLD_DESIGN.md.swp`
+- ✅ 删除 `e2e/diagnose-scrolling.spec.js`（无断言诊断脚本，已被 scrolling-bg/scrolling-visual 覆盖）→ E2E 38 → 37 用例
+- ✅ `init.sh` 末尾提示改为全量 E2E 命令（webServer 自动拉起）
+- ✅ 文档计数同步：AGENTS/CLAUDE/quality/session-handoff/PHASE_3_ROADMAP
+
+### 验证
+- `./init.sh` → 5 步全过，863 tests passed
+- `npx playwright test --project=chromium` → 37 passed
+
+### 未执行（需决策）
+- `.git` 仍 142MB：`git rm --cached` 不影响历史 pack，需 `git filter-repo` 重写历史 + 强推才能瘦身
 
 ---
 

@@ -52,6 +52,18 @@ gameLogger.info('Game started', { difficulty: 'normal' });
 - 升级触发（level, skillUnlocked）
 - 玩家受伤（damage, remainingHp）
 - 波次状态切换（waveState, spawnInterval）
+- 死亡触发（score, level, kills, hp — `Game over triggered`）
+- 死亡演出阶段切换（phase: hitStop/impact/fadeOut — `Death sequence phase`）
+- 进入结算页（survivalTime — `Game over transition`）
+- 低血量警告进入/退出（state, hpRatio — `Low health warning`）
+
+**DeathSequenceSystem:**（纯逻辑，由 GameScene 打日志）
+- 阶段推进只在 `update()` 返回 `phaseChanged: true` 时记录，避免每帧刷屏
+
+**LowHealthWarningSystem:**（纯逻辑，由 GameScene 打日志）
+- 进入/退出警告区（level: `INFO`，`Low health warning` + state: enter/exit, hpRatio）— 只在状态翻转时记录
+- 心跳触发（level: `DEBUG`，`Low health heartbeat` + hpRatio, interval）— critical 期间按间隔记录
+- 警告强度变化属于每帧数据，不单独打日志（避免刷屏）
 
 **SpawnSystem:**
 - 敌鱼创建（fishType, x, y）

@@ -13,14 +13,12 @@ class UIScene extends Phaser.Scene {
         this.hpBar = null;
         this.expBar = null;
         this.vignetteGraphics = null;
-        this._lastVignetteAlpha = -1; // dirty flag for vignette
+        this.dangerText = null;
     }
 
     create() {
-        // Kill any lingering vignette tweens from a previous run of this scene
-        this._vignettePulsing = false;
+        // Drop the previous run's vignette graphics (scene can be restarted)
         if (this.vignetteGraphics) {
-            this.tweens.killTweensOf(this.vignetteGraphics);
             this.vignetteGraphics.destroy();
             this.vignetteGraphics = null;
         }
@@ -101,6 +99,21 @@ class UIScene extends Phaser.Scene {
         // ─── Vignette (low HP danger overlay) ───────────────────────────────
         this.vignetteGraphics = this.add.graphics();
         this.vignetteGraphics.setDepth(98); // below HUD but above game
+        this._drawVignetteStrips();
+        this.vignetteGraphics.setAlpha(0);
+        this.vignetteGraphics.setVisible(false);
+
+        // ─── Low HP warning text ────────────────────────────────────────────
+        this.dangerText = this.add.text(W / 2, 56, '', {
+            fontSize: '18px',
+            fontFamily: 'Arial Black, Arial',
+            color: '#FF4444',
+            stroke: '#000000',
+            strokeThickness: 4
+        });
+        this.dangerText.setOrigin(0.5);
+        this.dangerText.setDepth(200);
+        this.dangerText.setVisible(false);
 
         // ─── Combo display (center, shown when combo >= 2) ───────────────────
         this.comboText = this.add.text(W / 2, 90, '', {
@@ -173,12 +186,6 @@ class UIScene extends Phaser.Scene {
         return 0xff2222;
     }
 
-    _vignetteAlpha(hpRatio) {
-        const THRESHOLD = 0.3;
-        if (hpRatio >= THRESHOLD) return 0;
-        return 0.8 * (1 - hpRatio / THRESHOLD);
-    }
-
     _drawHpBar(hp, maxHp) {
         const W = this.scale.width;
         const BAR_W = 300;
@@ -225,48 +232,30 @@ class UIScene extends Phaser.Scene {
         }
     }
 
-    _drawVignette(hpRatio) {
+    /**
+     * Draw the four red edge strips once, at full strength.
+     * Runtime intensity is applied via setAlpha() in updateLowHealthWarning(),
+     * so the geometry is never rebuilt per frame.
+     */
+    _drawVignetteStrips() {
         if (!this.vignetteGraphics) return;
-        const alpha = this._vignetteAlpha(hpRatio);
-        if (Math.abs(alpha - this._lastVignetteAlpha) < 0.01) return; // skip tiny changes
-        this._lastVignetteAlpha = alpha;
-
-        this.vignetteGraphics.clear();
-        if (alpha <= 0) return;
-
-        // Draw red vignette using 4 gradient strips around screen edges
         const W = this.scale.width;
         const H = this.scale.height;
-        const DEPTH = 60;
+        const DEPTH = Math.round(Math.min(W, H) * 0.14);
 
+        this.vignetteGraphics.clear();
         // Top strip
-        this.vignetteGraphics.fillGradientStyle(0xff0000, 0xff0000, 0xff0000, 0xff0000, alpha, alpha, 0, 0);
+        this.vignetteGraphics.fillGradientStyle(0xff0000, 0xff0000, 0xff0000, 0xff0000, 1, 1, 0, 0);
         this.vignetteGraphics.fillRect(0, 0, W, DEPTH);
         // Bottom strip
-        this.vignetteGraphics.fillGradientStyle(0xff0000, 0xff0000, 0xff0000, 0xff0000, 0, 0, alpha, alpha);
+        this.vignetteGraphics.fillGradientStyle(0xff0000, 0xff0000, 0xff0000, 0xff0000, 0, 0, 1, 1);
         this.vignetteGraphics.fillRect(0, H - DEPTH, W, DEPTH);
         // Left strip
-        this.vignetteGraphics.fillGradientStyle(0xff0000, 0xff0000, 0xff0000, 0xff0000, alpha, 0, 0, alpha);
+        this.vignetteGraphics.fillGradientStyle(0xff0000, 0xff0000, 0xff0000, 0xff0000, 1, 0, 0, 1);
         this.vignetteGraphics.fillRect(0, 0, DEPTH, H);
         // Right strip
-        this.vignetteGraphics.fillGradientStyle(0xff0000, 0xff0000, 0xff0000, 0xff0000, 0, alpha, alpha, 0);
+        this.vignetteGraphics.fillGradientStyle(0xff0000, 0xff0000, 0xff0000, 0xff0000, 0, 1, 1, 0);
         this.vignetteGraphics.fillRect(W - DEPTH, 0, DEPTH, H);
-
-        // Pulse the vignette when critical HP
-        if (hpRatio < 0.15 && !this._vignettePulsing) {
-            this._vignettePulsing = true;
-            this.tweens.add({
-                targets: this.vignetteGraphics,
-                alpha: { from: 1, to: 0.4 },
-                duration: 600,
-                yoyo: true,
-                repeat: -1
-            });
-        } else if (hpRatio >= 0.15 && this._vignettePulsing) {
-            this._vignettePulsing = false;
-            this.tweens.killTweensOf(this.vignetteGraphics);
-            this.vignetteGraphics.setAlpha(1);
-        }
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -280,7 +269,29 @@ class UIScene extends Phaser.Scene {
         const maxExp = expForNextLevel !== null ? expForNextLevel : (level * 100);
         this._drawHpBar(hp, maxHp);
         this._drawExpBar(exp, maxExp);
-        this._drawVignette(this._hpRatio(hp, maxHp));
+    }
+
+    /**
+     * Render the low-health warning state pushed by GameScene every frame.
+     * Shape: { alpha, showText, textAlpha, text } from LowHealthWarningSystem.
+     */
+    updateLowHealthWarning(state) {
+        if (!state) return;
+
+        if (this.vignetteGraphics) {
+            const alpha = state.alpha || 0;
+            this.vignetteGraphics.setAlpha(alpha);
+            this.vignetteGraphics.setVisible(alpha > 0.01);
+        }
+
+        if (this.dangerText) {
+            const show = !!state.showText;
+            this.dangerText.setVisible(show);
+            if (show) {
+                if (state.text) this.dangerText.setText(state.text);
+                this.dangerText.setAlpha(state.textAlpha ?? 1);
+            }
+        }
     }
 
     /**

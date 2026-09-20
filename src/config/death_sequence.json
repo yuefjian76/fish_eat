@@ -1,0 +1,28 @@
+{
+  "hitStop": {
+    "duration": 150,
+    "flash": { "color": "#FFFFFF", "alpha": 0.7, "duration": 150 },
+    "shake": { "intensity": 0.012, "duration": 150 }
+  },
+  "impact": {
+    "duration": 700,
+    "zoom": { "from": 1.0, "to": 1.3 },
+    "playerAlpha": { "from": 1.0, "to": 0.15 },
+    "particles": {
+      "count": 14,
+      "colors": ["#FF4444", "#FFA500", "#FFFFFF"],
+      "distance": 90,
+      "duration": 800
+    },
+    "text": {
+      "content": "GAME OVER",
+      "color": "#FF4444",
+      "fontSize": 56,
+      "scaleFrom": 1.6
+    }
+  },
+  "fadeOut": {
+    "duration": 500,
+    "color": "#000000"
+  }
+}

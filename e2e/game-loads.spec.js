@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { clickStartButton } from './helpers/game.js';
 
 test('Game loads with local phaser (no CDN) and enters GameScene via start button', async ({ page }) => {
   const errors = [];
@@ -31,15 +32,8 @@ test('Game loads with local phaser (no CDN) and enters GameScene via start butto
   expect(menuState.hasMenu).toBe(true);
   expect(menuState.menuActive).toBe(true);
 
-  // 3. Click start button (canvas at page (128, 0), local (512, 520) = page (640, 520))
-  const canvasBounds = await page.evaluate(() => {
-    const rect = document.querySelector('canvas')?.getBoundingClientRect();
-    return rect ? { x: rect.x, y: rect.y, width: rect.width, height: rect.height } : null;
-  });
-  expect(canvasBounds).not.toBeNull();
-  const startBtnX = canvasBounds.x + 512;
-  const startBtnY = canvasBounds.y + 520;
-  await page.mouse.click(startBtnX, startBtnY);
+  // 3. Click start button (canvas-relative coordinates, viewport independent)
+  await clickStartButton(page);
   await page.waitForTimeout(2000);
 
   // 4. GameScene active

@@ -1,0 +1,22 @@
+{
+  "threshold": 0.3,
+  "maxVignetteAlpha": 0.8,
+  "alphaExponent": 0.5,
+  "pulse": {
+    "enabled": true,
+    "startThreshold": 0.18,
+    "slowPeriod": 1000,
+    "fastPeriod": 320,
+    "minFactor": 0.45
+  },
+  "heartbeat": {
+    "enabled": true,
+    "startThreshold": 0.18,
+    "slowInterval": 1200,
+    "fastInterval": 500
+  },
+  "text": {
+    "content": "危险",
+    "blinkPeriod": 500
+  }
+}

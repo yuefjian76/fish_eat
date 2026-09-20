@@ -586,6 +586,69 @@
       ],
       "status": "completed",
       "evidence": "AnimationFeedbackSystem.js + animation_feedback.json + 8 unit tests + 5 e2e tests, integrated in GameScene onLevelUp/setupSkillKeys (Q/W/E/R)/_handleCollisionResult. 863 unit + 33 e2e tests pass."
+    },
+    {
+      "id": "feat-051",
+      "name": "E2E 验证系统修复（引导逻辑统一）",
+      "description": "修复 E2E 套件长期失败/假通过问题：(1) 新增 e2e/helpers/game.js 统一 bootstrap — 等待 guest 按钮可见再点击、按 canvas bounding box 换算「开始游戏」坐标（设计坐标 512,520 @ 1024x768）；(2) smoke.spec.js 适配登录/菜单流程（原先假设加载即进 GameScene，导致 __GAME_SCENE__ 为 undefined，HP 断言出现 undefined===undefined 假通过）；(3) wave 断言改用 waveSystem.getState()（_waveState 已在 feat-026 移除）；(4) playwright.config.mjs 增加 webServer，`npx playwright test` 可独立运行。",
+      "dependencies": [
+        "feat-025"
+      ],
+      "status": "completed",
+      "definition_of_done": [
+        "e2e/helpers/game.js 提供 openGame/dismissLogin/clickStartButton/startGame/waitForGameScene/waitForDebugApi",
+        "所有 spec 移除硬编码 page.mouse.click(640, 520)，改用 canvas 相对坐标",
+        "smoke.spec.js 覆盖 8 个用例且断言无假通过（HP/level/score 均校验类型与数值）",
+        "npx playwright test --project=chromium 全绿（37 passed）",
+        "--repeat-each=2 连跑无 flaky（74 passed）",
+        "npx playwright test 无需手动启动 HTTP server（webServer 自动拉起）"
+      ],
+      "evidence": "npx playwright test --project=chromium → 37 passed；--repeat-each=2 → 74 passed（0 failed / 0 flaky）；npm test 863 passed 无回归。修复过程中同时删除了 1 个无断言的诊断 spec（diagnose-scrolling.spec.js，已被 scrolling-bg/scrolling-visual 覆盖），故总数由 38 变为 37。"
+    },
+    {
+      "id": "feat-052",
+      "name": "死亡演出系统（P0 体验打磨）",
+      "description": "血量归零后播放 1.35s 死亡演出再进入结算页，取代原先的硬切。(1) src/config/death_sequence.json 数据驱动时序；(2) DeathSequenceSystem 纯状态机（hitStop 150ms → impact 700ms → fadeOut 500ms）；(3) GameScene 统一死亡入口 _triggerGameOver()，替换两处重复 scene.start('GameOverScene')；(4) 死亡瞬间冻结物理世界，结算 payload 在死亡瞬间快照；(5) 重入保护 _isDying；(6) __DEBUG_API__.kill() 便于 E2E 触发。",
+      "dependencies": [
+        "feat-038"
+      ],
+      "status": "completed",
+      "definition_of_done": [
+        "DeathSequenceSystem 纯逻辑（无 Phaser 依赖）并通过 15 个单元测试",
+        "death_sequence.json 配置驱动，时序可调",
+        "两处 scene.start('GameOverScene') 统一为 _triggerGameOver()，具备重入保护",
+        "死亡瞬间物理世界暂停，玩家速度归零，onEnemyAttack/_handleCollisionResult 有 _isDying 守卫",
+        "结算 survivalTime 在死亡瞬间快照，不被 1.35s 演出拉长（E2E 断言）",
+        "\"GAME OVER\" 文字在缩放后的相机视口中心可见（E2E 断言 worldView.contains）",
+        "e2e/death-sequence.spec.js 5 个用例全过",
+        "浏览器截图确认：镜头推进 + 文字 + 玩家淡出 + 结算页连贯，Console 无 Error",
+        "npx playwright test --project=chromium → 42 passed；--repeat-each=2 → 84 passed（0 flaky）",
+        "npm test → 878 passed 无回归"
+      ],
+      "evidence": "DeathSequenceSystem.js（15 单测）+ death_sequence.json + GameScene 集成 + e2e/death-sequence.spec.js（5 用例）。npx playwright test --project=chromium → 42 passed；--repeat-each=2 → 84 passed。npm test → 878 passed。截图验证 /tmp/death-1-impact.png（GAME OVER 居中、玩家淡出、镜头推进 1.0→1.3）、/tmp/death-3-gameover.png（结算页正常）。修复过程中发现并解决 scrollFactor(0)+zoom 导致的文字/overlay 出屏问题。"
+    },
+    {
+      "id": "feat-053",
+      "name": "低血量警告强化（P0 体验打磨）",
+      "description": "血量低于 30% 起给出渐进式低血量警告，取代原先几乎不可见的静态暗角。(1) src/config/low_health.json 数据驱动（阈值 / 强度曲线 / 脉冲 / 心跳 / 文字）；(2) LowHealthWarningSystem 纯逻辑状态机，输出 { active, alpha, critical, severity, pulsePeriod, showText, textAlpha, text, heartbeatDue, entered, exited }；(3) 强度曲线 alpha = maxVignetteAlpha * severity^alphaExponent（alphaExponent=0.5，修复线性曲线在 25% 血量下 alpha 仅 0.13 导致实战不可见）；(4) UIScene 暗角几何只画一次（四条边缘渐变条，厚度=短边 14%），运行时仅 setAlpha；(5) critical 追加三角波脉冲 + 「危险」文字 + AudioSystem heartbeat 音；(6) GameScene 统一出口 _updateLowHealthWarning/_clearLowHealthWarning（死亡演出前清空）；(7) __DEBUG_API__.damage(n) 便于 E2E 直接改血量（打到 0 走正常死亡流程）。",
+      "dependencies": [
+        "feat-038",
+        "feat-052"
+      ],
+      "status": "completed",
+      "definition_of_done": [
+        "LowHealthWarningSystem 纯逻辑（无 Phaser 依赖）并通过 25 个单元测试",
+        "low_health.json 配置驱动，阈值/曲线/脉冲/心跳/文字均可调",
+        "ratio >= 0.30 静默；0.18 < ratio < 0.30 静态红光且强度随危险度上升；ratio <= 0.18 追加脉冲 + 文字 + 心跳",
+        "暗角几何只在 create 时绘制一次，每帧只改 alpha/visible（无 per-frame Graphics 重建）",
+        "死亡演出入口 _triggerGameOver() 会清空警告状态（不残留红光）",
+        "e2e/low-health.spec.js 7 个用例全过（含 worldView 视口内可见性回归断言）",
+        "浏览器截图确认：25% 血量红光可见但不挡视野、critical 状态脉冲 + 危险文字 + 无 Console Error",
+        "npx playwright test --project=chromium --repeat-each=2 → 98 passed（0 failed / 0 flaky）",
+        "npm test → 906 passed 无回归"
+      ],
+      "evidence": "LowHealthWarningSystem.js（25 单测）+ low_health.json + AudioSystem.play('heartbeat')（+3 单测）+ UIScene.updateLowHealthWarning（暗角/危险文字）+ GameScene 集成 + __DEBUG_API__.damage(n) + e2e/low-health.spec.js（7 用例）。npx playwright test --project=chromium --repeat-each=2 → 98 passed（0 flaky）；npm test → 906 passed / 53 suites。像素采样（redness = r-(g+b)/2，左边缘）：满血 -169.5 → 25% 血量 -90.0 → 22% -68.5 → 12%（critical）-50.0，画面中心保持 ~155 不变（未被泛白）。截图 /tmp/lh-0-full.png、/tmp/lh-1-warn.png、/tmp/lh-2-critical.png。",
+      "completedAt": "2026-09-19"
     }
   ]
 }

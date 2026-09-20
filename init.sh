@@ -61,7 +61,8 @@ echo ""
 echo "[4/5] 验证核心配置文件..."
 CONFIGS_OK=true
 for f in src/config/fish.json src/config/skills.json src/config/levels.json \
-          src/config/difficulty.json src/config/drops.json; do
+          src/config/difficulty.json src/config/drops.json src/config/death_sequence.json \
+          src/config/low_health.json; do
   if node -e "JSON.parse(require('fs').readFileSync('$f', 'utf8'))" 2>/dev/null; then
     echo "      ✓ $f"
   else
@@ -119,10 +120,9 @@ echo ""
 # ─── 完成 ─────────────────────────────────────────────────────────
 echo "=== 验证完成 ==="
 echo ""
-echo "E2E 冒烟测试（需要浏览器，单独运行）："
-echo "  1. python3 -m http.server 8765 &"
-echo "  2. npx playwright test e2e/smoke.spec.js --project=chromium"
-echo "  或使用 Playwright MCP browser 工具"
+echo "E2E 测试（需要浏览器，单独运行；webServer 会自动拉起）："
+echo "  npx playwright test --project=chromium          # 全量（49 用例）"
+echo "  npx playwright test e2e/smoke.spec.js --project=chromium   # 仅冒烟"
 echo ""
 echo "下一步："
 echo "  1. 读 feature_list.json，找一个 pending 功能"

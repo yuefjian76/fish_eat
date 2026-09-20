@@ -5,36 +5,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-// Helper to start game from menu by clicking the start button
-async function startGame(page) {
-    await page.goto('http://localhost:8765?debug=true');
-    await page.waitForSelector('canvas');
-    await delay(1000);
-
-    // Try to click guest mode button if visible (in case login screen appears first)
-    try {
-        const guestBtn = page.locator('button:has-text("游客模式")');
-        if (await guestBtn.isVisible({ timeout: 2000 })) {
-            await guestBtn.click();
-            await delay(500);
-        }
-    } catch (e) {
-        // Guest button not visible, continue
-    }
-
-    // Now click start button to go from MenuScene to GameScene
-    await page.mouse.click(640, 520);
-
-    // Wait for GameScene to be ready - wait for debug API to exist
-    await page.waitForFunction(
-        () => window.__DEBUG_API__ != null,
-        { timeout: 10000 }
-    );
-    await delay(1000);
-}
+import { startGame, delay } from './helpers/game.js';
 
 test('game.debug.state() returns structured object', async ({ page }) => {
     await startGame(page);

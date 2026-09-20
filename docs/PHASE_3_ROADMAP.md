@@ -8,6 +8,19 @@
 
 ## 候选方向(按优先级)
 
+> **进展更新 (2026-09-19)**：feat-050 已落地「数据驱动战斗反馈动画」（AnimationFeedbackSystem），
+> 因此 **P1 动作演出系统** 的起点应改为「在现有 AnimationFeedbackSystem 上扩展镜头编排」而非从零实现。
+> 同会话完成 feat-051：E2E 套件曾长期失败（含 1 处假通过），已修复并全绿（37 用例，repeat×2 无 flaky）。
+> 新 spec 必须复用 `e2e/helpers/game.js`。
+
+> **进展更新 (2026-09-19 第二轮)**：P0 体验打磨已落地 **feat-052 死亡演出**（DeathSequenceSystem，
+> 血量归零 → 定格/镜头推进/淡出 → 结算页，结算数据在死亡瞬间快照）。
+> P0 剩余候选：低血量警告强化（已有基础实现，可增强）、Boss 战节奏调整、数值平衡实测。
+
+> **进展更新 (2026-09-19 第三轮)**：P0 体验打磨第二项落地 —— **feat-053 低血量警告强化**
+> （LowHealthWarningSystem：红色暗角 → critical 脉冲 + `危险` 文字 + 心跳音；纯逻辑 + 数据驱动 + 16 个 `__DEBUG_API__` 方法）。
+> P0 剩余候选：**Boss 战节奏调整**、**数值平衡实测**（都需要用 `__DEBUG_API__` 实际跑起来找手感问题）。
+
 ### P0: 体验打磨(用 `__DEBUG_API__` 跑游戏找手感问题)
 
 - **来源**:`README_IMPROVEMENTS.md` "立即开始" 的延续 + `findings.md` 体验分析 5 点
@@ -80,6 +93,10 @@
 | 极限计时(部分) | feat-020(Daily Challenge) | ✅ completed |
 | 音频分层 | feat-014 + feat-039 | ✅ completed |
 | 调试 API | E2E-debug(`window.__DEBUG_API__`) | ✅ completed |
+| 战斗反馈动画 | feat-050(AnimationFeedbackSystem) | ✅ completed |
+| E2E 验证修复 | feat-051(helpers/game.js + smoke 重写) | ✅ completed |
+| 死亡演出 | feat-052(DeathSequenceSystem) | ✅ completed |
+| 低血量警告强化 | feat-053(LowHealthWarningSystem) | ✅ completed |
 | 无障碍 | (尚未实现,仍 P2) | 🔜 pending |
 
 ---

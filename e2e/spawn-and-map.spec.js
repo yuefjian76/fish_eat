@@ -13,36 +13,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-// Reusable bootstrap: load game with ?debug=true, click past guest mode /
-// main menu, wait for GameScene to expose window.__GAME_SCENE__.
-async function startGame(page) {
-    await page.goto('http://localhost:8765?debug=true');
-    await page.waitForSelector('canvas');
-    await delay(1000);
-
-    // Guest mode (if login screen shown).
-    try {
-        const guestBtn = page.locator('button:has-text("游客模式")');
-        if (await guestBtn.isVisible({ timeout: 2000 })) {
-            await guestBtn.click();
-            await delay(500);
-        }
-    } catch (e) {
-        // No guest button — already in menu.
-    }
-
-    // Click start button on MenuScene.
-    await page.mouse.click(640, 520);
-
-    // Wait until GameScene exposes itself.
-    await page.waitForFunction(() => window.__GAME_SCENE__ != null, {
-        timeout: 10000,
-    });
-    await delay(500);
-}
+import { startGame, delay } from './helpers/game.js';
 
 test('Bug 1: enemies appear near player at game start', async ({ page }) => {
     await startGame(page);

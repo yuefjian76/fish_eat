@@ -1,5 +1,6 @@
 // AudioSystem.test.js
 // Tests for Web Audio synthesized sound effects
+import { AudioSystem } from '../AudioSystem.js';
 
 describe('AudioSystem - sound synthesis parameters', () => {
     describe('eat sound parameters', () => {
@@ -66,6 +67,32 @@ describe('AudioSystem - sound synthesis parameters', () => {
             const sys = createAudioSystem(null);
             expect(() => sys.play('eat')).not.toThrow();
         });
+
+        test('playing heartbeat when disabled does not throw', () => {
+            const sys = new AudioSystem();
+            sys.enabled = false;
+            expect(() => sys.play('heartbeat')).not.toThrow();
+        });
+    });
+
+    describe('heartbeat sound (feat-053)', () => {
+        test('heartbeat creates two low-frequency thumps', () => {
+            const record = { freqs: [], peaks: [] };
+            const sys = createRealAudioSystem(createMockCtx(record));
+            sys.play('heartbeat');
+            expect(record.freqs).toHaveLength(2);
+            // 心跳必须是低频，否则会变成"哔"声而不是"咚"
+            expect(Math.max(...record.freqs)).toBeLessThan(100);
+            expect(Math.min(...record.freqs)).toBeGreaterThan(20);
+        });
+
+        test('second thump is quieter than the first (lub-dub)', () => {
+            const record = { freqs: [], peaks: [] };
+            const sys = createRealAudioSystem(createMockCtx(record));
+            sys.play('heartbeat');
+            expect(record.peaks).toHaveLength(2);
+            expect(record.peaks[1]).toBeLessThan(record.peaks[0]);
+        });
     });
 
     describe('volume control', () => {
@@ -90,6 +117,49 @@ describe('AudioSystem - sound synthesis parameters', () => {
 });
 
 // ─── Pure logic helpers (these will be extracted from AudioSystem.js) ──────
+
+/** Minimal AudioContext stub that records the parameters a sound actually uses. */
+function createRealAudioSystem(audioContext) {
+    const sys = new AudioSystem();
+    sys.ctx = audioContext;
+    sys.enabled = true;
+    return sys;
+}
+
+function createMockCtx(record) {
+    return {
+        currentTime: 0,
+        state: 'running',
+        destination: {},
+        createOscillator() {
+            return {
+                type: 'sine',
+                frequency: {
+                    setValueAtTime: (v) => record.freqs.push(v),
+                    exponentialRampToValueAtTime: () => {},
+                },
+                connect: () => {},
+                start: () => {},
+                stop: () => {},
+            };
+        },
+        createGain() {
+            return {
+                gain: {
+                    setValueAtTime: () => {},
+                    // Only record the attack ramps (decays ramp down to ~0)
+                    exponentialRampToValueAtTime: (v) => {
+                        if (v > 0.001) record.peaks.push(v);
+                    },
+                },
+                connect: () => {},
+            };
+        },
+        createBuffer: () => ({ getChannelData: () => new Float32Array(1) }),
+        createBufferSource: () => ({ connect: () => {}, start: () => {}, stop: () => {} }),
+        createBiquadFilter: () => ({ frequency: { setValueAtTime: () => {} }, connect: () => {} }),
+    };
+}
 
 function getEatSoundParams(size) {
     // Small fish = higher pitch, big fish = lower pitch

@@ -1,16 +1,9 @@
 import { test, expect } from '@playwright/test';
+import { startGame } from './helpers/game.js';
 
 test.describe('AnimationFeedbackSystem', () => {
     test.beforeEach(async ({ page }) => {
-        await page.goto('http://localhost:8765?debug=true', { waitUntil: 'networkidle' });
-        await page.waitForTimeout(2000);
-        // Click start button to enter GameScene
-        const canvasBounds = await page.evaluate(() => {
-            const rect = document.querySelector('canvas')?.getBoundingClientRect();
-            return rect ? { x: rect.x, y: rect.y, width: rect.width, height: rect.height } : null;
-        });
-        await page.mouse.click(canvasBounds.x + 512, canvasBounds.y + 520);
-        await page.waitForTimeout(2000);
+        await startGame(page);
     });
 
     test('feedbackSystem exists in GameScene after start', async ({ page }) => {

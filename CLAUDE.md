@@ -21,17 +21,18 @@ git log --oneline -5         # 查看近期变更
 
 **鱼吃鱼** — Phaser.js 3.x HTML5 游戏。单人，俯视角，玩家控制一条鱼吃更小的鱼、升级、解锁技能、挑战 Boss。
 
-**技术栈**：Phaser.js 3.x · Arcade Physics · ES Modules · Jest（855 个测试） · Playwright（23 个 E2E 测试）
+**技术栈**：Phaser.js 3.x · Arcade Physics · ES Modules · Jest（906 个测试） · Playwright（49 个 E2E 测试）
 
 ---
 
 ## 关键命令
 
 ```bash
-npm test                                              # 单元测试（当前 855 个）
+npm test                                              # 单元测试（当前 906 个）
 npm run test:watch                                    # 监听模式
 ./init.sh                                             # 完整验证（install + test + smoke）
 python3 -m http.server 8765                           # 启动本地 HTTP 服务器
+npx playwright test --project=chromium                 # E2E 全量（49 个，自动拉起 webServer）
 npx playwright test e2e/smoke.spec.js --project=chromium  # E2E 冒烟
 npx playwright test e2e/debug-api.spec.js --project=chromium  # E2E debug-api（16 个测试）
 ```
@@ -50,14 +51,17 @@ npx playwright test e2e/debug-api.spec.js --project=chromium  # E2E debug-api（
 | `src/systems/SkillSystem.js` | 技能冷却 + 效果执行 |
 | `src/systems/GrowthSystem.js` | 经验值 + 升级 + 技能解锁 |
 | `src/systems/WaveSystem.js` | 波次状态机（calm/surge/peak） |
+| `src/systems/DeathSequenceSystem.js` | 死亡演出时序（feat-052） |
 | `src/systems/DebugLogger.js` | 结构化日志（DEBUG/INFO/WARN/ERROR） |
 | `src/config/fish.json` | 鱼类配置（HP/速度/大小/克制关系） |
 | `src/config/skills.json` | 技能配置（Q/W/E/R） |
+| `src/config/death_sequence.json` | 死亡演出时序配置 |
 | `feature_list.json` | **功能状态真相来源** |
 | `progress.md` | 会话连续性日志 |
 | `session-handoff.md` | 跨会话交接文档 |
 | `e2e/debug-api.spec.js` | E2E debug-api 测试（16 用例） |
-| `e2e/smoke.spec.js` | E2E 冒烟测试（7 用例） |
+| `e2e/helpers/game.js` | E2E 统一引导（登录浮层 + 开始按钮坐标，**新 spec 必须复用**） |
+| `e2e/smoke.spec.js` | E2E 冒烟测试（8 用例） |
 | `docs/PHASE_3_ROADMAP.md` | Phase 3 候选方向（下次 brainstorming 起点） |
 
 ---
@@ -152,7 +156,7 @@ URL 加 `?debug=true` 启用：
 
 - 页面内 Debug Overlay（Wave / HP / Score / Lv / Enemies）
 - `window.__GAME_SCENE__` 暴露游戏状态
-- `window.__DEBUG_API__` 暴露 14 个调试方法
+- `window.__DEBUG_API__` 暴露 16 个调试方法
 
 常用方法：
 
@@ -164,6 +168,8 @@ __DEBUG_API__.level(n)         // 直接升到 n 级（测技能解锁）
 __DEBUG_API__.killAll()        // 清空敌鱼
 __DEBUG_API__.fullHealth()     // 满血
 __DEBUG_API__.maxExp()         // 当前等级经验溢出，触发升级
+__DEBUG_API__.kill()           // 触发死亡演出
+__DEBUG_API__.damage(n)        // 扣 n 点血（0 血走正常死亡流程）
 __DEBUG_API__.restart()        // 重启场景
 __DEBUG_API__.eat(fishType)    // 在玩家位置生成并吃指定鱼
 __DEBUG_API__.watch(event, on) // 订阅事件
@@ -173,7 +179,7 @@ __DEBUG_API__.watch(event, on) // 订阅事件
 
 ## Phase 3 路线图
 
-49/49 features 全部完成后，下一阶段方向见 [`docs/PHASE_3_ROADMAP.md`](docs/PHASE_3_ROADMAP.md)。当前 5 个候选方向（P0 体验打磨 / P1 动作演出 / P1 群体 AI / P2 极限计时 / P2 无障碍），每次会话只选 1 个方向，通过 brainstorming 流程生成 spec → plan → 实现。
+53/53 features 全部完成后，下一阶段方向见 [`docs/PHASE_3_ROADMAP.md`](docs/PHASE_3_ROADMAP.md)。当前 5 个候选方向（P0 体验打磨 / P1 动作演出 / P1 群体 AI / P2 极限计时 / P2 无障碍），每次会话只选 1 个方向，通过 brainstorming 流程生成 spec → plan → 实现。
 
 ---
 

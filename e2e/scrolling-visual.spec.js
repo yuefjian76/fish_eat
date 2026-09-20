@@ -25,31 +25,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-async function startGame(page) {
-    await page.goto('http://localhost:8765?debug=true');
-    await page.waitForSelector('canvas');
-    await delay(1000);
-
-    try {
-        const guestBtn = page.locator('button:has-text("游客模式")');
-        if (await guestBtn.isVisible({ timeout: 2000 })) {
-            await guestBtn.click();
-            await delay(500);
-        }
-    } catch (e) {
-        // No guest button — already in menu.
-    }
-
-    await page.mouse.click(640, 520);
-
-    await page.waitForFunction(() => window.__GAME_SCENE__ != null, {
-        timeout: 10000,
-    });
-    await delay(500);
-}
+import { startGame, delay } from './helpers/game.js';
 
 test('bg layer is fully opaque and gradient only covers bottom 30%', async ({ page }) => {
     await startGame(page);

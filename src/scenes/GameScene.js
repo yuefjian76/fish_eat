@@ -23,6 +23,8 @@ import { AchievementSystem } from '../systems/AchievementSystem.js';
 import { DailyChallengeSystem } from '../systems/DailyChallengeSystem.js';
 import { CollisionSystem } from '../systems/CollisionSystem.js';
 import { AnimationFeedbackSystem } from '../systems/AnimationFeedbackSystem.js';
+import { DeathSequenceSystem } from '../systems/DeathSequenceSystem.js';
+import { LowHealthWarningSystem } from '../systems/LowHealthWarningSystem.js';
 import { WORLD_CONFIG } from '../constants/WorldConfig.js';
 import { logger } from '../systems/DebugLogger.js';
 
@@ -80,6 +82,12 @@ class GameScene extends Phaser.Scene {
         this.difficulty = (data && data.difficulty) || 'easy';
         this.fishType = (data && data.fishType) || 'clownfish';
         this.spawnTimer = null;
+        // Death sequence state (reset every time the scene starts)
+        this._isDying = false;
+        this._deathPayload = null;
+        this._deathPhase = null;
+        this.deathSequence?.reset();
+        this.lowHealthWarning?.reset();
         // Stats tracking
         this.killCount = 0;
         this.gameStartTime = Date.now();
@@ -120,6 +128,10 @@ class GameScene extends Phaser.Scene {
         this.load.json('zonesData', 'src/config/zones.json');
         // Load achievements data from JSON
         this.load.json('achievementsData', 'src/config/achievements.json');
+        // Load death sequence timing data from JSON
+        this.load.json('deathSequence', 'src/config/death_sequence.json');
+        // Load low-health warning tuning from JSON
+        this.load.json('lowHealth', 'src/config/low_health.json');
     }
 
     create() {
@@ -345,6 +357,10 @@ class GameScene extends Phaser.Scene {
             onIntervalChange: (interval) => logger.info(`Spawn interval: ${interval}ms`)
         });
         this.floatingTextSystem = new FloatingTextSystem({ scene: this });
+        // Death sequence timing (visuals are driven by GameScene, see _updateDeathSequence)
+        this.deathSequence = new DeathSequenceSystem(this.cache.json.get('deathSequence'));
+        // Low-health warning tuning (pure logic; UIScene renders the result)
+        this.lowHealthWarning = new LowHealthWarningSystem(this.cache.json.get('lowHealth'));
         this._spawnTimer = 0;
 
         // Wave indicator graphics
@@ -363,7 +379,6 @@ class GameScene extends Phaser.Scene {
                 backgroundColor: '#000000aa',
                 padding: { x: 6, y: 4 }
             });
-            this._debugText.setScrollFactor(0);
             this._debugText.setDepth(9999);
             this._prevDebugState = '';
 
@@ -757,6 +772,9 @@ class GameScene extends Phaser.Scene {
      * @param {object} result - Collision result from CollisionSystem
      */
     _handleCollisionResult(result) {
+        // Player is already dead — the death sequence owns the scene now
+        if (this._isDying) return;
+
         if (!result || result.type === 'already_eaten' || result.type === 'blocked') {
             return;
         }
@@ -841,22 +859,209 @@ class GameScene extends Phaser.Scene {
 
             // Check game over
             if (this.hp <= 0) {
-                this.scene.start('GameOverScene', { score: this.score, level: this.level, difficulty: this.difficulty, kills: this.killCount, survivalTime: Math.floor((Date.now() - this.gameStartTime) / 1000) });
+                this._triggerGameOver();
             }
         }
     }
 
-    update(time, delta) {
-        // Update debug overlay (only when state changes)
-        if (this._debugText) {
-            const waveState = this.waveSystem ? this.waveSystem.getState() : 'calm';
-            const enemyCount = this.enemies ? this.enemies.length : 0;
-            const newState = `Wave: ${waveState} | HP: ${Math.floor(this.hp)}/${this.maxHp} | Score: ${this.score} | Lv: ${this.level} | Enemies: ${enemyCount}`;
-            if (newState !== this._prevDebugState) {
-                this._debugText.setText(newState);
-                this._prevDebugState = newState;
-            }
+    /**
+     * Snapshot the stats shown on the game over screen.
+     * Taken at the moment of death so the death sequence does not inflate survivalTime.
+     */
+    _buildGameOverPayload() {
+        return {
+            score: this.score,
+            level: this.level,
+            difficulty: this.difficulty,
+            kills: this.killCount,
+            survivalTime: Math.floor((Date.now() - this.gameStartTime) / 1000),
+        };
+    }
+
+    /**
+     * Single entry point for player death (all damage paths call this).
+     * Freezes the world and starts the death sequence; the scene switches to
+     * GameOverScene when the sequence completes.
+     */
+    _triggerGameOver() {
+        if (this._isDying) return;
+        this._isDying = true;
+        this._deathPayload = this._buildGameOverPayload();
+
+        logger.info('Game over triggered', {
+            score: this.score,
+            level: this.level,
+            kills: this.killCount,
+            hp: this.hp,
+        });
+
+        // Freeze the world so the player is not attacked after death
+        if (this.physics?.world) this.physics.world.pause();
+        if (this.player?.body) this.player.body.setVelocity(0, 0);
+        this.isMouseActive = false;
+        this.mouseTarget = null;
+
+        this._clearLowHealthWarning();
+
+        const cfg = this.deathSequence.getConfig().hitStop;
+        this.cameras.main.shake(cfg.shake.duration, cfg.shake.intensity);
+        this.cameras.main.flash(cfg.flash.duration, 255, 255, 255);
+        if (this.audioSystem) this.audioSystem.play('hurt');
+
+        this.deathSequence.start();
+    }
+
+    /**
+     * Drive the death sequence and run the visuals for each phase.
+     * Called from update() instead of the normal gameplay update while dying.
+     */
+    _updateDeathSequence(delta) {
+        const result = this.deathSequence.update(delta);
+        if (!result) return;
+
+        if (result.phaseChanged) {
+            logger.info('Death sequence phase', { phase: result.phase });
+            if (result.phase === 'impact') this._playDeathImpact();
+            if (result.phase === 'fadeOut') this._playDeathFadeOut();
         }
+
+        this._centerDeathText();
+        this._updateDebugOverlay();
+
+        if (result.done) {
+            logger.info('Game over transition', { survivalTime: this._deathPayload.survivalTime });
+            this.scene.start('GameOverScene', this._deathPayload);
+        }
+    }
+
+    /** Impact phase: camera pushes in on the player, which fades out with a particle burst. */
+    _playDeathImpact() {
+        const cfg = this.deathSequence.getConfig().impact;
+
+        this.cameras.main.zoomTo(cfg.zoom.to, cfg.duration);
+
+        if (this.player) {
+            this.tweens.add({
+                targets: this.player,
+                alpha: cfg.playerAlpha.to,
+                duration: cfg.duration,
+            });
+        }
+
+        if (this.feedbackSystem && this.player) {
+            this.feedbackSystem.trigger('eat', {
+                x: this.player.x,
+                y: this.player.y,
+                exp: 0,
+                colors: cfg.particles.colors,
+                count: cfg.particles.count,
+            });
+        }
+
+        const text = this.add.text(this.cameras.main.width / 2, this.cameras.main.height / 2, cfg.text.content, {
+            fontSize: `${cfg.text.fontSize}px`,
+            color: cfg.text.color,
+            fontFamily: 'Arial Black',
+            stroke: '#000000',
+            strokeThickness: 6,
+        });
+        text.setOrigin(0.5);
+        text.setDepth(9998);
+        text.setAlpha(0);
+        // The camera is zoomed in on the player during this phase, so the text
+        // must be positioned in world space at the camera mid-point to end up
+        // centered on screen (see _centerDeathText).
+        this._deathText = text;
+        this._centerDeathText();
+        this.tweens.add({
+            targets: text,
+            alpha: 1,
+            scale: { from: cfg.text.scaleFrom, to: 1 },
+            duration: cfg.duration,
+        });
+    }
+
+    /** Keep the death text pinned to the centre of the (zoomed) camera view. */
+    _centerDeathText() {
+        if (!this._deathText || !this.cameras?.main) return;
+        const mid = this.cameras.main.midPoint;
+        this._deathText.setPosition(mid.x, mid.y);
+    }
+
+    /**
+     * Drive the low-health warning and push the result to UIScene.
+     * The heartbeat sound lives here (this scene owns hp and the AudioSystem).
+     */
+    _updateLowHealthWarning(delta) {
+        if (!this.lowHealthWarning) return;
+
+        const maxHp = this.maxHp > 0 ? this.maxHp : 1;
+        const hpRatio = Math.max(0, Math.min(1, this.hp / maxHp));
+        const state = this.lowHealthWarning.update(hpRatio, delta);
+
+        if (state.entered) logger.info('Low health warning', { state: 'enter', hpRatio });
+        if (state.exited) logger.info('Low health warning', { state: 'exit', hpRatio });
+
+        if (state.heartbeatDue) {
+            logger.debug('Low health heartbeat', { hpRatio, interval: state.pulsePeriod });
+            if (this.audioSystem) this.audioSystem.play('heartbeat');
+        }
+
+        const uiScene = this.scene.get('UIScene');
+        if (uiScene && uiScene.updateLowHealthWarning) {
+            uiScene.updateLowHealthWarning(state);
+        }
+    }
+
+    /** Hide the low-health warning (used when the death sequence takes over). */
+    _clearLowHealthWarning() {
+        if (!this.lowHealthWarning) return;
+        this.lowHealthWarning.reset();
+        const uiScene = this.scene.get('UIScene');
+        if (uiScene && uiScene.updateLowHealthWarning) {
+            uiScene.updateLowHealthWarning({ alpha: 0, showText: false, textAlpha: 0 });
+        }
+    }
+
+    /** Refresh the ?debug=true overlay (only touches the text when state changed). */
+    _updateDebugOverlay() {
+        if (!this._debugText) return;
+
+        // Pin the overlay to the top-left of whatever the camera currently
+        // shows. Anchoring in world space (rather than setScrollFactor(0))
+        // keeps it correct while the camera zooms, e.g. during the death
+        // sequence.
+        const cam = this.cameras?.main;
+        if (cam) {
+            const view = cam.worldView;
+            this._debugText.setPosition(view.x + 10, view.y + 10);
+        }
+
+        const waveState = this.waveSystem ? this.waveSystem.getState() : 'calm';
+        const enemyCount = this.enemies ? this.enemies.length : 0;
+        const newState = `Wave: ${waveState} | HP: ${Math.floor(this.hp)}/${this.maxHp} | Score: ${this.score} | Lv: ${this.level} | Enemies: ${enemyCount}`;
+        if (newState !== this._prevDebugState) {
+            this._debugText.setText(newState);
+            this._prevDebugState = newState;
+        }
+    }
+
+    /** Fade out phase: fade the camera to the configured color before switching scenes. */
+    _playDeathFadeOut() {
+        const cfg = this.deathSequence.getConfig().fadeOut;
+        const color = Phaser.Display.Color.HexStringToColor(cfg.color);
+        this.cameras.main.fade(cfg.duration, color.red, color.green, color.blue);
+    }
+
+    update(time, delta) {
+        // Death sequence owns the update loop once the player dies
+        if (this._isDying) {
+            this._updateDeathSequence(delta);
+            return;
+        }
+
+        this._updateDebugOverlay();
+        this._updateLowHealthWarning(delta);
 
         // Handle spawn invincibility flashing
         if (this._spawnInvincible) {
@@ -1395,6 +1600,30 @@ class GameScene extends Phaser.Scene {
                 };
             },
 
+            damage(amount = 10) {
+                const value = Number(amount);
+                if (!Number.isFinite(value) || value <= 0) {
+                    return { success: false, error: 'amount must be a positive number' };
+                }
+                self.hp = Math.max(0, self.hp - value);
+                self.outOfCombatTimer = 0;
+                self.uiDirty = true;
+                self.updatePlayerHealthBar();
+                // Mirror real gameplay: dropping to 0 runs the normal death path
+                if (self.hp <= 0) self._triggerGameOver();
+                return { success: true, hp: self.hp, maxHp: self.maxHp };
+            },
+
+            kill() {
+                if (self._isDying) {
+                    return { success: false, error: 'death sequence already running' };
+                }
+                self.hp = 0;
+                self.updatePlayerHealthBar();
+                self._triggerGameOver();
+                return { success: true, dying: true, hp: self.hp };
+            },
+
             // === Info ===
             help() {
                 const lines = [
@@ -1410,6 +1639,8 @@ class GameScene extends Phaser.Scene {
                     'killAll() — Remove all enemies (excludes bosses)',
                     'fullHealth() — Restore HP to maxHp',
                     'maxExp() — Set EXP to just below level-up threshold',
+                    'kill() — Kill the player (plays death sequence)',
+                    'damage(n) — Deal n damage to the player (runs death sequence at 0 HP)',
                     'help() — Show this message',
                 ];
                 const msg = lines.join('\n');
@@ -1427,6 +1658,9 @@ class GameScene extends Phaser.Scene {
      * @param {number} damage - Damage dealt
      */
     onEnemyAttack(enemy, damage) {
+        // Player is already dead — the death sequence owns the scene now
+        if (this._isDying) return;
+
         // Check if player has shield - shield absorbs damage first
         if (this.skillSystem && this.skillSystem.isPlayerShielded()) {
             const remainingDamage = this.skillSystem.damageShield(damage);
